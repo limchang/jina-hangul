@@ -5,131 +5,161 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>진아의 글자 공부</title>
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+    * { margin:0; padding:0; box-sizing:border-box; }
     body {
-      background: linear-gradient(135deg, #1a0533 0%, #0d1b4b 50%, #001a2e 100%);
-      min-height: 100vh;
-      font-family: 'Malgun Gothic', '맑은 고딕', sans-serif;
-      overflow-x: hidden;
-      user-select: none;
+      background: linear-gradient(135deg,#1a0533 0%,#0d1b4b 50%,#001a2e 100%);
+      min-height:100vh;
+      font-family:'Malgun Gothic','맑은 고딕',sans-serif;
+      overflow-x:hidden; user-select:none;
     }
     #particle-canvas {
-      position: fixed; top: 0; left: 0;
-      width: 100%; height: 100%;
-      pointer-events: none; z-index: 0;
+      position:fixed; top:0; left:0; width:100%; height:100%;
+      pointer-events:none; z-index:0;
     }
     #app {
-      position: relative; z-index: 1;
-      display: flex; flex-direction: column; align-items: center;
-      padding: 16px 10px; min-height: 100vh;
+      position:relative; z-index:1;
+      display:flex; flex-direction:column; align-items:center;
+      padding:14px 10px; min-height:100vh;
     }
     h1 {
-      color: #fff; font-size: 1.7rem; margin-bottom: 4px;
-      text-shadow: 0 0 20px rgba(255,180,255,0.9); letter-spacing: 3px;
+      color:#fff; font-size:1.6rem; margin-bottom:3px;
+      text-shadow:0 0 20px rgba(255,180,255,0.9); letter-spacing:3px;
     }
-    #subtitle { color: rgba(255,255,255,0.6); font-size: 0.82rem; margin-bottom: 14px; }
+    #subtitle { color:rgba(255,255,255,0.55); font-size:0.78rem; margin-bottom:12px; }
 
     /* 탭 */
-    #tabs { display: flex; gap: 7px; margin-bottom: 12px; }
+    #tabs { display:flex; gap:7px; margin-bottom:11px; }
     .tab-btn {
-      padding: 6px 18px; border-radius: 20px;
-      border: 2px solid rgba(255,255,255,0.22);
-      background: rgba(255,255,255,0.07);
-      color: rgba(255,255,255,0.7); font-size: 0.92rem;
-      cursor: pointer; transition: all 0.18s; font-family: inherit;
+      padding:6px 20px; border-radius:20px;
+      border:2px solid rgba(255,255,255,0.22);
+      background:rgba(255,255,255,0.07);
+      color:rgba(255,255,255,0.7); font-size:0.92rem;
+      cursor:pointer; transition:all 0.18s; font-family:inherit;
     }
     .tab-btn.active {
-      background: rgba(175,70,255,0.45); border-color: rgba(200,120,255,0.9);
-      color: #fff; box-shadow: 0 0 13px rgba(175,70,255,0.5);
+      background:rgba(175,70,255,0.45); border-color:rgba(200,120,255,0.9);
+      color:#fff; box-shadow:0 0 13px rgba(175,70,255,0.5);
     }
 
-    /* 글자 버튼 */
+    /* 글자 선택 버튼 */
     #letter-selector {
-      display: flex; flex-wrap: wrap; gap: 7px;
-      justify-content: center; margin-bottom: 14px; max-width: 560px;
+      display:flex; flex-wrap:wrap; gap:7px;
+      justify-content:center; margin-bottom:11px; max-width:560px;
     }
     .letter-btn {
-      width: 48px; height: 48px; border-radius: 11px;
-      border: 2px solid rgba(255,255,255,0.22);
-      background: rgba(255,255,255,0.07); color: #fff;
-      font-size: 1.3rem; cursor: pointer; transition: all 0.16s; font-family: inherit;
+      width:46px; height:46px; border-radius:11px;
+      border:2px solid rgba(255,255,255,0.22);
+      background:rgba(255,255,255,0.07); color:#fff;
+      font-size:1.25rem; cursor:pointer; transition:all 0.16s; font-family:inherit;
     }
-    .letter-btn:hover { background: rgba(200,100,255,0.28); border-color: rgba(200,100,255,0.6); transform: scale(1.07); }
+    .letter-btn:hover { background:rgba(200,100,255,0.28); border-color:rgba(200,100,255,0.6); transform:scale(1.07); }
     .letter-btn.active {
-      background: rgba(195,75,255,0.55); border-color: #cc66ff;
-      transform: scale(1.11); box-shadow: 0 0 14px rgba(195,75,255,0.6);
+      background:rgba(195,75,255,0.55); border-color:#cc66ff;
+      transform:scale(1.11); box-shadow:0 0 14px rgba(195,75,255,0.6);
+    }
+
+    /* 동물 패널 */
+    #animal-panel {
+      display:flex; align-items:center; justify-content:center;
+      gap:10px; margin-bottom:8px; min-height:38px;
+    }
+    #animal-emoji { font-size:2.2rem; line-height:1; }
+    #animal-name {
+      font-size:1.15rem; color:#fff; font-weight:bold;
+      text-shadow:0 0 14px rgba(255,200,255,0.85); letter-spacing:1px;
     }
 
     /* 캔버스 */
     #canvas-wrap {
-      position: relative; width: 320px; height: 320px;
-      border-radius: 20px;
-      box-shadow: 0 0 0 2px rgba(175,90,255,0.45),
-                  0 0 40px rgba(175,90,255,0.35),
-                  0 0 80px rgba(90,120,255,0.15);
+      position:relative; width:320px; height:320px;
+      border-radius:20px;
+      box-shadow:0 0 0 2px rgba(175,90,255,0.45),
+                 0 0 40px rgba(175,90,255,0.35),
+                 0 0 80px rgba(90,120,255,0.15);
     }
     #guide-canvas, #draw-canvas, #stroke-canvas {
-      position: absolute; top: 0; left: 0; width: 320px; height: 320px;
+      position:absolute; top:0; left:0; width:320px; height:320px;
     }
-    #draw-canvas { cursor: crosshair; }
+    #draw-canvas { cursor:crosshair; }
 
     /* 획순 번호 버튼 */
     .stroke-num-btn {
-      position: absolute;
-      width: 38px; height: 38px;
-      border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 16px; font-weight: bold; font-family: inherit;
-      cursor: grab;
-      transform: translate(-50%, -50%);
-      pointer-events: auto;
-      z-index: 10;
-      border: 3px solid rgba(255,220,80,0.95);
-      background: rgba(255,205,40,0.97);
-      color: #1a0533;
-      box-shadow: 0 0 18px rgba(255,200,50,0.9), 0 2px 8px rgba(0,0,0,0.5);
-      user-select: none;
-      touch-action: none;
-      transition: box-shadow 0.15s;
-      animation: btnAppear 0.3s cubic-bezier(0.34,1.56,0.64,1);
+      position:absolute;
+      width:38px; height:38px; border-radius:50%;
+      display:flex; align-items:center; justify-content:center;
+      font-size:16px; font-weight:bold; font-family:inherit;
+      cursor:grab;
+      transform:translate(-50%,-50%);
+      pointer-events:auto; z-index:10;
+      border:3px solid rgba(255,220,80,0.95);
+      background:rgba(255,205,40,0.97); color:#1a0533;
+      box-shadow:0 0 18px rgba(255,200,50,0.9),0 2px 8px rgba(0,0,0,0.5);
+      user-select:none; touch-action:none;
+      animation:btnAppear 0.3s cubic-bezier(0.34,1.56,0.64,1);
     }
     @keyframes btnAppear {
-      from { transform: translate(-50%,-50%) scale(0); opacity:0; }
-      to   { transform: translate(-50%,-50%) scale(1); opacity:1; }
+      from { transform:translate(-50%,-50%) scale(0); opacity:0; }
+      to   { transform:translate(-50%,-50%) scale(1); opacity:1; }
     }
     .stroke-num-btn.dragging {
-      cursor: grabbing;
-      box-shadow: 0 0 28px rgba(255,200,50,1), 0 0 8px rgba(255,255,255,0.6), 0 2px 12px rgba(0,0,0,0.5);
+      cursor:grabbing;
+      box-shadow:0 0 28px rgba(255,200,50,1),0 0 8px rgba(255,255,255,0.6),0 2px 12px rgba(0,0,0,0.5);
     }
 
-    /* 획순 진행바 */
+    /* 아이템 버튼 */
+    #item-buttons {
+      display:flex; gap:9px; margin-top:13px;
+    }
+    .item-btn {
+      display:flex; flex-direction:column; align-items:center;
+      padding:9px 16px; border-radius:16px;
+      border:2px solid rgba(255,255,255,0.20);
+      background:rgba(255,255,255,0.09);
+      color:#fff; cursor:pointer;
+      transition:transform 0.15s, background 0.15s, border-color 0.15s;
+      font-family:inherit; min-width:88px;
+    }
+    .item-btn:hover {
+      background:rgba(200,100,255,0.30); border-color:rgba(220,150,255,0.7);
+      transform:scale(1.07);
+    }
+    .item-btn.pop { animation:itemPop 0.28s cubic-bezier(0.34,1.56,0.64,1); }
+    @keyframes itemPop {
+      0%   { transform:scale(1); }
+      50%  { transform:scale(1.25); }
+      100% { transform:scale(1); }
+    }
+    .item-emoji { font-size:1.7rem; line-height:1.2; }
+    .item-label { font-size:0.72rem; margin-top:3px; opacity:0.9; }
+
+    /* 획 진행 */
     #stroke-progress {
-      display: flex; gap: 7px; margin-top: 13px; align-items: center;
+      display:flex; gap:7px; margin-top:11px; align-items:center;
     }
     .stroke-dot {
-      width: 14px; height: 14px; border-radius: 50%;
-      border: 2px solid rgba(255,255,255,0.4);
-      background: rgba(255,255,255,0.1); transition: all 0.3s;
+      width:13px; height:13px; border-radius:50%;
+      border:2px solid rgba(255,255,255,0.4);
+      background:rgba(255,255,255,0.1); transition:all 0.3s;
     }
-    .stroke-dot.done { background: #bb55ff; border-color: #dd88ff; box-shadow: 0 0 8px rgba(187,85,255,0.7); }
-    .stroke-dot.active { background: #ffcc44; border-color: #ffee88; box-shadow: 0 0 8px rgba(255,200,60,0.7); }
-    #stroke-hint { color: rgba(255,255,255,0.5); font-size: 0.8rem; margin-left: 6px; }
+    .stroke-dot.done { background:#bb55ff; border-color:#dd88ff; box-shadow:0 0 8px rgba(187,85,255,0.7); }
+    .stroke-dot.active { background:#ffcc44; border-color:#ffee88; box-shadow:0 0 8px rgba(255,200,60,0.7); }
+    #stroke-hint { color:rgba(255,255,255,0.5); font-size:0.78rem; margin-left:5px; }
 
     /* 하단 버튼 */
-    #controls { display: flex; gap: 11px; margin-top: 14px; }
+    #controls { display:flex; gap:11px; margin-top:12px; }
     .ctrl-btn {
-      padding: 10px 24px; border-radius: 28px; border: none;
-      font-size: 0.95rem; cursor: pointer; transition: all 0.18s;
-      font-family: inherit; font-weight: bold;
+      padding:10px 24px; border-radius:28px; border:none;
+      font-size:0.95rem; cursor:pointer; transition:all 0.18s;
+      font-family:inherit; font-weight:bold;
     }
-    #clear-btn { background: rgba(255,65,105,0.75); color: #fff; box-shadow: 0 0 16px rgba(255,65,105,0.4); }
-    #clear-btn:hover { background: rgba(255,65,105,1); transform: scale(1.06); }
+    #clear-btn { background:rgba(255,65,105,0.75); color:#fff; box-shadow:0 0 16px rgba(255,65,105,0.4); }
+    #clear-btn:hover { background:rgba(255,65,105,1); transform:scale(1.06); }
 
     /* 칭찬 */
     #praise {
-      margin-top: 14px; font-size: 1.7rem; color: #ffe880;
-      text-shadow: 0 0 18px rgba(255,215,70,1);
-      min-height: 2.1rem; font-weight: bold; letter-spacing: 2px;
+      margin-top:12px; font-size:1.6rem; color:#ffe880;
+      text-shadow:0 0 18px rgba(255,215,70,1);
+      min-height:2rem; font-weight:bold; letter-spacing:2px;
     }
   </style>
 </head>
@@ -137,16 +167,20 @@
 <canvas id="particle-canvas"></canvas>
 <div id="app">
   <h1>✨ 진아의 글자 공부 ✨</h1>
-  <p id="subtitle">획순 번호를 따라 드래그해서 글자를 완성하세요! 🌟</p>
+  <p id="subtitle">번호 버튼을 드래그해서 획을 따라 써 보세요! 🌟</p>
 
   <div id="tabs">
-    <button class="tab-btn active" onclick="switchTab('ga')">가나다</button>
-    <button class="tab-btn" onclick="switchTab('cho')">ㄱㄴㄷ</button>
+    <button class="tab-btn active" onclick="switchTab('cho')">자음</button>
     <button class="tab-btn" onclick="switchTab('mo')">모음</button>
     <button class="tab-btn" onclick="switchTab('num')">숫자</button>
   </div>
 
   <div id="letter-selector"></div>
+
+  <div id="animal-panel">
+    <span id="animal-emoji"></span>
+    <span id="animal-name"></span>
+  </div>
 
   <div id="canvas-wrap">
     <canvas id="guide-canvas" width="320" height="320"></canvas>
@@ -154,6 +188,7 @@
     <canvas id="draw-canvas"   width="320" height="320"></canvas>
   </div>
 
+  <div id="item-buttons"></div>
   <div id="stroke-progress"></div>
 
   <div id="controls">
@@ -167,256 +202,207 @@
 // 1. 배경 파티클
 // ══════════════════════════════════════════
 const bgCanvas = document.getElementById('particle-canvas');
-const bgCtx = bgCanvas.getContext('2d');
-function resizeBg() { bgCanvas.width = innerWidth; bgCanvas.height = innerHeight; }
-resizeBg();
-window.addEventListener('resize', resizeBg);
+const bgCtx    = bgCanvas.getContext('2d');
+function resizeBg() { bgCanvas.width=innerWidth; bgCanvas.height=innerHeight; }
+resizeBg(); window.addEventListener('resize', resizeBg);
 
-const bgPts = Array.from({length: 65}, () => ({
-  x: Math.random() * innerWidth, y: Math.random() * innerHeight,
-  r: Math.random() * 1.7 + 0.4,
-  dx: (Math.random() - 0.5) * 0.22, dy: (Math.random() - 0.5) * 0.22,
-  a: Math.random() * 0.45 + 0.12, h: Math.random() * 60 + 248
+const bgPts = Array.from({length:60},()=>({
+  x:Math.random()*innerWidth, y:Math.random()*innerHeight,
+  r:Math.random()*1.6+0.4,
+  dx:(Math.random()-0.5)*0.2, dy:(Math.random()-0.5)*0.2,
+  a:Math.random()*0.4+0.1, h:Math.random()*60+248
 }));
-(function bgLoop() {
-  bgCtx.clearRect(0, 0, bgCanvas.width, bgCanvas.height);
-  for (const p of bgPts) {
-    bgCtx.beginPath();
-    bgCtx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-    bgCtx.fillStyle = `hsla(${p.h},100%,75%,${p.a})`;
-    bgCtx.fill();
-    p.x = (p.x + p.dx + bgCanvas.width)  % bgCanvas.width;
-    p.y = (p.y + p.dy + bgCanvas.height) % bgCanvas.height;
+
+// 버튼 파티클 (bgCanvas 좌표계 — 화면 절대좌표)
+const bgBursts = [];
+
+(function bgLoop(){
+  bgCtx.clearRect(0,0,bgCanvas.width,bgCanvas.height);
+  // 배경 별
+  for(const p of bgPts){
+    bgCtx.beginPath(); bgCtx.arc(p.x,p.y,p.r,0,Math.PI*2);
+    bgCtx.fillStyle=`hsla(${p.h},100%,75%,${p.a})`; bgCtx.fill();
+    p.x=(p.x+p.dx+bgCanvas.width)%bgCanvas.width;
+    p.y=(p.y+p.dy+bgCanvas.height)%bgCanvas.height;
+  }
+  // 버튼 파티클
+  for(let i=bgBursts.length-1;i>=0;i--){
+    const p=bgBursts[i];
+    bgCtx.save(); bgCtx.globalAlpha=Math.max(0,p.life);
+    bgCtx.beginPath(); bgCtx.arc(p.x,p.y,p.r,0,Math.PI*2);
+    bgCtx.fillStyle=`hsl(${p.h},100%,72%)`; bgCtx.fill();
+    bgCtx.restore();
+    p.x+=p.vx; p.y+=p.vy; p.vy+=0.12; p.life-=p.decay; p.r*=0.96;
+    if(p.life<=0) bgBursts.splice(i,1);
   }
   requestAnimationFrame(bgLoop);
 })();
 
+function spawnBgBurst(cx, cy, hue){
+  for(let i=0;i<20;i++){
+    const a=Math.random()*Math.PI*2, s=Math.random()*6+2;
+    bgBursts.push({
+      x:cx, y:cy, vx:Math.cos(a)*s, vy:Math.sin(a)*s-2,
+      r:Math.random()*7+3, h:hue??Math.random()*360,
+      life:1, decay:Math.random()*0.022+0.012
+    });
+  }
+}
+
 // ══════════════════════════════════════════
-// 2. 획순 데이터  (320×320 기준)
-//    자음/모음 단독: 중앙 큰 글자
-//    가나다…: 좌측 자음 + 우측 모음 분할
+// 2. 동물 / 단어 데이터
+// ══════════════════════════════════════════
+const ANIMAL_DATA = {
+  // 자음
+  'ㄱ':{ label:'거북이', emoji:'🐢', items:[{e:'🌊',l:'바다'},{e:'🪨',l:'돌'},{e:'🐚',l:'조개'}] },
+  'ㄴ':{ label:'나비',   emoji:'🦋', items:[{e:'🌸',l:'꽃'},{e:'🌿',l:'풀잎'},{e:'🌞',l:'햇빛'}] },
+  'ㄷ':{ label:'다람쥐', emoji:'🐿️', items:[{e:'🌰',l:'도토리'},{e:'🌲',l:'나무'},{e:'🍂',l:'낙엽'}] },
+  'ㄹ':{ label:'라쿤',   emoji:'🦝', items:[{e:'🐟',l:'물고기'},{e:'🌙',l:'달빛'},{e:'🍎',l:'열매'}] },
+  'ㅁ':{ label:'말',     emoji:'🐎', items:[{e:'🌾',l:'여물'},{e:'🏇',l:'달리기'},{e:'🌿',l:'풀밭'}] },
+  'ㅂ':{ label:'벌',     emoji:'🐝', items:[{e:'🍯',l:'꿀'},{e:'🌻',l:'해바라기'},{e:'🏠',l:'벌집'}] },
+  'ㅅ':{ label:'사슴',   emoji:'🦌', items:[{e:'🍄',l:'버섯'},{e:'🌲',l:'숲'},{e:'💧',l:'샘물'}] },
+  'ㅇ':{ label:'오리',   emoji:'🦆', items:[{e:'🌊',l:'물'},{e:'🌾',l:'풀밭'},{e:'🥚',l:'알'}] },
+  'ㅈ':{ label:'지렁이', emoji:'🪱', items:[{e:'🌱',l:'새싹'},{e:'🌧️',l:'비'},{e:'🌍',l:'흙'}] },
+  'ㅊ':{ label:'참새',   emoji:'🐦', items:[{e:'🌾',l:'낟알'},{e:'🌿',l:'나뭇가지'},{e:'🪺',l:'둥지'}] },
+  'ㅋ':{ label:'코끼리', emoji:'🐘', items:[{e:'🥜',l:'땅콩'},{e:'💦',l:'물줄기'},{e:'🌴',l:'야자나무'}] },
+  'ㅌ':{ label:'토끼',   emoji:'🐰', items:[{e:'🥕',l:'당근'},{e:'🌸',l:'꽃밭'},{e:'🌙',l:'달'}] },
+  'ㅍ':{ label:'펭귄',   emoji:'🐧', items:[{e:'🐟',l:'물고기'},{e:'❄️',l:'얼음'},{e:'🌊',l:'바다'}] },
+  'ㅎ':{ label:'하마',   emoji:'🦛', items:[{e:'🌊',l:'강물'},{e:'🌿',l:'수초'},{e:'☀️',l:'햇빛'}] },
+  // 모음
+  'ㅏ':{ label:'아빠',   emoji:'👨', items:[{e:'👔',l:'넥타이'},{e:'💼',l:'가방'},{e:'☕',l:'커피'}] },
+  'ㅑ':{ label:'야구',   emoji:'⚾', items:[{e:'🏏',l:'배트'},{e:'🧢',l:'모자'},{e:'🏟️',l:'구장'}] },
+  'ㅓ':{ label:'엄마',   emoji:'👩', items:[{e:'👒',l:'모자'},{e:'👜',l:'핸드백'},{e:'🌷',l:'꽃다발'}] },
+  'ㅕ':{ label:'여우',   emoji:'🦊', items:[{e:'🍎',l:'열매'},{e:'🌲',l:'숲'},{e:'🌙',l:'밤'}] },
+  'ㅗ':{ label:'오리',   emoji:'🦆', items:[{e:'💧',l:'물'},{e:'🌾',l:'풀'},{e:'🥚',l:'알'}] },
+  'ㅛ':{ label:'요리',   emoji:'🍳', items:[{e:'🧅',l:'양파'},{e:'🔪',l:'칼'},{e:'🍽️',l:'접시'}] },
+  'ㅜ':{ label:'우유',   emoji:'🥛', items:[{e:'🐄',l:'젖소'},{e:'🌾',l:'풀'},{e:'🍪',l:'쿠키'}] },
+  'ㅠ':{ label:'유리',   emoji:'🪟', items:[{e:'🌞',l:'햇빛'},{e:'🧴',l:'세제'},{e:'🏠',l:'집'}] },
+  'ㅡ':{ label:'으르렁', emoji:'🦁', items:[{e:'🥩',l:'고기'},{e:'🌿',l:'초원'},{e:'🌅',l:'일출'}] },
+  'ㅣ':{ label:'이빨',   emoji:'🦷', items:[{e:'🪥',l:'칫솔'},{e:'🧴',l:'치약'},{e:'💧',l:'물'}] },
+};
+
+// ══════════════════════════════════════════
+// 3. 획순 데이터 (320×320, 여백 고려해 x:75~245, y:75~250)
 // ══════════════════════════════════════════
 const STROKE_DATA = {
 
-  /* ─── 자음 단독 ─── */
+  /* ── 자음 ── */
   'ㄱ': [
-    { n:1, path:'M 80,95 L 230,95' },
-    { n:2, path:'M 230,95 L 230,245' }
+    { n:1, path:'M 78,88 L 244,88' },
+    { n:2, path:'M 244,88 L 244,248' }
   ],
   'ㄴ': [
-    { n:1, path:'M 80,95 L 80,245' },
-    { n:2, path:'M 80,245 L 230,245' }
+    { n:1, path:'M 78,88 L 78,248' },
+    { n:2, path:'M 78,248 L 244,248' }
   ],
   'ㄷ': [
-    { n:1, path:'M 80,95 L 230,95' },
-    { n:2, path:'M 80,95 L 80,245' },
-    { n:3, path:'M 80,245 L 230,245' }
+    { n:1, path:'M 78,88 L 244,88' },
+    { n:2, path:'M 78,88 L 78,248' },
+    { n:3, path:'M 78,248 L 244,248' }
   ],
   'ㄹ': [
-    { n:1, path:'M 80,95 L 230,95' },
-    { n:2, path:'M 230,95 L 230,170 L 80,170' },
-    { n:3, path:'M 80,170 L 80,245' },
-    { n:4, path:'M 80,245 L 230,245' }
+    { n:1, path:'M 78,88 L 244,88' },
+    { n:2, path:'M 244,88 L 244,168 L 78,168' },
+    { n:3, path:'M 78,168 L 78,248' },
+    { n:4, path:'M 78,248 L 244,248' }
   ],
   'ㅁ': [
-    { n:1, path:'M 80,95 L 80,245' },
-    { n:2, path:'M 80,95 L 230,95' },
-    { n:3, path:'M 230,95 L 230,245' },
-    { n:4, path:'M 80,245 L 230,245' }
+    { n:1, path:'M 78,88 L 78,248' },
+    { n:2, path:'M 78,88 L 244,88' },
+    { n:3, path:'M 244,88 L 244,248' },
+    { n:4, path:'M 78,248 L 244,248' }
   ],
   'ㅂ': [
-    { n:1, path:'M 80,95 L 80,245' },
-    { n:2, path:'M 230,95 L 230,245' },
-    { n:3, path:'M 80,170 L 230,170' },
-    { n:4, path:'M 80,245 L 230,245' }
+    { n:1, path:'M 78,88 L 78,248' },
+    { n:2, path:'M 244,88 L 244,248' },
+    { n:3, path:'M 78,168 L 244,168' },
+    { n:4, path:'M 78,248 L 244,248' }
   ],
   'ㅅ': [
-    { n:1, path:'M 160,90 L 80,245' },
-    { n:2, path:'M 160,90 L 240,245' }
+    { n:1, path:'M 161,82 L 78,248' },
+    { n:2, path:'M 161,82 L 244,248' }
   ],
   'ㅇ': [
-    { n:1, path:'M 160,95 C 230,95 245,245 160,245 C 75,245 75,95 160,95' }
+    { n:1, path:'M 161,82 C 248,82 252,252 161,252 C 70,252 68,82 161,82' }
   ],
   'ㅈ': [
-    { n:1, path:'M 80,110 L 230,110' },
-    { n:2, path:'M 160,110 L 80,245' },
-    { n:3, path:'M 160,110 L 240,245' }
+    { n:1, path:'M 78,108 L 244,108' },
+    { n:2, path:'M 161,108 L 78,248' },
+    { n:3, path:'M 161,108 L 244,248' }
   ],
   'ㅊ': [
-    { n:1, path:'M 135,75 L 185,75' },
-    { n:2, path:'M 80,115 L 230,115' },
-    { n:3, path:'M 160,115 L 80,245' },
-    { n:4, path:'M 160,115 L 240,245' }
+    { n:1, path:'M 128,72 L 194,72' },
+    { n:2, path:'M 78,112 L 244,112' },
+    { n:3, path:'M 161,112 L 78,248' },
+    { n:4, path:'M 161,112 L 244,248' }
   ],
   'ㅋ': [
-    { n:1, path:'M 80,95 L 230,95' },
-    { n:2, path:'M 80,95 L 80,245' },
-    { n:3, path:'M 80,170 L 210,170' }
+    { n:1, path:'M 78,88 L 244,88' },
+    { n:2, path:'M 78,88 L 78,248' },
+    { n:3, path:'M 78,170 L 218,170' }
   ],
   'ㅌ': [
-    { n:1, path:'M 80,95 L 230,95' },
-    { n:2, path:'M 80,95 L 80,245' },
-    { n:3, path:'M 80,170 L 230,170' },
-    { n:4, path:'M 80,245 L 230,245' }
+    { n:1, path:'M 78,88 L 244,88' },
+    { n:2, path:'M 78,88 L 78,248' },
+    { n:3, path:'M 78,168 L 244,168' },
+    { n:4, path:'M 78,248 L 244,248' }
   ],
   'ㅍ': [
-    { n:1, path:'M 80,95 L 230,95' },
-    { n:2, path:'M 155,95 L 155,245' },
-    { n:3, path:'M 80,245 L 230,245' }
+    { n:1, path:'M 78,88 L 244,88' },
+    { n:2, path:'M 161,88 L 161,248' },
+    { n:3, path:'M 78,248 L 244,248' }
   ],
   'ㅎ': [
-    { n:1, path:'M 135,70 L 185,70' },
-    { n:2, path:'M 80,108 L 230,108' },
-    { n:3, path:'M 160,140 C 230,140 245,258 160,258 C 75,258 75,140 160,140' }
+    { n:1, path:'M 128,70 L 194,70' },
+    { n:2, path:'M 78,110 L 244,110' },
+    { n:3, path:'M 161,142 C 248,142 252,258 161,258 C 70,258 70,142 161,142' }
   ],
 
-  /* ─── 모음 단독 ─── */
+  /* ── 모음 ── */
   'ㅏ': [
-    { n:1, path:'M 160,68 L 160,252' },
-    { n:2, path:'M 160,160 L 245,160' }
+    { n:1, path:'M 158,65 L 158,255' },
+    { n:2, path:'M 158,160 L 250,160' }
   ],
   'ㅑ': [
-    { n:1, path:'M 160,68 L 160,252' },
-    { n:2, path:'M 160,125 L 245,125' },
-    { n:3, path:'M 160,195 L 245,195' }
+    { n:1, path:'M 158,65 L 158,255' },
+    { n:2, path:'M 158,118 L 250,118' },
+    { n:3, path:'M 158,200 L 250,200' }
   ],
   'ㅓ': [
-    { n:1, path:'M 160,68 L 160,252' },
-    { n:2, path:'M 75,160 L 160,160' }
+    { n:1, path:'M 162,65 L 162,255' },
+    { n:2, path:'M 70,160 L 162,160' }
   ],
   'ㅕ': [
-    { n:1, path:'M 160,68 L 160,252' },
-    { n:2, path:'M 75,125 L 160,125' },
-    { n:3, path:'M 75,195 L 160,195' }
+    { n:1, path:'M 162,65 L 162,255' },
+    { n:2, path:'M 70,118 L 162,118' },
+    { n:3, path:'M 70,200 L 162,200' }
   ],
   'ㅗ': [
-    { n:1, path:'M 160,160 L 160,75' },
-    { n:2, path:'M 75,160 L 245,160' }
+    { n:1, path:'M 160,160 L 160,72' },
+    { n:2, path:'M 70,160 L 250,160' }
   ],
   'ㅛ': [
-    { n:1, path:'M 118,160 L 118,75' },
-    { n:2, path:'M 202,160 L 202,75' },
-    { n:3, path:'M 75,160 L 245,160' }
+    { n:1, path:'M 112,160 L 112,72' },
+    { n:2, path:'M 208,160 L 208,72' },
+    { n:3, path:'M 70,160 L 250,160' }
   ],
   'ㅜ': [
-    { n:1, path:'M 75,160 L 245,160' },
-    { n:2, path:'M 160,160 L 160,248' }
+    { n:1, path:'M 70,160 L 250,160' },
+    { n:2, path:'M 160,160 L 160,250' }
   ],
   'ㅠ': [
-    { n:1, path:'M 75,160 L 245,160' },
-    { n:2, path:'M 118,160 L 118,248' },
-    { n:3, path:'M 202,160 L 202,248' }
+    { n:1, path:'M 70,160 L 250,160' },
+    { n:2, path:'M 112,160 L 112,250' },
+    { n:3, path:'M 208,160 L 208,250' }
   ],
   'ㅡ': [
-    { n:1, path:'M 65,160 L 255,160' }
+    { n:1, path:'M 62,160 L 258,160' }
   ],
   'ㅣ': [
-    { n:1, path:'M 160,65 L 160,255' }
+    { n:1, path:'M 160,62 L 160,258' }
   ],
 
-  /* ─── 가나다라마바사아자차카타파하 ─── */
-  // 자음 영역: x 55~150, y 65~255
-  // 모음 ㅏ 영역: x 160~255, y 65~255
-  '가': [
-    { n:1, path:'M 60,85 L 148,85' },
-    { n:2, path:'M 148,85 L 148,248' },
-    { n:3, path:'M 172,65 L 172,255' },
-    { n:4, path:'M 172,160 L 252,160' }
-  ],
-  '나': [
-    { n:1, path:'M 60,85 L 60,248' },
-    { n:2, path:'M 60,248 L 148,248' },
-    { n:3, path:'M 172,65 L 172,255' },
-    { n:4, path:'M 172,160 L 252,160' }
-  ],
-  '다': [
-    { n:1, path:'M 60,85 L 148,85' },
-    { n:2, path:'M 60,85 L 60,248' },
-    { n:3, path:'M 60,248 L 148,248' },
-    { n:4, path:'M 172,65 L 172,255' },
-    { n:5, path:'M 172,160 L 252,160' }
-  ],
-  '라': [
-    { n:1, path:'M 60,85 L 148,85' },
-    { n:2, path:'M 148,85 L 148,165 L 60,165' },
-    { n:3, path:'M 60,165 L 60,248' },
-    { n:4, path:'M 60,248 L 148,248' },
-    { n:5, path:'M 172,65 L 172,255' },
-    { n:6, path:'M 172,160 L 252,160' }
-  ],
-  '마': [
-    { n:1, path:'M 60,85 L 60,248' },
-    { n:2, path:'M 60,85 L 148,85' },
-    { n:3, path:'M 148,85 L 148,248' },
-    { n:4, path:'M 60,248 L 148,248' },
-    { n:5, path:'M 172,65 L 172,255' },
-    { n:6, path:'M 172,160 L 252,160' }
-  ],
-  '바': [
-    { n:1, path:'M 60,85 L 60,248' },
-    { n:2, path:'M 148,85 L 148,248' },
-    { n:3, path:'M 60,165 L 148,165' },
-    { n:4, path:'M 60,248 L 148,248' },
-    { n:5, path:'M 172,65 L 172,255' },
-    { n:6, path:'M 172,160 L 252,160' }
-  ],
-  '사': [
-    { n:1, path:'M 104,85 L 60,248' },
-    { n:2, path:'M 104,85 L 148,248' },
-    { n:3, path:'M 172,65 L 172,255' },
-    { n:4, path:'M 172,160 L 252,160' }
-  ],
-  '아': [
-    { n:1, path:'M 104,85 C 148,80 158,248 104,248 C 55,248 58,88 104,85' },
-    { n:2, path:'M 172,65 L 172,255' },
-    { n:3, path:'M 172,160 L 252,160' }
-  ],
-  '자': [
-    { n:1, path:'M 60,108 L 148,108' },
-    { n:2, path:'M 104,108 L 60,248' },
-    { n:3, path:'M 104,108 L 148,248' },
-    { n:4, path:'M 172,65 L 172,255' },
-    { n:5, path:'M 172,160 L 252,160' }
-  ],
-  '차': [
-    { n:1, path:'M 85,72 L 122,72' },
-    { n:2, path:'M 60,108 L 148,108' },
-    { n:3, path:'M 104,108 L 60,248' },
-    { n:4, path:'M 104,108 L 148,248' },
-    { n:5, path:'M 172,65 L 172,255' },
-    { n:6, path:'M 172,160 L 252,160' }
-  ],
-  '카': [
-    { n:1, path:'M 60,85 L 148,85' },
-    { n:2, path:'M 60,85 L 60,248' },
-    { n:3, path:'M 60,165 L 130,165' },
-    { n:4, path:'M 172,65 L 172,255' },
-    { n:5, path:'M 172,160 L 252,160' }
-  ],
-  '타': [
-    { n:1, path:'M 60,85 L 148,85' },
-    { n:2, path:'M 60,85 L 60,248' },
-    { n:3, path:'M 60,165 L 148,165' },
-    { n:4, path:'M 60,248 L 148,248' },
-    { n:5, path:'M 172,65 L 172,255' },
-    { n:6, path:'M 172,160 L 252,160' }
-  ],
-  '파': [
-    { n:1, path:'M 60,85 L 148,85' },
-    { n:2, path:'M 104,85 L 104,248' },
-    { n:3, path:'M 60,248 L 148,248' },
-    { n:4, path:'M 172,65 L 172,255' },
-    { n:5, path:'M 172,160 L 252,160' }
-  ],
-  '하': [
-    { n:1, path:'M 85,70 L 122,70' },
-    { n:2, path:'M 60,105 L 148,105' },
-    { n:3, path:'M 104,135 C 150,135 158,250 104,250 C 54,250 56,135 104,135' },
-    { n:4, path:'M 172,65 L 172,255' },
-    { n:5, path:'M 172,160 L 252,160' }
-  ],
-
-  /* ─── 숫자 ─── */
+  /* ── 숫자 ── */
   '1': [
     { n:1, path:'M 125,78 L 160,65 L 160,255' }
   ],
@@ -444,31 +430,29 @@ const STROKE_DATA = {
     { n:2, path:'M 222,82 L 128,255' }
   ],
   '8': [
-    { n:1, path:'M 160,165 C 225,142 232,72 160,68 C 88,68 95,142 160,165' },
-    { n:2, path:'M 160,165 C 238,180 245,268 160,268 C 75,268 75,180 160,165' }
+    { n:1, path:'M 161,165 C 225,142 232,72 161,68 C 90,68 97,142 161,165' },
+    { n:2, path:'M 161,165 C 238,180 245,268 161,268 C 77,268 77,180 161,165' }
   ],
   '9': [
-    { n:1, path:'M 160,160 C 78,138 78,68 160,68 C 238,68 242,148 160,160 C 88,172 128,255 170,255' }
+    { n:1, path:'M 161,160 C 79,138 79,68 161,68 C 239,68 243,148 161,160 C 89,172 129,255 171,255' }
   ],
   '0': [
-    { n:1, path:'M 160,72 C 238,72 248,258 160,258 C 72,258 72,72 160,72' }
+    { n:1, path:'M 161,72 C 239,72 249,258 161,258 C 73,258 73,72 161,72' }
   ]
 };
 
 // ══════════════════════════════════════════
-// 3. 탭 & 글자 목록
+// 4. 탭 & 글자 목록
 // ══════════════════════════════════════════
 const TABS = {
-  ga:  ['가','나','다','라','마','바','사','아','자','차','카','타','파','하'],
   cho: ['ㄱ','ㄴ','ㄷ','ㄹ','ㅁ','ㅂ','ㅅ','ㅇ','ㅈ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'],
   mo:  ['ㅏ','ㅑ','ㅓ','ㅕ','ㅗ','ㅛ','ㅜ','ㅠ','ㅡ','ㅣ'],
   num: ['1','2','3','4','5','6','7','8','9','0']
 };
-let currentTab   = 'ga';
-let currentLetter = '가';
+let currentTab='cho', currentLetter='ㄱ';
 
 // ══════════════════════════════════════════
-// 4. 캔버스
+// 5. 캔버스
 // ══════════════════════════════════════════
 const guideCanvas  = document.getElementById('guide-canvas');
 const strokeCanvas = document.getElementById('stroke-canvas');
@@ -476,531 +460,385 @@ const drawCanvas   = document.getElementById('draw-canvas');
 const gCtx = guideCanvas.getContext('2d');
 const sCtx = strokeCanvas.getContext('2d');
 const dCtx = drawCanvas.getContext('2d');
-const W = 320, H = 320;
+const W=320, H=320;
 
 // ══════════════════════════════════════════
-// 5. 드로잉 파티클 클래스
+// 6. 캔버스 파티클 클래스
 // ══════════════════════════════════════════
-const particles = [];
-class Particle {
-  constructor(x, y, hue) {
-    const angle = Math.random() * Math.PI * 2;
-    const spd   = Math.random() * 3.5 + 0.8;
-    this.x = x; this.y = y;
-    this.vx = Math.cos(angle) * spd;
-    this.vy = Math.sin(angle) * spd - 1.5;
-    this.life  = 1.0;
-    this.decay = Math.random() * 0.025 + 0.012;
-    this.r     = Math.random() * 7 + 2;
-    this.hue   = hue ?? (Math.random() * 80 + 250);
-    this.isStar = Math.random() < 0.3;
+const particles=[];
+class Particle{
+  constructor(x,y,hue){
+    const a=Math.random()*Math.PI*2, s=Math.random()*3.5+0.8;
+    this.x=x; this.y=y; this.vx=Math.cos(a)*s; this.vy=Math.sin(a)*s-1.5;
+    this.life=1; this.decay=Math.random()*0.025+0.012;
+    this.r=Math.random()*7+2; this.hue=hue??(Math.random()*80+250);
+    this.isStar=Math.random()<0.3;
   }
-  update() {
-    this.x  += this.vx; this.y  += this.vy;
-    this.vy += 0.09; this.vx *= 0.985;
-    this.life -= this.decay; this.r *= 0.975;
-  }
-  draw(ctx) {
-    if (this.life <= 0) return;
-    ctx.save(); ctx.globalAlpha = this.life;
-    if (this.isStar) {
-      ctx.save(); ctx.translate(this.x, this.y); ctx.beginPath();
-      for (let i = 0; i < 5; i++) {
-        const a = (i*4*Math.PI/5) - Math.PI/2;
-        i === 0 ? ctx.moveTo(Math.cos(a)*this.r, Math.sin(a)*this.r)
-                : ctx.lineTo(Math.cos(a)*this.r, Math.sin(a)*this.r);
+  update(){ this.x+=this.vx; this.y+=this.vy; this.vy+=0.09; this.vx*=0.985; this.life-=this.decay; this.r*=0.975; }
+  draw(ctx){
+    if(this.life<=0) return;
+    ctx.save(); ctx.globalAlpha=this.life;
+    if(this.isStar){
+      ctx.save(); ctx.translate(this.x,this.y); ctx.beginPath();
+      for(let i=0;i<5;i++){
+        const a=(i*4*Math.PI/5)-Math.PI/2;
+        i===0?ctx.moveTo(Math.cos(a)*this.r,Math.sin(a)*this.r):ctx.lineTo(Math.cos(a)*this.r,Math.sin(a)*this.r);
       }
-      ctx.closePath(); ctx.fillStyle = `hsl(${this.hue},100%,72%)`; ctx.fill(); ctx.restore();
+      ctx.closePath(); ctx.fillStyle=`hsl(${this.hue},100%,72%)`; ctx.fill(); ctx.restore();
     } else {
-      ctx.beginPath(); ctx.arc(this.x, this.y, this.r, 0, Math.PI*2);
-      const g = ctx.createRadialGradient(this.x,this.y,0,this.x,this.y,this.r);
-      g.addColorStop(0, `hsl(${this.hue+30},100%,92%)`);
-      g.addColorStop(1, `hsla(${this.hue},100%,60%,0)`);
-      ctx.fillStyle = g; ctx.fill();
+      ctx.beginPath(); ctx.arc(this.x,this.y,this.r,0,Math.PI*2);
+      const g=ctx.createRadialGradient(this.x,this.y,0,this.x,this.y,this.r);
+      g.addColorStop(0,`hsl(${this.hue+30},100%,92%)`); g.addColorStop(1,`hsla(${this.hue},100%,60%,0)`);
+      ctx.fillStyle=g; ctx.fill();
     }
     ctx.restore();
   }
 }
 
 // ══════════════════════════════════════════
-// 6. SVG Path 유틸
+// 7. SVG Path 유틸
 // ══════════════════════════════════════════
-function samplePath(pathStr, n = 60) {
-  const pts = [];
-  const cmds = pathStr.match(/[MLHVC][^MLHVC]*/g) || [];
-  let cx = 0, cy = 0, steps;
-  for (const cmd of cmds) {
-    const t = cmd[0];
-    const nums = cmd.slice(1).trim().split(/[\s,]+/).map(Number);
-    if (t === 'M') {
-      cx = nums[0]; cy = nums[1]; pts.push({x:cx, y:cy});
-    } else if (t === 'L') {
-      steps = Math.max(8, Math.ceil(n / cmds.length));
-      for (let i = 1; i <= steps; i++) {
-        pts.push({ x: cx + (nums[0]-cx)*i/steps, y: cy + (nums[1]-cy)*i/steps });
+function samplePath(pathStr, n=60){
+  const pts=[], cmds=pathStr.match(/[MLHVC][^MLHVC]*/g)||[];
+  let cx=0,cy=0,steps;
+  for(const cmd of cmds){
+    const t=cmd[0], nums=cmd.slice(1).trim().split(/[\s,]+/).map(Number);
+    if(t==='M'){ cx=nums[0]; cy=nums[1]; pts.push({x:cx,y:cy}); }
+    else if(t==='L'){
+      steps=Math.max(8,Math.ceil(n/cmds.length));
+      for(let i=1;i<=steps;i++) pts.push({x:cx+(nums[0]-cx)*i/steps,y:cy+(nums[1]-cy)*i/steps});
+      cx=nums[0]; cy=nums[1];
+    } else if(t==='C'){
+      const [cx1,cy1,cx2,cy2,ex,ey]=nums;
+      steps=Math.max(14,Math.ceil(n/cmds.length));
+      for(let i=1;i<=steps;i++){
+        const u=i/steps,v=1-u;
+        pts.push({x:v*v*v*cx+3*v*v*u*cx1+3*v*u*u*cx2+u*u*u*ex, y:v*v*v*cy+3*v*v*u*cy1+3*v*u*u*cy2+u*u*u*ey});
       }
-      cx = nums[0]; cy = nums[1];
-    } else if (t === 'C') {
-      const [cx1,cy1,cx2,cy2,ex,ey] = nums;
-      steps = Math.max(12, Math.ceil(n / cmds.length));
-      for (let i = 1; i <= steps; i++) {
-        const u = i/steps, v = 1-u;
-        pts.push({
-          x: v*v*v*cx + 3*v*v*u*cx1 + 3*v*u*u*cx2 + u*u*u*ex,
-          y: v*v*v*cy + 3*v*v*u*cy1 + 3*v*u*u*cy2 + u*u*u*ey
-        });
-      }
-      cx = ex; cy = ey;
+      cx=ex; cy=ey;
     }
   }
   return pts;
 }
-
-function pathStartPt(pathStr) {
-  const m = pathStr.match(/M\s*([\d.]+)[,\s]+([\d.]+)/);
-  return m ? {x:+m[1], y:+m[2]} : {x:160,y:160};
-}
-
-function pathStartDir(pathStr) {
-  const pts = samplePath(pathStr, 10);
-  if (pts.length < 2) return {x:1,y:0};
-  const dx = pts[2].x - pts[0].x, dy = pts[2].y - pts[0].y;
-  const len = Math.hypot(dx,dy) || 1;
-  return {x:dx/len, y:dy/len};
+function pathStartPt(p){ const m=p.match(/M\s*([\d.]+)[,\s]+([\d.]+)/); return m?{x:+m[1],y:+m[2]}:{x:160,y:160}; }
+function pathStartDir(p){
+  const pts=samplePath(p,10);
+  if(pts.length<3) return {x:1,y:0};
+  const dx=pts[2].x-pts[0].x, dy=pts[2].y-pts[0].y, len=Math.hypot(dx,dy)||1;
+  return {x:dx/len,y:dy/len};
 }
 
 // ══════════════════════════════════════════
-// 7. 획 상태 관리
+// 8. 획 상태 관리
 // ══════════════════════════════════════════
-let strokeDone   = [];
-let activeStroke = -1;
-const HIT_RADIUS  = 24;
-const COVER_RATIO = 0.38; // 38% 커버하면 획 인정
+let strokeDone=[], activeStroke=-1;
+const HIT_RADIUS=26, COVER_RATIO=0.40;
 
-function initStrokes(letter) {
-  const data = STROKE_DATA[letter];
-  strokeDone   = data ? new Array(data.length).fill(false) : [];
-  activeStroke = -1;
+function initStrokes(letter){
+  const d=STROKE_DATA[letter];
+  strokeDone=d?new Array(d.length).fill(false):[];
+  activeStroke=-1;
   updateProgressDots();
 }
 
-function findNearestStroke(px, py) {
-  const data = STROKE_DATA[currentLetter];
-  if (!data) return -1;
-  // 현재 순서에서 완료 안 된 첫 번째 획부터 찾기
-  // (순서대로 써야 하므로 이전 획이 완료되지 않으면 이후 획 시작 불가)
-  const nextIdx = strokeDone.indexOf(false);
-  if (nextIdx < 0) return -1;
-
-  // nextIdx 획의 시작점 근처인지만 확인 (±HIT_RADIUS)
-  const sp = pathStartPt(data[nextIdx].path);
-  if (Math.hypot(px - sp.x, py - sp.y) <= HIT_RADIUS * 1.5) return nextIdx;
-  return -1;
-}
-
-function checkCoverage(userPath, strokeIdx) {
-  const data = STROKE_DATA[currentLetter];
-  if (!data) return 0;
-  const pts = samplePath(data[strokeIdx].path, 40);
-  let covered = 0;
-  for (const sp of pts) {
-    for (const up of userPath) {
-      if (Math.hypot(sp.x-up.x, sp.y-up.y) < HIT_RADIUS) { covered++; break; }
+function checkCoverage(userPath, idx){
+  const d=STROKE_DATA[currentLetter]; if(!d) return 0;
+  const pts=samplePath(d[idx].path,40); let covered=0;
+  for(const sp of pts){
+    for(const up of userPath){
+      if(Math.hypot(sp.x-up.x,sp.y-up.y)<HIT_RADIUS){covered++;break;}
     }
   }
-  return covered / pts.length;
+  return covered/pts.length;
 }
 
-function updateProgressDots() {
-  const bar = document.getElementById('stroke-progress');
-  const data = STROKE_DATA[currentLetter];
-  bar.innerHTML = '';
-  if (!data) return;
-  data.forEach((_, i) => {
-    const dot = document.createElement('div');
-    dot.className = 'stroke-dot' +
-      (strokeDone[i] ? ' done' : (i === strokeDone.indexOf(false) ? ' active' : ''));
+function updateProgressDots(){
+  const bar=document.getElementById('stroke-progress');
+  const d=STROKE_DATA[currentLetter];
+  bar.innerHTML='';
+  if(!d) return;
+  d.forEach((_,i)=>{
+    const dot=document.createElement('div');
+    dot.className='stroke-dot'+(strokeDone[i]?' done':(i===strokeDone.indexOf(false)?' active':''));
     bar.appendChild(dot);
   });
-  const hint = document.createElement('span');
-  hint.id = 'stroke-hint';
-  const done = strokeDone.filter(Boolean).length;
-  hint.textContent = `${done} / ${data.length} 획`;
+  const hint=document.createElement('span'); hint.id='stroke-hint';
+  hint.textContent=`${strokeDone.filter(Boolean).length} / ${d.length} 획`;
   bar.appendChild(hint);
 }
 
 // ══════════════════════════════════════════
-// 8. 가이드 배경 + 획 렌더링
+// 9. 가이드 렌더링
 // ══════════════════════════════════════════
-function drawBackground() {
-  gCtx.clearRect(0, 0, W, H);
-  // 배경
-  gCtx.fillStyle = 'rgba(14,7,44,0.93)';
+function drawBackground(){
+  gCtx.clearRect(0,0,W,H);
+  gCtx.fillStyle='rgba(14,7,44,0.93)';
   gCtx.beginPath(); gCtx.roundRect(0,0,W,H,20); gCtx.fill();
-  // 격자
-  gCtx.strokeStyle = 'rgba(255,255,255,0.07)'; gCtx.lineWidth = 1;
-  gCtx.setLineDash([4,7]);
-  gCtx.beginPath();
-  gCtx.moveTo(W/2,10); gCtx.lineTo(W/2,H-10);
-  gCtx.moveTo(10,H/2); gCtx.lineTo(W-10,H/2);
-  gCtx.stroke(); gCtx.setLineDash([]);
-  // 테두리
-  gCtx.strokeStyle = 'rgba(155,90,255,0.28)'; gCtx.lineWidth = 1.5;
-  gCtx.setLineDash([7,5]);
-  gCtx.beginPath(); gCtx.roundRect(13,13,W-26,H-26,13); gCtx.stroke();
+  gCtx.strokeStyle='rgba(255,255,255,0.07)'; gCtx.lineWidth=1; gCtx.setLineDash([4,7]);
+  gCtx.beginPath(); gCtx.moveTo(W/2,10); gCtx.lineTo(W/2,H-10); gCtx.moveTo(10,H/2); gCtx.lineTo(W-10,H/2); gCtx.stroke();
   gCtx.setLineDash([]);
+  gCtx.strokeStyle='rgba(155,90,255,0.28)'; gCtx.lineWidth=1.5; gCtx.setLineDash([7,5]);
+  gCtx.beginPath(); gCtx.roundRect(13,13,W-26,H-26,13); gCtx.stroke(); gCtx.setLineDash([]);
 }
 
-function drawGuideStrokes(letter) {
+function drawGuideStrokes(letter){
   drawBackground();
-  const data = STROKE_DATA[letter];
-  if (!data) {
+  const d=STROKE_DATA[letter];
+  if(!d){
     gCtx.save();
-    gCtx.font = `900 210px 'Malgun Gothic','맑은 고딕',sans-serif`;
-    gCtx.textAlign = 'center'; gCtx.textBaseline = 'middle';
-    gCtx.strokeStyle = 'rgba(190,130,255,0.55)'; gCtx.lineWidth = 4;
-    gCtx.strokeText(letter, W/2, H/2+8);
-    gCtx.fillStyle = 'rgba(200,160,255,0.28)'; gCtx.fillText(letter, W/2, H/2+8);
-    gCtx.restore();
-    return;
+    gCtx.font=`900 210px 'Malgun Gothic','맑은 고딕',sans-serif`;
+    gCtx.textAlign='center'; gCtx.textBaseline='middle';
+    gCtx.strokeStyle='rgba(190,130,255,0.55)'; gCtx.lineWidth=4; gCtx.strokeText(letter,W/2,H/2+8);
+    gCtx.fillStyle='rgba(200,160,255,0.28)'; gCtx.fillText(letter,W/2,H/2+8);
+    gCtx.restore(); return;
   }
-
-  sCtx.clearRect(0, 0, W, H);
-
-  data.forEach((stroke, i) => {
-    const done   = strokeDone[i];
-    const isNext = i === strokeDone.indexOf(false);
-    const p2d    = new Path2D(stroke.path);
-
-    gCtx.save();
-    gCtx.lineCap = 'round'; gCtx.lineJoin = 'round';
-    if (done) {
-      gCtx.strokeStyle = 'rgba(210,155,255,0.95)';
-      gCtx.lineWidth = 32;
-    } else if (isNext) {
-      gCtx.strokeStyle = 'rgba(255,255,255,0.40)';
-      gCtx.lineWidth = 30;
-      gCtx.setLineDash([16,11]);
-    } else {
-      gCtx.strokeStyle = 'rgba(160,110,220,0.22)';
-      gCtx.lineWidth = 26;
-      gCtx.setLineDash([10,12]);
-    }
-    gCtx.stroke(p2d);
-    gCtx.setLineDash([]);
-    gCtx.restore();
+  sCtx.clearRect(0,0,W,H);
+  d.forEach((stroke,i)=>{
+    const done=strokeDone[i], isNext=i===strokeDone.indexOf(false);
+    const p2d=new Path2D(stroke.path);
+    gCtx.save(); gCtx.lineCap='round'; gCtx.lineJoin='round';
+    if(done){ gCtx.strokeStyle='rgba(210,155,255,0.95)'; gCtx.lineWidth=32; }
+    else if(isNext){ gCtx.strokeStyle='rgba(255,255,255,0.40)'; gCtx.lineWidth=30; gCtx.setLineDash([16,11]); }
+    else { gCtx.strokeStyle='rgba(160,110,220,0.22)'; gCtx.lineWidth=26; gCtx.setLineDash([10,12]); }
+    gCtx.stroke(p2d); gCtx.setLineDash([]); gCtx.restore();
   });
-
   updateStrokeButtons(letter);
 }
 
-// ── 번호 버튼 DOM 관리 ──
-// 현재 차례 버튼 하나만 표시. 완료되면 제거 후 다음 버튼 등장.
-function updateStrokeButtons(letter) {
-  const wrap = document.getElementById('canvas-wrap');
-  wrap.querySelectorAll('.stroke-num-btn').forEach(el => el.remove());
-
-  const data = STROKE_DATA[letter];
-  if (!data) return;
-
-  const nextIdx = strokeDone.indexOf(false);
-  if (nextIdx < 0) return; // 모두 완료
-
-  const stroke = data[nextIdx];
-  const sp  = pathStartPt(stroke.path);
-  const dir = pathStartDir(stroke.path);
-  const angleDeg = Math.atan2(dir.y, dir.x) * 180 / Math.PI;
-
-  const btn = document.createElement('div');
-  btn.className = 'stroke-num-btn';
-  btn.id = 'active-stroke-btn';
-  btn.dataset.strokeIdx = nextIdx;
-  btn.textContent = String(stroke.n);
-  btn.style.left = sp.x + 'px';
-  btn.style.top  = sp.y + 'px';
-
-  // 방향 화살표 (버튼 내부, 어두운 색)
-  const arrow = document.createElement('span');
-  arrow.style.cssText = `
-    position:absolute; left:50%; top:50%;
-    width:32px; height:3px;
-    background:rgba(30,10,80,0.65);
-    transform-origin:0 50%;
-    transform:rotate(${angleDeg}deg) translateY(-50%);
-    pointer-events:none; border-radius:2px;
-  `;
-  const head = document.createElement('span');
-  head.style.cssText = `
-    position:absolute; right:-2px; top:50%;
-    transform:translateY(-50%);
-    border-top:5px solid transparent;
-    border-bottom:5px solid transparent;
-    border-left:9px solid rgba(30,10,80,0.75);
-  `;
-  arrow.appendChild(head);
-  btn.appendChild(arrow);
-
-  btn.addEventListener('mousedown', e => { e.preventDefault(); startStrokeDrag(e, nextIdx, btn); });
-  btn.addEventListener('touchstart', e => { e.preventDefault(); startStrokeDrag(e, nextIdx, btn); }, { passive:false });
-
+function updateStrokeButtons(letter){
+  const wrap=document.getElementById('canvas-wrap');
+  wrap.querySelectorAll('.stroke-num-btn').forEach(el=>el.remove());
+  const d=STROKE_DATA[letter]; if(!d) return;
+  const nextIdx=strokeDone.indexOf(false); if(nextIdx<0) return;
+  const stroke=d[nextIdx];
+  const sp=pathStartPt(stroke.path), dir=pathStartDir(stroke.path);
+  const angleDeg=Math.atan2(dir.y,dir.x)*180/Math.PI;
+  const btn=document.createElement('div');
+  btn.className='stroke-num-btn'; btn.id='active-stroke-btn';
+  btn.textContent=String(stroke.n);
+  btn.style.left=sp.x+'px'; btn.style.top=sp.y+'px';
+  const arrow=document.createElement('span');
+  arrow.style.cssText=`position:absolute;left:50%;top:50%;width:32px;height:3px;background:rgba(30,10,80,0.65);transform-origin:0 50%;transform:rotate(${angleDeg}deg) translateY(-50%);pointer-events:none;border-radius:2px;`;
+  const head=document.createElement('span');
+  head.style.cssText=`position:absolute;right:-2px;top:50%;transform:translateY(-50%);border-top:5px solid transparent;border-bottom:5px solid transparent;border-left:9px solid rgba(30,10,80,0.75);`;
+  arrow.appendChild(head); btn.appendChild(arrow);
+  btn.addEventListener('mousedown',e=>{e.preventDefault();startStrokeDrag(e,nextIdx,btn);});
+  btn.addEventListener('touchstart',e=>{e.preventDefault();startStrokeDrag(e,nextIdx,btn);},{passive:false});
   wrap.appendChild(btn);
 }
 
 // ══════════════════════════════════════════
-// 9. 파티클 렌더 루프 (필기선 없음)
+// 10. 파티클 루프 (캔버스)
 // ══════════════════════════════════════════
-let currentPath  = [];
-const drawnPaths = [];
-
-(function drawLoop() {
-  dCtx.clearRect(0, 0, W, H);
-  // 파티클만
-  for (let i=particles.length-1;i>=0;i--) {
+let currentPath=[], drawnPaths=[];
+(function drawLoop(){
+  dCtx.clearRect(0,0,W,H);
+  for(let i=particles.length-1;i>=0;i--){
     particles[i].update(); particles[i].draw(dCtx);
-    if (particles[i].life<=0) particles.splice(i,1);
+    if(particles[i].life<=0) particles.splice(i,1);
   }
   requestAnimationFrame(drawLoop);
 })();
 
+function spawnParticles(x,y,n=5,hue){ for(let i=0;i<n;i++) particles.push(new Particle(x,y,hue)); }
+
 // ══════════════════════════════════════════
-// 10. 탭 & 버튼
+// 11. 드래그 로직
 // ══════════════════════════════════════════
-function switchTab(tab) {
-  currentTab = tab;
-  document.querySelectorAll('.tab-btn').forEach((b,i) => {
-    b.classList.toggle('active', Object.keys(TABS)[i] === tab);
+function getPos(e){
+  const rect=drawCanvas.getBoundingClientRect();
+  const sx=W/rect.width, sy=H/rect.height;
+  const src=e.touches?e.touches[0]:e;
+  return {x:(src.clientX-rect.left)*sx, y:(src.clientY-rect.top)*sy};
+}
+
+let drawing=false, dragBtn=null, dragPath=[];
+
+function startStrokeDrag(e,idx,btn){
+  drawing=true; activeStroke=idx; dragBtn=btn; dragPath=[];
+  const p=getPos(e); dragPath.push(p);
+  btn.classList.add('dragging'); spawnParticles(p.x,p.y,8,55);
+  window.addEventListener('mousemove',onDragMove);
+  window.addEventListener('mouseup',onDragEnd);
+  window.addEventListener('touchmove',onDragMoveT,{passive:false});
+  window.addEventListener('touchend',onDragEnd);
+}
+
+function onDragMove(e){
+  if(!drawing||!dragBtn) return;
+  const p=getPos(e); dragPath.push(p);
+  dragBtn.style.left=p.x+'px'; dragBtn.style.top=p.y+'px';
+  spawnParticles(p.x,p.y,4,48);
+
+  // 현재 획 커버 체크 → 완료 시 다음 획으로 자동 전환
+  if(checkCoverage(dragPath,activeStroke)>=COVER_RATIO){
+    strokeDone[activeStroke]=true;
+    for(const pt of dragPath.filter((_,i)=>i%3===0)) spawnParticles(pt.x,pt.y,2,280);
+    const nextIdx=strokeDone.indexOf(false);
+    if(nextIdx>=0){
+      activeStroke=nextIdx; dragPath=[p];
+      const d=STROKE_DATA[currentLetter];
+      const nsp=pathStartPt(d[nextIdx].path), ndir=pathStartDir(d[nextIdx].path);
+      const ang=Math.atan2(ndir.y,ndir.x)*180/Math.PI;
+      dragBtn.textContent=String(d[nextIdx].n);
+      dragBtn.querySelectorAll('span').forEach(s=>s.remove());
+      const arr=document.createElement('span');
+      arr.style.cssText=`position:absolute;left:50%;top:50%;width:32px;height:3px;background:rgba(30,10,80,0.65);transform-origin:0 50%;transform:rotate(${ang}deg) translateY(-50%);pointer-events:none;border-radius:2px;`;
+      const hd=document.createElement('span');
+      hd.style.cssText=`position:absolute;right:-2px;top:50%;transform:translateY(-50%);border-top:5px solid transparent;border-bottom:5px solid transparent;border-left:9px solid rgba(30,10,80,0.75);`;
+      arr.appendChild(hd); dragBtn.appendChild(arr);
+      updateProgressDots();
+    } else { onDragEnd(); return; }
+  }
+  updateGuideProgress(activeStroke,dragPath);
+}
+
+function onDragMoveT(e){ e.preventDefault(); onDragMove(e); }
+
+function onDragEnd(){
+  window.removeEventListener('mousemove',onDragMove);
+  window.removeEventListener('mouseup',onDragEnd);
+  window.removeEventListener('touchmove',onDragMoveT);
+  window.removeEventListener('touchend',onDragEnd);
+  if(!drawing) return; drawing=false;
+  const idx=activeStroke; activeStroke=-1;
+  if(dragBtn){dragBtn.classList.remove('dragging'); dragBtn=null;}
+  if(idx>=0 && checkCoverage(dragPath,idx)>=COVER_RATIO){
+    strokeDone[idx]=true;
+    for(const pt of dragPath.filter((_,i)=>i%3===0)) spawnParticles(pt.x,pt.y,2,280);
+    if(strokeDone.every(Boolean)) setTimeout(tryPraise,200);
+  }
+  dragPath=[]; currentPath=[];
+  updateProgressDots(); drawGuideStrokes(currentLetter);
+}
+
+function updateGuideProgress(strokeIdx,path){
+  const d=STROKE_DATA[currentLetter]; if(!d||strokeIdx<0) return;
+  drawBackground();
+  d.forEach((stroke,i)=>{
+    const done=strokeDone[i], isCur=i===strokeIdx;
+    const p2d=new Path2D(stroke.path);
+    gCtx.save(); gCtx.lineCap='round'; gCtx.lineJoin='round';
+    if(done){
+      gCtx.strokeStyle='rgba(210,155,255,0.95)'; gCtx.lineWidth=32; gCtx.stroke(p2d);
+    } else if(isCur){
+      gCtx.strokeStyle='rgba(255,255,255,0.22)'; gCtx.lineWidth=30; gCtx.setLineDash([16,11]); gCtx.stroke(p2d); gCtx.setLineDash([]);
+      const spts=samplePath(stroke.path,80); let until=0;
+      for(let si=0;si<spts.length;si++){
+        let hit=false;
+        for(const up of path){ if(Math.hypot(spts[si].x-up.x,spts[si].y-up.y)<HIT_RADIUS){hit=true;break;} }
+        if(hit) until=si;
+      }
+      if(until>1){
+        gCtx.strokeStyle='rgba(255,220,80,0.97)'; gCtx.lineWidth=32;
+        gCtx.beginPath(); gCtx.moveTo(spts[0].x,spts[0].y);
+        for(let si=1;si<=until;si++) gCtx.lineTo(spts[si].x,spts[si].y);
+        gCtx.stroke();
+      }
+    } else {
+      gCtx.strokeStyle='rgba(160,110,220,0.20)'; gCtx.lineWidth=26; gCtx.setLineDash([10,12]); gCtx.stroke(p2d); gCtx.setLineDash([]);
+    }
+    gCtx.restore();
+  });
+}
+
+// ══════════════════════════════════════════
+// 12. 동물 패널 & 아이템 버튼
+// ══════════════════════════════════════════
+function renderAnimalPanel(letter){
+  const data=ANIMAL_DATA[letter];
+  const emojiEl=document.getElementById('animal-emoji');
+  const nameEl=document.getElementById('animal-name');
+  const btnArea=document.getElementById('item-buttons');
+  btnArea.innerHTML='';
+  if(!data){ emojiEl.textContent=''; nameEl.textContent=''; return; }
+
+  emojiEl.textContent=data.emoji;
+  nameEl.textContent=data.label;
+
+  data.items.forEach(item=>{
+    const btn=document.createElement('button');
+    btn.className='item-btn';
+    btn.innerHTML=`<span class="item-emoji">${item.e}</span><span class="item-label">${item.l}</span>`;
+    btn.addEventListener('click',e=>{
+      btn.classList.remove('pop');
+      void btn.offsetWidth; // reflow
+      btn.classList.add('pop');
+      btn.addEventListener('animationend',()=>btn.classList.remove('pop'),{once:true});
+      // bgCanvas 파티클
+      const rect=btn.getBoundingClientRect();
+      spawnBgBurst(rect.left+rect.width/2, rect.top+rect.height/2, Math.random()*360);
+    });
+    btnArea.appendChild(btn);
+  });
+}
+
+// ══════════════════════════════════════════
+// 13. 탭 & 글자 선택
+// ══════════════════════════════════════════
+function switchTab(tab){
+  currentTab=tab;
+  document.querySelectorAll('.tab-btn').forEach((b,i)=>{
+    b.classList.toggle('active',Object.keys(TABS)[i]===tab);
   });
   renderButtons(TABS[tab]);
   selectLetter(TABS[tab][0]);
 }
 
-function renderButtons(letters) {
-  const sel = document.getElementById('letter-selector');
-  sel.innerHTML = '';
-  letters.forEach((l,i) => {
-    const btn = document.createElement('button');
-    btn.className = 'letter-btn' + (i===0?' active':'');
-    btn.textContent = l;
-    btn.onclick = () => selectLetter(l);
+function renderButtons(letters){
+  const sel=document.getElementById('letter-selector');
+  sel.innerHTML='';
+  letters.forEach((l,i)=>{
+    const btn=document.createElement('button');
+    btn.className='letter-btn'+(i===0?' active':'');
+    btn.textContent=l;
+    btn.onclick=()=>selectLetter(l);
     sel.appendChild(btn);
   });
 }
 
-function selectLetter(l) {
-  currentLetter = l;
-  document.querySelectorAll('.letter-btn').forEach(b => {
-    b.classList.toggle('active', b.textContent === l);
-  });
-  clearDrawing();
-  initStrokes(l);
-  drawGuideStrokes(l);
+function selectLetter(l){
+  currentLetter=l;
+  document.querySelectorAll('.letter-btn').forEach(b=>b.classList.toggle('active',b.textContent===l));
+  clearDrawing(); initStrokes(l); drawGuideStrokes(l); renderAnimalPanel(l);
 }
 
 // ══════════════════════════════════════════
-// 11. 마우스 / 터치 입력
+// 14. 지우기 & 칭찬
 // ══════════════════════════════════════════
-function getCanvasPos(clientX, clientY) {
-  const rect = drawCanvas.getBoundingClientRect();
-  const sx = W / rect.width, sy = H / rect.height;
-  return { x:(clientX-rect.left)*sx, y:(clientY-rect.top)*sy };
+function clearDrawing(){
+  drawnPaths.length=0; currentPath=[]; particles.length=0;
+  document.getElementById('praise').textContent='';
+  document.getElementById('canvas-wrap').querySelectorAll('.stroke-num-btn').forEach(el=>el.remove());
 }
-function getPos(e) {
-  const src = e.touches ? e.touches[0] : e;
-  return getCanvasPos(src.clientX, src.clientY);
-}
-function spawnParticles(x, y, n=5, hue) {
-  for (let i=0;i<n;i++) particles.push(new Particle(x,y,hue));
-}
-
-let drawing = false;
-let dragBtn = null;   // 현재 드래그 중인 버튼 DOM
-let dragPath = [];    // 버튼이 지나간 캔버스 좌표 경로
-
-// 버튼 드래그 시작
-function startStrokeDrag(e, idx, btn) {
-  drawing = true;
-  activeStroke = idx;
-  dragBtn = btn;
-  dragPath = [];
-
-  const p = getPos(e);
-  dragPath.push(p);
-  btn.classList.add('dragging');
-  spawnParticles(p.x, p.y, 8, 55);
-
-  window.addEventListener('mousemove', onDragMove);
-  window.addEventListener('mouseup',   onDragEnd);
-  window.addEventListener('touchmove', onDragMoveT, { passive:false });
-  window.addEventListener('touchend',  onDragEnd);
-}
-
-function onDragMove(e) {
-  if (!drawing || !dragBtn) return;
-  const p = getPos(e);
-  dragPath.push(p);
-
-  // 버튼 위치를 마우스/터치 위치로 이동
-  dragBtn.style.left = p.x + 'px';
-  dragBtn.style.top  = p.y + 'px';
-
-  spawnParticles(p.x, p.y, 4, 48);
-
-  // 현재 획 커버 체크 → 충분히 덮였으면 손 안 떼고 다음 획으로 자동 전환
-  const cov = checkCoverage(dragPath, activeStroke);
-  if (cov >= COVER_RATIO) {
-    // 현재 획 완료
-    strokeDone[activeStroke] = true;
-    for (const pt of dragPath.filter((_,i)=>i%3===0)) spawnParticles(pt.x, pt.y, 2, 280);
-
-    const nextIdx = strokeDone.indexOf(false);
-    if (nextIdx >= 0) {
-      // 다음 획으로 전환 — 버튼을 다음 획 시작점으로 순간 이동
-      activeStroke = nextIdx;
-      dragPath = [p]; // 경로 리셋 (현재 위치에서 새 획 시작)
-      const data = STROKE_DATA[currentLetter];
-      const sp   = pathStartPt(data[nextIdx].path);
-      const dir  = pathStartDir(data[nextIdx].path);
-      const angleDeg = Math.atan2(dir.y, dir.x) * 180 / Math.PI;
-
-      // 버튼 번호·화살표 갱신
-      dragBtn.textContent = String(data[nextIdx].n);
-      // 기존 arrow span 제거 후 새로 생성
-      dragBtn.querySelectorAll('span').forEach(s => s.remove());
-      const arrow = document.createElement('span');
-      arrow.style.cssText = `position:absolute;left:50%;top:50%;width:32px;height:3px;background:rgba(30,10,80,0.65);transform-origin:0 50%;transform:rotate(${angleDeg}deg) translateY(-50%);pointer-events:none;border-radius:2px;`;
-      const head = document.createElement('span');
-      head.style.cssText = `position:absolute;right:-2px;top:50%;transform:translateY(-50%);border-top:5px solid transparent;border-bottom:5px solid transparent;border-left:9px solid rgba(30,10,80,0.75);`;
-      arrow.appendChild(head);
-      dragBtn.appendChild(arrow);
-
-      updateProgressDots();
-    } else {
-      // 모든 획 완료 — 드래그 종료
-      onDragEnd();
-      return;
-    }
-  }
-
-  updateGuideProgress(activeStroke, dragPath);
-}
-
-function onDragMoveT(e) {
-  e.preventDefault();
-  onDragMove(e);
-}
-
-function onDragEnd() {
-  window.removeEventListener('mousemove', onDragMove);
-  window.removeEventListener('mouseup',   onDragEnd);
-  window.removeEventListener('touchmove', onDragMoveT);
-  window.removeEventListener('touchend',  onDragEnd);
-
-  if (!drawing) return;
-  drawing = false;
-
-  const idx = activeStroke;
-  activeStroke = -1;
-  if (dragBtn) { dragBtn.classList.remove('dragging'); dragBtn = null; }
-
-  const cov = checkCoverage(dragPath, idx);
-  if (idx >= 0 && cov >= COVER_RATIO) {
-    strokeDone[idx] = true;
-    // 완성 파티클
-    for (const pt of dragPath.filter((_,i)=>i%3===0)) spawnParticles(pt.x, pt.y, 2, 280);
-    if (strokeDone.every(Boolean)) setTimeout(tryPraise, 200);
-  }
-
-  dragPath = [];
-  currentPath = [];
-  updateProgressDots();
-  drawGuideStrokes(currentLetter);
-}
-
-// 드래그 진행 중 실시간으로 현재 획 가이드선에 진행 표시
-function updateGuideProgress(strokeIdx, path) {
-  const data = STROKE_DATA[currentLetter];
-  if (!data || strokeIdx < 0) return;
-
-  // 기존 guide 다시 그리기 (완료된 획 + 현재 진행 획 점선 배경)
-  drawBackground();
-  data.forEach((stroke, i) => {
-    const done   = strokeDone[i];
-    const isCur  = i === strokeIdx;
-    const p2d    = new Path2D(stroke.path);
-
-    gCtx.save();
-    gCtx.lineCap = 'round'; gCtx.lineJoin = 'round';
-
-    if (done) {
-      gCtx.strokeStyle = 'rgba(210,155,255,0.95)'; gCtx.lineWidth = 32;
-      gCtx.stroke(p2d);
-    } else if (isCur) {
-      // 점선 배경
-      gCtx.strokeStyle = 'rgba(255,255,255,0.22)'; gCtx.lineWidth = 30;
-      gCtx.setLineDash([16,11]); gCtx.stroke(p2d); gCtx.setLineDash([]);
-
-      // 버튼이 지나간 부분 실선 채우기
-      const strokePts = samplePath(stroke.path, 80);
-      let coveredUntil = 0;
-      for (let si = 0; si < strokePts.length; si++) {
-        let hit = false;
-        for (const up of path) {
-          if (Math.hypot(strokePts[si].x - up.x, strokePts[si].y - up.y) < HIT_RADIUS) { hit=true; break; }
-        }
-        if (hit) coveredUntil = si;
-      }
-      if (coveredUntil > 1) {
-        gCtx.strokeStyle = 'rgba(255,220,80,0.97)'; gCtx.lineWidth = 32;
-        gCtx.beginPath();
-        gCtx.moveTo(strokePts[0].x, strokePts[0].y);
-        for (let si=1; si<=coveredUntil; si++) gCtx.lineTo(strokePts[si].x, strokePts[si].y);
-        gCtx.stroke();
-      }
-    } else {
-      gCtx.strokeStyle = 'rgba(160,110,220,0.20)'; gCtx.lineWidth = 26;
-      gCtx.setLineDash([10,12]); gCtx.stroke(p2d); gCtx.setLineDash([]);
-    }
-    gCtx.restore();
-  });
-}
-
-// ══════════════════════════════════════════
-// 12. 지우기 & 칭찬
-// ══════════════════════════════════════════
-function clearDrawing() {
-  drawnPaths.length = 0; currentPath = []; particles.length = 0;
-  document.getElementById('praise').textContent = '';
-}
-document.getElementById('clear-btn').onclick = () => {
+document.getElementById('clear-btn').onclick=()=>{
   clearDrawing(); initStrokes(currentLetter); drawGuideStrokes(currentLetter);
 };
 
-const PRAISES = ['완성! 🎉','최고예요! ⭐','훌륭해요! 🌟','대단해요! 🎊','완벽해요! 💖','멋있어요! 🦋'];
+const PRAISES=['완성! 🎉','최고예요! ⭐','훌륭해요! 🌟','대단해요! 🎊','완벽해요! 💖','멋있어요! 🦋'];
 let praiseTimer;
-function tryPraise() {
-  const el = document.getElementById('praise');
-  el.textContent = PRAISES[Math.floor(Math.random()*PRAISES.length)];
+function tryPraise(){
+  const el=document.getElementById('praise');
+  el.textContent=PRAISES[Math.floor(Math.random()*PRAISES.length)];
   clearTimeout(praiseTimer);
-  praiseTimer = setTimeout(() => { el.textContent=''; }, 3000);
-  for (let i=0;i<50;i++) {
-    const p = new Particle(W/2, H/2, Math.random()*140+10);
-    p.vx = (Math.random()-.5)*14; p.vy = (Math.random()-.5)*14;
-    p.r = Math.random()*11+5; p.decay = 0.009;
+  praiseTimer=setTimeout(()=>{el.textContent='';},3000);
+  for(let i=0;i<50;i++){
+    const p=new Particle(W/2,H/2,Math.random()*140+10);
+    p.vx=(Math.random()-.5)*14; p.vy=(Math.random()-.5)*14; p.r=Math.random()*11+5; p.decay=0.009;
     particles.push(p);
   }
 }
 
 // ══════════════════════════════════════════
-// 13. 초기화
+// 15. 초기화
 // ══════════════════════════════════════════
-function init() {
-  renderButtons(TABS.ga);
-  initStrokes('가');
-  drawGuideStrokes('가');
+function init(){
+  renderButtons(TABS.cho);
+  selectLetter('ㄱ');
 }
-document.fonts && document.fonts.ready
+document.fonts&&document.fonts.ready
   ? document.fonts.ready.then(init)
-  : window.addEventListener('load', init);
+  : window.addEventListener('load',init);
 </script>
 </body>
 </html>
