@@ -61,13 +61,43 @@
     /* 동물 패널 */
     #animal-panel {
       display:flex; align-items:center; justify-content:center;
-      gap:10px; margin-bottom:8px; min-height:38px;
+      gap:12px; margin-bottom:10px; width:320px;
     }
-    #animal-emoji { font-size:2.2rem; line-height:1; }
+    /* 동물 카드 */
+    #animal-card {
+      background:rgba(255,255,255,0.08);
+      border:2px solid rgba(255,255,255,0.18);
+      border-radius:18px; padding:8px 10px;
+      display:flex; flex-direction:column; align-items:center;
+      gap:4px; min-width:110px;
+      box-shadow:0 0 18px rgba(180,120,255,0.25);
+    }
+    #animal-card svg { display:block; }
     #animal-name {
-      font-size:1.15rem; color:#fff; font-weight:bold;
-      text-shadow:0 0 14px rgba(255,200,255,0.85); letter-spacing:1px;
+      font-size:0.85rem; color:#fff; font-weight:bold;
+      text-shadow:0 0 10px rgba(255,200,255,0.8); letter-spacing:1px;
     }
+    /* 음식 아이콘 그리드 */
+    #food-grid {
+      display:grid; grid-template-columns:1fr 1fr;
+      gap:7px; flex:1;
+    }
+    .food-btn {
+      display:flex; flex-direction:column; align-items:center; justify-content:center;
+      gap:4px; padding:8px 6px; border-radius:14px;
+      border:2px solid rgba(255,255,255,0.18);
+      background:rgba(255,255,255,0.08);
+      color:#fff; cursor:pointer;
+      transition:transform 0.15s, background 0.15s, border-color 0.15s;
+      font-family:inherit;
+    }
+    .food-btn:hover {
+      background:rgba(200,130,255,0.32); border-color:rgba(220,160,255,0.7);
+      transform:scale(1.08);
+    }
+    .food-btn.pop { animation:itemPop 0.28s cubic-bezier(0.34,1.56,0.64,1); }
+    .food-btn svg { display:block; }
+    .food-label { font-size:0.68rem; opacity:0.9; }
 
     /* 캔버스 */
     #canvas-wrap {
@@ -178,8 +208,11 @@
   <div id="letter-selector"></div>
 
   <div id="animal-panel">
-    <span id="animal-emoji"></span>
-    <span id="animal-name"></span>
+    <div id="animal-card">
+      <div id="animal-svg-wrap"></div>
+      <span id="animal-name"></span>
+    </div>
+    <div id="food-grid"></div>
   </div>
 
   <div id="canvas-wrap">
@@ -188,7 +221,6 @@
     <canvas id="draw-canvas"   width="320" height="320"></canvas>
   </div>
 
-  <div id="item-buttons"></div>
   <div id="stroke-progress"></div>
 
   <div id="controls">
@@ -250,35 +282,131 @@ function spawnBgBurst(cx, cy, hue){
 }
 
 // ══════════════════════════════════════════
-// 2. 동물 / 단어 데이터
+// 2. SVG 일러스트 라이브러리
+// ══════════════════════════════════════════
+
+// 거북이 SVG (동화책 스타일, 90×90)
+const SVG_TURTLE = `<svg width="90" height="90" viewBox="0 0 90 90" xmlns="http://www.w3.org/2000/svg">
+  <!-- 몸통 등껍질 -->
+  <ellipse cx="45" cy="50" rx="26" ry="20" fill="#4caf50"/>
+  <!-- 등껍질 무늬 -->
+  <ellipse cx="45" cy="50" rx="26" ry="20" fill="none" stroke="#2e7d32" stroke-width="1.5"/>
+  <polygon points="45,33 56,41 52,55 38,55 34,41" fill="#66bb6a" stroke="#2e7d32" stroke-width="1"/>
+  <line x1="45" y1="33" x2="45" y2="55" stroke="#2e7d32" stroke-width="1"/>
+  <line x1="34" y1="41" x2="56" y2="41" stroke="#2e7d32" stroke-width="1"/>
+  <line x1="38" y1="55" x2="34" y2="41" stroke="#2e7d32" stroke-width="1"/>
+  <line x1="52" y1="55" x2="56" y2="41" stroke="#2e7d32" stroke-width="1"/>
+  <!-- 머리 -->
+  <ellipse cx="68" cy="46" rx="11" ry="9" fill="#81c784"/>
+  <!-- 눈 -->
+  <circle cx="72" cy="43" r="2.5" fill="#fff"/>
+  <circle cx="72" cy="43" r="1.3" fill="#1a237e"/>
+  <circle cx="72.7" cy="42.3" r="0.5" fill="#fff"/>
+  <!-- 입 -->
+  <path d="M67,50 Q70,53 73,50" fill="none" stroke="#2e7d32" stroke-width="1.2" stroke-linecap="round"/>
+  <!-- 앞발 -->
+  <ellipse cx="26" cy="58" rx="7" ry="5" fill="#81c784" transform="rotate(-20,26,58)"/>
+  <ellipse cx="34" cy="67" rx="6" ry="4.5" fill="#81c784" transform="rotate(10,34,67)"/>
+  <!-- 뒷발 -->
+  <ellipse cx="56" cy="67" rx="6" ry="4.5" fill="#81c784" transform="rotate(-10,56,67)"/>
+  <ellipse cx="64" cy="58" rx="7" ry="5" fill="#81c784" transform="rotate(20,64,58)"/>
+  <!-- 꼬리 -->
+  <ellipse cx="22" cy="50" rx="5" ry="3" fill="#81c784" transform="rotate(15,22,50)"/>
+</svg>`;
+
+// 음식 SVG들 (거북이가 좋아하는 것들)
+// 물고기 (60×60)
+const SVG_FISH = `<svg width="54" height="54" viewBox="0 0 54 54" xmlns="http://www.w3.org/2000/svg">
+  <!-- 꼬리 -->
+  <polygon points="10,18 10,36 2,27" fill="#e53935"/>
+  <!-- 몸통 -->
+  <ellipse cx="32" cy="27" rx="20" ry="13" fill="#ef5350"/>
+  <!-- 지느러미 위 -->
+  <polygon points="28,14 36,14 32,20" fill="#c62828"/>
+  <!-- 지느러미 아래 -->
+  <polygon points="28,40 36,40 32,34" fill="#c62828"/>
+  <!-- 눈 -->
+  <circle cx="44" cy="24" r="4" fill="#fff"/>
+  <circle cx="44" cy="24" r="2" fill="#1a237e"/>
+  <circle cx="45" cy="23" r="0.8" fill="#fff"/>
+  <!-- 비늘 -->
+  <path d="M22,24 Q27,20 32,24" fill="none" stroke="#c62828" stroke-width="1"/>
+  <path d="M18,27 Q23,23 28,27" fill="none" stroke="#c62828" stroke-width="1"/>
+</svg>`;
+
+// 해초 (60×60)
+const SVG_SEAWEED = `<svg width="54" height="54" viewBox="0 0 54 54" xmlns="http://www.w3.org/2000/svg">
+  <!-- 줄기들 -->
+  <path d="M20,50 Q14,38 20,26 Q26,14 20,6" fill="none" stroke="#2e7d32" stroke-width="4" stroke-linecap="round"/>
+  <path d="M30,50 Q38,36 30,24 Q22,12 30,4" fill="none" stroke="#388e3c" stroke-width="4" stroke-linecap="round"/>
+  <path d="M40,50 Q34,38 40,28 Q46,18 40,10" fill="none" stroke="#43a047" stroke-width="3.5" stroke-linecap="round"/>
+  <!-- 잎 -->
+  <ellipse cx="14" cy="20" rx="7" ry="3.5" fill="#66bb6a" transform="rotate(-30,14,20)"/>
+  <ellipse cx="26" cy="16" rx="7" ry="3.5" fill="#4caf50" transform="rotate(20,26,16)"/>
+  <ellipse cx="38" cy="22" rx="6" ry="3" fill="#81c784" transform="rotate(-15,38,22)"/>
+</svg>`;
+
+// 새우 (60×60)
+const SVG_SHRIMP = `<svg width="54" height="54" viewBox="0 0 54 54" xmlns="http://www.w3.org/2000/svg">
+  <!-- 몸통 -->
+  <path d="M12,38 Q20,28 30,22 Q40,16 46,10" fill="none" stroke="#f4511e" stroke-width="7" stroke-linecap="round"/>
+  <!-- 껍질 마디 -->
+  <path d="M16,35 Q24,26 33,20" fill="none" stroke="#bf360c" stroke-width="1.5"/>
+  <path d="M20,31 Q28,23 37,18" fill="none" stroke="#bf360c" stroke-width="1.5"/>
+  <path d="M25,27 Q33,20 41,15" fill="none" stroke="#bf360c" stroke-width="1.5"/>
+  <!-- 꼬리 -->
+  <path d="M12,38 Q6,44 8,50" fill="none" stroke="#f4511e" stroke-width="5" stroke-linecap="round"/>
+  <path d="M12,38 Q4,42 4,48" fill="none" stroke="#e64a19" stroke-width="3.5" stroke-linecap="round"/>
+  <!-- 더듬이 -->
+  <line x1="46" y1="10" x2="52" y2="4" stroke="#bf360c" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="46" y1="10" x2="54" y2="10" stroke="#bf360c" stroke-width="1.5" stroke-linecap="round"/>
+  <!-- 눈 -->
+  <circle cx="46" cy="10" r="3.5" fill="#fff"/>
+  <circle cx="46" cy="10" r="2" fill="#1a237e"/>
+  <!-- 다리 -->
+  <line x1="22" y1="30" x2="18" y2="38" stroke="#f4511e" stroke-width="1.2" stroke-linecap="round"/>
+  <line x1="28" y1="26" x2="26" y2="34" stroke="#f4511e" stroke-width="1.2" stroke-linecap="round"/>
+  <line x1="34" y1="22" x2="34" y2="30" stroke="#f4511e" stroke-width="1.2" stroke-linecap="round"/>
+</svg>`;
+
+// ── 나머지 자음/모음은 이모지 fallback (추후 SVG 추가 예정)
+const SVG_ICONS = {
+  'ㄱ': { animal: SVG_TURTLE, foods:[
+    { svg: SVG_FISH,    label:'물고기' },
+    { svg: SVG_SEAWEED, label:'해초' },
+    { svg: SVG_SHRIMP,  label:'새우' },
+  ]},
+  // 나머지는 이모지 fallback
+};
+
+// ══════════════════════════════════════════
+// 3. 동물 / 단어 데이터 (이모지 fallback)
 // ══════════════════════════════════════════
 const ANIMAL_DATA = {
-  // 자음
-  'ㄱ':{ label:'거북이', emoji:'🐢', items:[{e:'🌊',l:'바다'},{e:'🪨',l:'돌'},{e:'🐚',l:'조개'}] },
-  'ㄴ':{ label:'나비',   emoji:'🦋', items:[{e:'🌸',l:'꽃'},{e:'🌿',l:'풀잎'},{e:'🌞',l:'햇빛'}] },
-  'ㄷ':{ label:'다람쥐', emoji:'🐿️', items:[{e:'🌰',l:'도토리'},{e:'🌲',l:'나무'},{e:'🍂',l:'낙엽'}] },
-  'ㄹ':{ label:'라쿤',   emoji:'🦝', items:[{e:'🐟',l:'물고기'},{e:'🌙',l:'달빛'},{e:'🍎',l:'열매'}] },
-  'ㅁ':{ label:'말',     emoji:'🐎', items:[{e:'🌾',l:'여물'},{e:'🏇',l:'달리기'},{e:'🌿',l:'풀밭'}] },
-  'ㅂ':{ label:'벌',     emoji:'🐝', items:[{e:'🍯',l:'꿀'},{e:'🌻',l:'해바라기'},{e:'🏠',l:'벌집'}] },
-  'ㅅ':{ label:'사슴',   emoji:'🦌', items:[{e:'🍄',l:'버섯'},{e:'🌲',l:'숲'},{e:'💧',l:'샘물'}] },
-  'ㅇ':{ label:'오리',   emoji:'🦆', items:[{e:'🌊',l:'물'},{e:'🌾',l:'풀밭'},{e:'🥚',l:'알'}] },
-  'ㅈ':{ label:'지렁이', emoji:'🪱', items:[{e:'🌱',l:'새싹'},{e:'🌧️',l:'비'},{e:'🌍',l:'흙'}] },
-  'ㅊ':{ label:'참새',   emoji:'🐦', items:[{e:'🌾',l:'낟알'},{e:'🌿',l:'나뭇가지'},{e:'🪺',l:'둥지'}] },
-  'ㅋ':{ label:'코끼리', emoji:'🐘', items:[{e:'🥜',l:'땅콩'},{e:'💦',l:'물줄기'},{e:'🌴',l:'야자나무'}] },
-  'ㅌ':{ label:'토끼',   emoji:'🐰', items:[{e:'🥕',l:'당근'},{e:'🌸',l:'꽃밭'},{e:'🌙',l:'달'}] },
-  'ㅍ':{ label:'펭귄',   emoji:'🐧', items:[{e:'🐟',l:'물고기'},{e:'❄️',l:'얼음'},{e:'🌊',l:'바다'}] },
-  'ㅎ':{ label:'하마',   emoji:'🦛', items:[{e:'🌊',l:'강물'},{e:'🌿',l:'수초'},{e:'☀️',l:'햇빛'}] },
-  // 모음
-  'ㅏ':{ label:'아빠',   emoji:'👨', items:[{e:'👔',l:'넥타이'},{e:'💼',l:'가방'},{e:'☕',l:'커피'}] },
-  'ㅑ':{ label:'야구',   emoji:'⚾', items:[{e:'🏏',l:'배트'},{e:'🧢',l:'모자'},{e:'🏟️',l:'구장'}] },
-  'ㅓ':{ label:'엄마',   emoji:'👩', items:[{e:'👒',l:'모자'},{e:'👜',l:'핸드백'},{e:'🌷',l:'꽃다발'}] },
-  'ㅕ':{ label:'여우',   emoji:'🦊', items:[{e:'🍎',l:'열매'},{e:'🌲',l:'숲'},{e:'🌙',l:'밤'}] },
-  'ㅗ':{ label:'오리',   emoji:'🦆', items:[{e:'💧',l:'물'},{e:'🌾',l:'풀'},{e:'🥚',l:'알'}] },
-  'ㅛ':{ label:'요리',   emoji:'🍳', items:[{e:'🧅',l:'양파'},{e:'🔪',l:'칼'},{e:'🍽️',l:'접시'}] },
-  'ㅜ':{ label:'우유',   emoji:'🥛', items:[{e:'🐄',l:'젖소'},{e:'🌾',l:'풀'},{e:'🍪',l:'쿠키'}] },
-  'ㅠ':{ label:'유리',   emoji:'🪟', items:[{e:'🌞',l:'햇빛'},{e:'🧴',l:'세제'},{e:'🏠',l:'집'}] },
-  'ㅡ':{ label:'으르렁', emoji:'🦁', items:[{e:'🥩',l:'고기'},{e:'🌿',l:'초원'},{e:'🌅',l:'일출'}] },
-  'ㅣ':{ label:'이빨',   emoji:'🦷', items:[{e:'🪥',l:'칫솔'},{e:'🧴',l:'치약'},{e:'💧',l:'물'}] },
+  'ㄱ':{ label:'거북이', emoji:'🐢', foods:[{e:'🐟',l:'물고기'},{e:'🌿',l:'해초'},{e:'🦐',l:'새우'}] },
+  'ㄴ':{ label:'나비',   emoji:'🦋', foods:[{e:'🌸',l:'꽃꿀'},{e:'🌺',l:'꽃'},{e:'🍃',l:'잎사귀'}] },
+  'ㄷ':{ label:'다람쥐', emoji:'🐿️', foods:[{e:'🌰',l:'도토리'},{e:'🫘',l:'견과류'},{e:'🍄',l:'버섯'}] },
+  'ㄹ':{ label:'라쿤',   emoji:'🦝', foods:[{e:'🐟',l:'물고기'},{e:'🍎',l:'열매'},{e:'🦀',l:'게'}] },
+  'ㅁ':{ label:'말',     emoji:'🐎', foods:[{e:'🌾',l:'건초'},{e:'🍎',l:'사과'},{e:'🥕',l:'당근'}] },
+  'ㅂ':{ label:'벌',     emoji:'🐝', foods:[{e:'🍯',l:'꿀'},{e:'🌼',l:'꽃가루'},{e:'🌻',l:'해바라기'}] },
+  'ㅅ':{ label:'사슴',   emoji:'🦌', foods:[{e:'🍂',l:'나뭇잎'},{e:'🌾',l:'풀'},{e:'🍄',l:'버섯'}] },
+  'ㅇ':{ label:'오리',   emoji:'🦆', foods:[{e:'🐛',l:'벌레'},{e:'🌾',l:'곡식'},{e:'🐠',l:'물고기'}] },
+  'ㅈ':{ label:'지렁이', emoji:'🪱', foods:[{e:'🌱',l:'새싹'},{e:'🍂',l:'낙엽'},{e:'🌍',l:'흙속균'}] },
+  'ㅊ':{ label:'참새',   emoji:'🐦', foods:[{e:'🌾',l:'낟알'},{e:'🐛',l:'벌레'},{e:'🫐',l:'열매'}] },
+  'ㅋ':{ label:'코끼리', emoji:'🐘', foods:[{e:'🥜',l:'땅콩'},{e:'🍌',l:'바나나'},{e:'🌿',l:'풀'}] },
+  'ㅌ':{ label:'토끼',   emoji:'🐰', foods:[{e:'🥕',l:'당근'},{e:'🥬',l:'상추'},{e:'🍎',l:'사과'}] },
+  'ㅍ':{ label:'펭귄',   emoji:'🐧', foods:[{e:'🐟',l:'물고기'},{e:'🦑',l:'오징어'},{e:'🦐',l:'새우'}] },
+  'ㅎ':{ label:'하마',   emoji:'🦛', foods:[{e:'🌿',l:'수초'},{e:'🍉',l:'수박'},{e:'🌾',l:'풀'}] },
+  'ㅏ':{ label:'아빠',   emoji:'👨', foods:[{e:'🍚',l:'밥'},{e:'☕',l:'커피'},{e:'🍖',l:'고기'}] },
+  'ㅑ':{ label:'야옹이', emoji:'🐱', foods:[{e:'🐟',l:'생선'},{e:'🥛',l:'우유'},{e:'🍗',l:'닭고기'}] },
+  'ㅓ':{ label:'엄마',   emoji:'👩', foods:[{e:'🍲',l:'국'},{e:'🍱',l:'도시락'},{e:'🧁',l:'케이크'}] },
+  'ㅕ':{ label:'여우',   emoji:'🦊', foods:[{e:'🍇',l:'포도'},{e:'🐇',l:'토끼'},{e:'🍎',l:'사과'}] },
+  'ㅗ':{ label:'오리',   emoji:'🦆', foods:[{e:'🐛',l:'벌레'},{e:'🌾',l:'곡식'},{e:'🐠',l:'물고기'}] },
+  'ㅛ':{ label:'요리사', emoji:'👨‍🍳', foods:[{e:'🧄',l:'마늘'},{e:'🧅',l:'양파'},{e:'🫒',l:'올리브'}] },
+  'ㅜ':{ label:'우렁이', emoji:'🐌', foods:[{e:'🌿',l:'풀잎'},{e:'🍄',l:'버섯'},{e:'🌱',l:'새싹'}] },
+  'ㅠ':{ label:'유니콘', emoji:'🦄', foods:[{e:'🌈',l:'무지개'},{e:'⭐',l:'별'},{e:'🍭',l:'사탕'}] },
+  'ㅡ':{ label:'으르렁', emoji:'🦁', foods:[{e:'🥩',l:'고기'},{e:'🦓',l:'얼룩말'},{e:'🌿',l:'초원'}] },
+  'ㅣ':{ label:'이구아나',emoji:'🦎', foods:[{e:'🦗',l:'귀뚜라미'},{e:'🌿',l:'잎'},{e:'🍓',l:'딸기'}] },
 };
 
 // ══════════════════════════════════════════
@@ -743,33 +871,47 @@ function updateGuideProgress(strokeIdx,path){
 }
 
 // ══════════════════════════════════════════
-// 12. 동물 패널 & 아이템 버튼
+// 12. 동물 패널 & 음식 아이콘
 // ══════════════════════════════════════════
 function renderAnimalPanel(letter){
-  const data=ANIMAL_DATA[letter];
-  const emojiEl=document.getElementById('animal-emoji');
-  const nameEl=document.getElementById('animal-name');
-  const btnArea=document.getElementById('item-buttons');
-  btnArea.innerHTML='';
-  if(!data){ emojiEl.textContent=''; nameEl.textContent=''; return; }
+  const data    = ANIMAL_DATA[letter];
+  const svgData = SVG_ICONS[letter];
+  const svgWrap = document.getElementById('animal-svg-wrap');
+  const nameEl  = document.getElementById('animal-name');
+  const grid    = document.getElementById('food-grid');
+  grid.innerHTML = ''; svgWrap.innerHTML = '';
 
-  emojiEl.textContent=data.emoji;
-  nameEl.textContent=data.label;
+  if(!data){ nameEl.textContent=''; return; }
 
-  data.items.forEach(item=>{
-    const btn=document.createElement('button');
-    btn.className='item-btn';
-    btn.innerHTML=`<span class="item-emoji">${item.e}</span><span class="item-label">${item.l}</span>`;
-    btn.addEventListener('click',e=>{
+  // 동물 일러스트: SVG 있으면 SVG, 없으면 이모지 크게
+  if(svgData){
+    svgWrap.innerHTML = svgData.animal;
+  } else {
+    svgWrap.innerHTML = `<div style="font-size:3rem;line-height:1;padding:4px 0">${data.emoji}</div>`;
+  }
+  nameEl.textContent = data.label;
+
+  // 음식 아이콘 버튼 (SVG 있으면 SVG, 없으면 이모지)
+  const foods = svgData ? svgData.foods : data.foods;
+  foods.forEach((food, fi)=>{
+    const btn = document.createElement('button');
+    btn.className = 'food-btn';
+    const iconHtml = svgData
+      ? food.svg
+      : `<span style="font-size:1.6rem;line-height:1">${food.e??food.emoji}</span>`;
+    const labelTxt = food.label ?? food.l;
+    btn.innerHTML = iconHtml + `<span class="food-label">${labelTxt}</span>`;
+    btn.addEventListener('click', ()=>{
       btn.classList.remove('pop');
-      void btn.offsetWidth; // reflow
+      void btn.offsetWidth;
       btn.classList.add('pop');
       btn.addEventListener('animationend',()=>btn.classList.remove('pop'),{once:true});
-      // bgCanvas 파티클
       const rect=btn.getBoundingClientRect();
-      spawnBgBurst(rect.left+rect.width/2, rect.top+rect.height/2, Math.random()*360);
+      // 각 음식마다 다른 색 파티클
+      const hues=[30,120,280];
+      spawnBgBurst(rect.left+rect.width/2, rect.top+rect.height/2, hues[fi]??Math.random()*360);
     });
-    btnArea.appendChild(btn);
+    grid.appendChild(btn);
   });
 }
 
