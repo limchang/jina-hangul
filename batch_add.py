@@ -97,23 +97,20 @@ for i, cand in enumerate(filtered[:N*2]):  # 실패분 감안해 여유있게 �
     except:
         print("파싱 실패 → 건너뜀")
         skipped.append(name)
-        time.sleep(0.5)
         continue
 
     if "error" in data or not data.get("keywords"):
         print(f"키워드 없음 → 건너뜀")
         skipped.append(name)
-        time.sleep(0.5)
         continue
 
     if data.get("total_reviews", 0) < 10:
         print(f"리뷰 {data.get('total_reviews')}건 → 건너뜀")
         skipped.append(name)
-        time.sleep(0.5)
         continue
 
-    # 카테고리 가져오기
-    category = get_category(pid, name)
+    # 카테고리: extract_restaurant.py 결과 우선, 없으면 별도 수집
+    category = data.get("category", "") or get_category(pid, name)
     cat_short = category.split("|")[0].strip() if category else ""
 
     # 항목 구성
@@ -134,7 +131,7 @@ for i, cand in enumerate(filtered[:N*2]):  # 실패분 감안해 여유있게 �
     existing_names.add(name)
     added.append(name)
     print(f"{data['group']}그룹 {data['ratio']:.2f}배 ({data['keywords'][0]['text']} {data['keywords'][0]['count']}) ✓")
-    time.sleep(0.5)
+    time.sleep(0.2)
 
 # ── restaurants.json 저장 ──────────────────────────────────
 with open(os.path.join(BASE, "restaurants.json"), 'w', encoding='utf-8') as f:

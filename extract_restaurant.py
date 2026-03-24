@@ -34,7 +34,7 @@ def fetch(url, retries=2):
             time.sleep(3)
 
 def get_place_id(name):
-    """식당명 → Naver Place ID"""
+    """식당명 → Naver Place ID, 플레이스 플러스 여부 반환"""
     query = urllib.parse.quote(f"목포 {name}")
     url = f"https://m.search.naver.com/search.naver?query={query}&where=m_local"
     content = fetch(url)
@@ -47,8 +47,14 @@ def get_place_id(name):
     ]:
         m = re.search(pattern, content)
         if m:
-            return m.group(1), content
-    return None, content
+            place_id = m.group(1)
+            # 검색 결과에서 플레이스 플러스 여부 감지
+            snippet_start = max(0, m.start() - 500)
+            snippet_end = min(len(content), m.end() + 500)
+            snippet = content[snippet_start:snippet_end]
+            is_plus = '플레이스 플러스' in snippet
+            return place_id, content, is_plus
+    return None, content, False
 
 def get_home_content(place_id):
     """Place ID → /home 페이지 원본"""
@@ -128,7 +134,7 @@ def main():
     debug = '--debug' in sys.argv
 
     print(f"[1/2] Place ID 검색 중: {name}", file=sys.stderr)
-    place_id, search_content = get_place_id(name)
+    place_id, search_content, is_plus = get_place_id(name)
 
     if not place_id:
         if debug:
@@ -136,27 +142,36 @@ def main():
         print(json.dumps({'error': 'Place ID를 찾을 수 없습니다', 'name': name}, ensure_ascii=False))
         sys.exit(1)
 
-    print(f"[2/2] 키워드 수집 중: Place ID={place_id}", file=sys.stderr)
-    home_content = get_home_content(place_id)
+    print(f"[2/2] 키워드 수집 중: Place ID={place_id}{' (플레이스 플러스→Firecrawl)' if is_plus else ''}", file=sys.stderr)
 
-    if debug:
-        print("=== HOME PAGE RAW ===\n", home_content[:5000], file=sys.stderr)
-
-    data = parse_data(home_content)
-
-    # Jina로 키워드 못 찾으면 Firecrawl로 재시도 (플레이스 플러스 등 동적 렌더링 페이지)
-    if not data['keywords']:
-        print(f"[2/2] Jina 키워드 없음 → Firecrawl 재시도...", file=sys.stderr)
+    if is_plus:
+        # 플레이스 플러스: Jina 홈 페이지 스킵, 바로 Firecrawl
+        data = {'total_reviews': 0, 'category': '', 'keywords': []}
         try:
             fc_content = get_home_content_firecrawl(place_id)
-            fc_data = parse_data(fc_content)
-            if fc_data['keywords']:
-                data = fc_data
+            data = parse_data(fc_content)
+            if data['keywords']:
                 print(f"[2/2] Firecrawl 키워드 수집 성공: {len(data['keywords'])}개", file=sys.stderr)
-            else:
-                print(f"[2/2] Firecrawl도 키워드 없음", file=sys.stderr)
         except Exception as e:
             print(f"[2/2] Firecrawl 실패: {e}", file=sys.stderr)
+    else:
+        home_content = get_home_content(place_id)
+        if debug:
+            print("=== HOME PAGE RAW ===\n", home_content[:5000], file=sys.stderr)
+        data = parse_data(home_content)
+        # Jina 키워드 없으면 Firecrawl 폴백
+        if not data['keywords']:
+            print(f"[2/2] Jina 키워드 없음 → Firecrawl 재시도...", file=sys.stderr)
+            try:
+                fc_content = get_home_content_firecrawl(place_id)
+                fc_data = parse_data(fc_content)
+                if fc_data['keywords']:
+                    data = fc_data
+                    print(f"[2/2] Firecrawl 키워드 수집 성공: {len(data['keywords'])}개", file=sys.stderr)
+                else:
+                    print(f"[2/2] Firecrawl도 키워드 없음", file=sys.stderr)
+            except Exception as e:
+                print(f"[2/2] Firecrawl 실패: {e}", file=sys.stderr)
     ratio = calc_ratio(data['keywords'])
     group = determine_group(ratio)
 
