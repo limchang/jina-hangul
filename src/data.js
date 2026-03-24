@@ -4,7 +4,7 @@ const CONSONANTS = [
   { char:'ㄷ', strokes:[{path:'M 150 150 L 350 150'}, {path:'M 150 150 L 150 350 L 350 350'}] },
   { char:'ㄹ', strokes:[{path:'M 150 150 L 350 150 L 350 250'}, {path:'M 150 250 L 350 250'}, {path:'M 150 250 L 150 350 L 350 350'}] },
   { char:'ㅁ', strokes:[{path:'M 150 150 L 150 350'}, {path:'M 150 150 L 350 150 L 350 350'}, {path:'M 150 350 L 350 350'}] },
-  { char:'ㅂ', strokes:[{path:'M 180 150 L 180 350'}, {path:'M 320 150 L 320 350'}, {path:'M 180 250 L 320 250'}, {path:'M 180 350 L 320 350'}] },
+  { char:'ㅂ', strokes:[{path:'M 150 150 L 150 350'}, {path:'M 350 150 L 350 350'}, {path:'M 150 250 L 350 250'}, {path:'M 150 350 L 350 350'}] },
   { char:'ㅅ', strokes:[
     {path:'M 250 140 Q 210 240 160 360'},
     {path:'M 250 140 Q 290 240 340 360'}
