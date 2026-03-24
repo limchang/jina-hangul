@@ -155,6 +155,22 @@ retry(lambda: ss.batch_update({"requests": [{
     }
 }]}))
 
+# 자동 필터 (표 범위 전체)
+time.sleep(2)
+retry(lambda: ss.batch_update({"requests": [{
+    "setBasicFilter": {
+        "filter": {
+            "range": {
+                "sheetId": ws.id,
+                "startRowIndex": 0,
+                "endRowIndex": total + 1,
+                "startColumnIndex": 0,
+                "endColumnIndex": 11
+            }
+        }
+    }
+}]}))
+
 print("  → 서식 완료")
 
 # ══════════════════════════════════════════════════════════
