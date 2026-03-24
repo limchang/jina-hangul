@@ -39,6 +39,7 @@ class TracingEngine {
   reset() {
     this.isTracing = false;
     this.maxReachedIdx = 0;
+    this.offPathCount = 0;
   }
 
   start(x, y) {
@@ -76,10 +77,15 @@ class TracingEngine {
     // Must be reasonably close to the path
     if (bestDist < 90) {
       this.maxReachedIdx = Math.max(this.maxReachedIdx, bestIdx);
+      this.offPathCount = 0;
     } else {
-      // Wandered off too far -> Reset stroke completely
-      this.isTracing = false;
-      this.maxReachedIdx = 0;
+      // Allow a few frames of being off-path before giving up (tolerance for kids)
+      this.offPathCount = (this.offPathCount || 0) + 1;
+      if (this.offPathCount > 8) {
+        this.isTracing = false;
+        this.maxReachedIdx = 0;
+        this.offPathCount = 0;
+      }
     }
   }
 
