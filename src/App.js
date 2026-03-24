@@ -8,6 +8,7 @@ let guideCanvas, traceCanvas, arrowCanvas, gCtx, tCtx, aCtx;
 let overlay, handlerIcon, targetIcon;
 let arrowAnimId = null;
 let arrowT = 0; // 0~1 along current stroke path
+let completedStrokes = []; // baked stroke point arrays
 
 function initApp() {
   guideCanvas = document.getElementById('guide-canvas');
@@ -96,15 +97,8 @@ function onPointerUp() {
 
 function completeStroke() {
   const charData = currentDataList[currentCharIdx];
-  // Bake the successful trace into the guide canvas
-  gCtx.beginPath();
-  gCtx.strokeStyle = APP_CONFIG.TRACE_COLOR;
-  gCtx.lineWidth = APP_CONFIG.TRACE_STROKE_WIDTH;
-  gCtx.lineCap = 'round';
-  gCtx.lineJoin = 'round';
-  gCtx.moveTo(engine.pts[0].x, engine.pts[0].y);
-  for (const p of engine.pts) gCtx.lineTo(p.x, p.y);
-  gCtx.stroke();
+  // Save completed stroke pts for re-drawing
+  completedStrokes.push([...engine.pts]);
   
   currentStrokeIdx++;
   if (currentStrokeIdx >= charData.strokes.length) {
@@ -126,6 +120,7 @@ function showSuccessAnim() {
 function loadCharacter(idx) {
   currentCharIdx = idx;
   currentStrokeIdx = 0;
+  completedStrokes = [];
   updateFooterActive();
   drawGuide();
   loadStroke(0);
@@ -227,6 +222,19 @@ function drawGuide(clear = true) {
   gCtx.lineJoin = 'round';
   gCtx.setLineDash([]);
   charData.strokes.forEach(s => { gCtx.stroke(new Path2D(s.path)); });
+
+  // Completed strokes in yellow on top
+  completedStrokes.forEach(pts => {
+    gCtx.beginPath();
+    gCtx.strokeStyle = APP_CONFIG.TRACE_COLOR;
+    gCtx.lineWidth = APP_CONFIG.TRACE_STROKE_WIDTH;
+    gCtx.lineCap = 'round';
+    gCtx.lineJoin = 'round';
+    gCtx.setLineDash([]);
+    gCtx.moveTo(pts[0].x, pts[0].y);
+    for (const p of pts) gCtx.lineTo(p.x, p.y);
+    gCtx.stroke();
+  });
 
   // Dashed direction guideline on top (orange dashes with dots)
   charData.strokes.forEach((s, si) => {
