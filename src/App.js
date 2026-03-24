@@ -260,18 +260,8 @@ function updateIcons() {
 function setupTabs() {
   const tc = document.getElementById('tab-cons');
   const tv = document.getElementById('tab-vow');
-  const ts = document.getElementById('tab-syl');
-  const allTabs = [tc, tv, ts];
-  const setActive = (tab, list) => {
-    allTabs.forEach(t => t.classList.remove('active'));
-    tab.classList.add('active');
-    currentDataList = list;
-    setupFooter();
-    loadCharacter(0);
-  };
-  tc.onclick = () => setActive(tc, CONSONANTS);
-  tv.onclick = () => setActive(tv, VOWELS);
-  ts.onclick = () => setActive(ts, SYLLABLES_GA);
+  tc.onclick = () => { tc.classList.add('active'); tv.classList.remove('active'); currentDataList = CONSONANTS; setupFooter(); loadCharacter(0); };
+  tv.onclick = () => { tv.classList.add('active'); tc.classList.remove('active'); currentDataList = VOWELS; setupFooter(); loadCharacter(0); };
 }
 
 function setupFooter() {
