@@ -1681,5 +1681,285 @@
     ],
     "verdict": "맛 평가(379)가 2순위(친절해요, 143)의 <strong>2.65배</strong>로 압도적. 재료가 신선해요도 높게 평가.",
     "place_id": "980871720"
+  },
+  {
+    "rank": 0,
+    "group": "C",
+    "name": "슬로우더바이트",
+    "category": "카페,디저트",
+    "category_short": "카페,디저트",
+    "total_reviews": "240",
+    "ratio": 1.22,
+    "keywords": [
+      {
+        "rank": 1,
+        "text": "디저트가 맛있어요",
+        "count": 193
+      },
+      {
+        "rank": 2,
+        "text": "커피가 맛있어요",
+        "count": 158
+      },
+      {
+        "rank": 3,
+        "text": "인테리어가 멋져요",
+        "count": 146
+      }
+    ],
+    "verdict": "맛(193)과 커피가 맛있어요(158)이 <strong>1.22배</strong>로 근접. 여러 강점이 동급 수준.",
+    "place_id": "2029932968"
+  },
+  {
+    "rank": 0,
+    "group": "B",
+    "name": "혹호",
+    "category": "카페,디저트",
+    "category_short": "카페,디저트",
+    "total_reviews": "16",
+    "ratio": 1.56,
+    "keywords": [
+      {
+        "rank": 1,
+        "text": "인테리어가 멋져요",
+        "count": 14
+      },
+      {
+        "rank": 2,
+        "text": "커피가 맛있어요",
+        "count": 9
+      },
+      {
+        "rank": 3,
+        "text": "사진이 잘 나와요",
+        "count": 7
+      }
+    ],
+    "verdict": "맛 평가(14)가 2순위(커피가 맛있어요, 9)의 <strong>1.56배</strong>. 커피가 맛있어요도 고르게 높은 균형형. 사진이 잘 나와요도 높게 평가.",
+    "place_id": "2082938097"
+  },
+  {
+    "rank": 0,
+    "group": "B",
+    "name": "유달제면소 칼국수,만두",
+    "category": "",
+    "category_short": "",
+    "total_reviews": "3683",
+    "ratio": 1.69,
+    "keywords": [
+      {
+        "rank": 1,
+        "text": "음식이 맛있어요",
+        "count": 3385
+      },
+      {
+        "rank": 2,
+        "text": "특별한 메뉴가 있어요",
+        "count": 2008
+      },
+      {
+        "rank": 3,
+        "text": "재료가 신선해요",
+        "count": 1820
+      }
+    ],
+    "verdict": "맛 평가(3385)가 2순위(특별한 메뉴가 있어요, 2008)의 <strong>1.69배</strong>. 특별한 메뉴가 있어요도 고르게 높은 균형형. 재료가 신선해요도 높게 평가.",
+    "place_id": "1342349148"
+  },
+  {
+    "rank": 0,
+    "group": "B",
+    "name": "목포오리탕",
+    "category": "오리요리",
+    "category_short": "오리요리",
+    "total_reviews": "1800",
+    "ratio": 1.85,
+    "keywords": [
+      {
+        "rank": 1,
+        "text": "음식이 맛있어요",
+        "count": 1595
+      },
+      {
+        "rank": 2,
+        "text": "친절해요",
+        "count": 864
+      },
+      {
+        "rank": 3,
+        "text": "양이 많아요",
+        "count": 648
+      }
+    ],
+    "verdict": "맛 평가(1595)가 2순위(친절해요, 864)의 <strong>1.85배</strong>. 친절해요도 고르게 높은 균형형. 양이 많아요도 높게 평가.",
+    "place_id": "2094931065"
+  },
+  {
+    "rank": 0,
+    "group": "C",
+    "name": "숙성뒷고기집 북항점",
+    "category": "돼지고기구이",
+    "category_short": "돼지고기구이",
+    "total_reviews": "15",
+    "ratio": 1.07,
+    "keywords": [
+      {
+        "rank": 1,
+        "text": "음식이 맛있어요",
+        "count": 15
+      },
+      {
+        "rank": 2,
+        "text": "고기 질이 좋아요",
+        "count": 14
+      },
+      {
+        "rank": 3,
+        "text": "친절해요",
+        "count": 8
+      }
+    ],
+    "verdict": "맛(15)과 고기 질이 좋아요(14)이 <strong>1.07배</strong>로 근접. 여러 강점이 동급 수준.",
+    "place_id": "2012608203"
+  },
+  {
+    "rank": 0,
+    "group": "B",
+    "name": "기찬밥상 목포본점",
+    "category": "",
+    "category_short": "",
+    "total_reviews": "987",
+    "ratio": 1.59,
+    "keywords": [
+      {
+        "rank": 1,
+        "text": "음식이 맛있어요",
+        "count": 844
+      },
+      {
+        "rank": 2,
+        "text": "재료가 신선해요",
+        "count": 530
+      },
+      {
+        "rank": 3,
+        "text": "양이 많아요",
+        "count": 370
+      }
+    ],
+    "verdict": "맛 평가(844)가 2순위(재료가 신선해요, 530)의 <strong>1.59배</strong>. 재료가 신선해요도 고르게 높은 균형형. 양이 많아요도 높게 평가.",
+    "place_id": "1357218782"
+  },
+  {
+    "rank": 0,
+    "group": "B",
+    "name": "왕궁 목포본점",
+    "category": "",
+    "category_short": "",
+    "total_reviews": "999",
+    "ratio": 1.85,
+    "keywords": [
+      {
+        "rank": 1,
+        "text": "음식이 맛있어요",
+        "count": 763
+      },
+      {
+        "rank": 2,
+        "text": "매장이 넓어요",
+        "count": 413
+      },
+      {
+        "rank": 3,
+        "text": "양이 많아요",
+        "count": 349
+      }
+    ],
+    "verdict": "맛 평가(763)가 2순위(매장이 넓어요, 413)의 <strong>1.85배</strong>. 매장이 넓어요도 고르게 높은 균형형. 양이 많아요도 높게 평가.",
+    "place_id": "33450669"
+  },
+  {
+    "rank": 0,
+    "group": "C",
+    "name": "솔분식",
+    "category": "종합분식",
+    "category_short": "종합분식",
+    "total_reviews": "348",
+    "ratio": 1.33,
+    "keywords": [
+      {
+        "rank": 1,
+        "text": "음식이 맛있어요",
+        "count": 237
+      },
+      {
+        "rank": 2,
+        "text": "양이 많아요",
+        "count": 178
+      },
+      {
+        "rank": 3,
+        "text": "가성비가 좋아요",
+        "count": 153
+      }
+    ],
+    "verdict": "맛(237)과 양이 많아요(178)이 <strong>1.33배</strong>로 근접. 여러 강점이 동급 수준.",
+    "place_id": "1546725519"
+  },
+  {
+    "rank": 0,
+    "group": "A",
+    "name": "원조순대떡볶이",
+    "category": "떡볶이",
+    "category_short": "떡볶이",
+    "total_reviews": "689",
+    "ratio": 2.88,
+    "keywords": [
+      {
+        "rank": 1,
+        "text": "음식이 맛있어요",
+        "count": 400
+      },
+      {
+        "rank": 2,
+        "text": "가성비가 좋아요",
+        "count": 139
+      },
+      {
+        "rank": 3,
+        "text": "특별한 메뉴가 있어요",
+        "count": 134
+      }
+    ],
+    "verdict": "맛 평가(400)가 2순위(가성비가 좋아요, 139)의 <strong>2.88배</strong>로 압도적. 특별한 메뉴가 있어요도 높게 평가.",
+    "place_id": "1974855861"
+  },
+  {
+    "rank": 0,
+    "group": "A",
+    "name": "자유떡상",
+    "category": "종합분식",
+    "category_short": "종합분식",
+    "total_reviews": "421",
+    "ratio": 2.42,
+    "keywords": [
+      {
+        "rank": 1,
+        "text": "음식이 맛있어요",
+        "count": 315
+      },
+      {
+        "rank": 2,
+        "text": "가성비가 좋아요",
+        "count": 130
+      },
+      {
+        "rank": 3,
+        "text": "친절해요",
+        "count": 126
+      }
+    ],
+    "verdict": "맛 평가(315)가 2순위(가성비가 좋아요, 130)의 <strong>2.42배</strong>로 압도적. 친절해요도 높게 평가.",
+    "place_id": "1140466830"
   }
 ]
