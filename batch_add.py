@@ -17,7 +17,7 @@ N       = int(sys.argv[1]) if len(sys.argv) > 1 else 10
 WORKERS = int(sys.argv[2]) if len(sys.argv) > 2 else 3  # 동시 처리 수
 
 # 카페/베이커리/비음식 제외 키워드
-SKIP_KEYWORDS = ['카페', '베이커리', '디저트', '샐러드', '편의점', '마트', 'SUKSAN', '케이블카맛집']
+SKIP_KEYWORDS = ['편의점', '마트', '케이블카맛집']
 
 # ── 기존 데이터 로드 ───────────────────────────────────────
 with open(os.path.join(BASE, "restaurants.json"), encoding='utf-8') as f:
