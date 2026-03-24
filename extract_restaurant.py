@@ -19,7 +19,6 @@ JINA_HEADERS = {
     'Accept': 'text/plain',
 }
 
-FIRECRAWL_API_KEY = "fc-7a3e6fd28e044b6aa1e8c84b53029f49"
 
 def fetch(url, retries=2):
     jina_url = "https://r.jina.ai/" + url
@@ -61,27 +60,21 @@ def get_home_content(place_id):
     url = f"https://m.place.naver.com/restaurant/{place_id}/home"
     return fetch(url)
 
-def get_home_content_firecrawl(place_id):
-    """Jina 실패 시 Firecrawl로 JS 렌더링 (플레이스 플러스 등 동적 페이지 대응)"""
+def get_home_content_playwright(place_id):
+    """Jina 실패 시 Playwright로 JS 렌더링 (플레이스 플러스 등 동적 페이지 대응)"""
+    from playwright.sync_api import sync_playwright
     url = f"https://m.place.naver.com/restaurant/{place_id}/home"
-    payload = json.dumps({
-        "url": url,
-        "formats": ["markdown"],
-        "waitFor": 1500,
-        "mobile": True,
-        "onlyMainContent": True,
-    }).encode('utf-8')
-    req = urllib.request.Request(
-        "https://api.firecrawl.dev/v1/scrape",
-        data=payload,
-        headers={
-            "Authorization": f"Bearer {FIRECRAWL_API_KEY}",
-            "Content-Type": "application/json",
-        }
-    )
-    with urllib.request.urlopen(req, timeout=30) as resp:
-        result = json.loads(resp.read().decode('utf-8'))
-    return result.get("data", {}).get("markdown", "")
+    with sync_playwright() as p:
+        browser = p.chromium.launch(headless=True)
+        context = browser.new_context(
+            user_agent='Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.0 Mobile/15E148 Safari/604.1',
+            viewport={'width': 390, 'height': 844}
+        )
+        page = context.new_page()
+        page.goto(url.replace('/home', '/review/visitor'), wait_until="networkidle", timeout=30000)
+        content = page.inner_text('body')
+        browser.close()
+    return content
 
 def parse_data(content):
     """Jina 마크다운에서 리뷰 카운트, 키워드 추출"""
@@ -99,7 +92,7 @@ def parse_data(content):
 
     # 키워드: '"키워드텍스트"이 키워드를 선택한 인원 숫자' 패턴 (공백 있/없 모두 허용)
     keywords = re.findall(
-        r'"([^"]+)"이 키워드를 선택한 인원\s*([\d,]+)',
+        r'"([^"]+)"\s*이 키워드를 선택한 인원\s*([\d,]+)',
         content
     )
 
@@ -142,18 +135,18 @@ def main():
         print(json.dumps({'error': 'Place ID를 찾을 수 없습니다', 'name': name}, ensure_ascii=False))
         sys.exit(1)
 
-    print(f"[2/2] 키워드 수집 중: Place ID={place_id}{' (플레이스 플러스→Firecrawl)' if is_plus else ''}", file=sys.stderr)
+    print(f"[2/2] 키워드 수집 중: Place ID={place_id}{' (플레이스 플러스→Playwright)' if is_plus else ''}", file=sys.stderr)
 
     if is_plus:
         # 플레이스 플러스: Jina 홈 페이지 스킵, 바로 Firecrawl
         data = {'total_reviews': 0, 'category': '', 'keywords': []}
         try:
-            fc_content = get_home_content_firecrawl(place_id)
+            fc_content = get_home_content_playwright(place_id)
             data = parse_data(fc_content)
             if data['keywords']:
-                print(f"[2/2] Firecrawl 키워드 수집 성공: {len(data['keywords'])}개", file=sys.stderr)
+                print(f"[2/2] Playwright 키워드 수집 성공: {len(data['keywords'])}개", file=sys.stderr)
         except Exception as e:
-            print(f"[2/2] Firecrawl 실패: {e}", file=sys.stderr)
+            print(f"[2/2] Playwright 실패: {e}", file=sys.stderr)
     else:
         home_content = get_home_content(place_id)
         if debug:
@@ -161,17 +154,17 @@ def main():
         data = parse_data(home_content)
         # Jina 키워드 없으면 Firecrawl 폴백
         if not data['keywords']:
-            print(f"[2/2] Jina 키워드 없음 → Firecrawl 재시도...", file=sys.stderr)
+            print(f"[2/2] Jina 키워드 없음 → Playwright 재시도...", file=sys.stderr)
             try:
-                fc_content = get_home_content_firecrawl(place_id)
+                fc_content = get_home_content_playwright(place_id)
                 fc_data = parse_data(fc_content)
                 if fc_data['keywords']:
                     data = fc_data
-                    print(f"[2/2] Firecrawl 키워드 수집 성공: {len(data['keywords'])}개", file=sys.stderr)
+                    print(f"[2/2] Playwright 키워드 수집 성공: {len(data['keywords'])}개", file=sys.stderr)
                 else:
-                    print(f"[2/2] Firecrawl도 키워드 없음", file=sys.stderr)
+                    print(f"[2/2] Playwright도 키워드 없음", file=sys.stderr)
             except Exception as e:
-                print(f"[2/2] Firecrawl 실패: {e}", file=sys.stderr)
+                print(f"[2/2] Playwright 실패: {e}", file=sys.stderr)
     ratio = calc_ratio(data['keywords'])
     group = determine_group(ratio)
 
