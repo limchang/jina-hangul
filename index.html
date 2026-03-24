@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -7,9 +8,10 @@
   <meta name="description" content="진아를 위한 프리미엄 한글 따라쓰기 앱입니다.">
   <link rel="stylesheet" href="css/styles.css">
 </head>
+
 <body>
   <div id="bg-layer"></div>
-  
+
   <div id="app-container">
     <header>
       <div class="btn-home" onclick="location.reload()" title="홈으로">
@@ -25,16 +27,18 @@
 
     <main>
       <div class="nav-arrow left" title="이전">&#10094;</div>
-      
+
       <div class="study-card" id="study-card">
         <!-- Background guide will be drawn here -->
         <canvas id="guide-canvas"></canvas>
+        <!-- Arrow guide animation -->
+        <canvas id="arrow-canvas"></canvas>
         <!-- The user's active drawing will be drawn here -->
         <canvas id="trace-canvas"></canvas>
         <!-- Icons (Gazelle and Star) overlay -->
         <div id="overlay-icons"></div>
       </div>
-      
+
       <div class="nav-arrow right" title="다음">&#10095;</div>
     </main>
 
@@ -45,4 +49,5 @@
   <script src="src/TracingEngine.js?v=5"></script>
   <script src="src/App.js?v=5"></script>
 </body>
+
 </html>

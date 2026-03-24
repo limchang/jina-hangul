@@ -4,13 +4,17 @@ let currentDataList = CONSONANTS;
 let currentCharIdx = 0;
 let currentStrokeIdx = 0;
 
-let guideCanvas, traceCanvas, gCtx, tCtx;
+let guideCanvas, traceCanvas, arrowCanvas, gCtx, tCtx, aCtx;
 let overlay, handlerIcon, targetIcon;
+let arrowAnimId = null;
+let arrowT = 0; // 0~1 along current stroke path
 
 function initApp() {
   guideCanvas = document.getElementById('guide-canvas');
+  arrowCanvas = document.getElementById('arrow-canvas');
   traceCanvas = document.getElementById('trace-canvas');
   gCtx = guideCanvas.getContext('2d');
+  aCtx = arrowCanvas.getContext('2d');
   tCtx = traceCanvas.getContext('2d');
   overlay = document.getElementById('overlay-icons');
   
@@ -39,20 +43,10 @@ function initApp() {
 }
 
 function resize() {
-  const rect = document.getElementById('study-card').getBoundingClientRect();
-  
-  // Internal Resolution (500x500 map)
-  guideCanvas.width = 500;
-  guideCanvas.height = 500;
-  traceCanvas.width = 500;
-  traceCanvas.height = 500;
-  
-  // External CSS styling bounds
-  guideCanvas.style.width = '100%';
-  guideCanvas.style.height = '100%';
-  traceCanvas.style.width = '100%';
-  traceCanvas.style.height = '100%';
-  
+  guideCanvas.width = arrowCanvas.width = traceCanvas.width = 500;
+  guideCanvas.height = arrowCanvas.height = traceCanvas.height = 500;
+  guideCanvas.style.width = arrowCanvas.style.width = traceCanvas.style.width = '100%';
+  guideCanvas.style.height = arrowCanvas.style.height = traceCanvas.style.height = '100%';
   if (currentDataList) drawGuide();
 }
 
@@ -71,6 +65,7 @@ function onPointerDown(e) {
   e.preventDefault();
   const pos = getPointerPos(e);
   if (engine.start(pos.x, pos.y)) {
+    stopArrowAnim();
     renderTrace();
     updateIcons();
     handlerIcon.style.transform = 'translate(-50%, -50%) scale(1.15) rotate(5deg)';
@@ -86,7 +81,7 @@ function onPointerMove(e) {
   updateIcons();
 }
 
-function onPointerUp(e) {
+function onPointerUp() {
   if (!engine.isTracing) return;
   handlerIcon.style.transform = 'translate(-50%, -50%)';
   if (engine.end()) {
@@ -95,6 +90,7 @@ function onPointerUp(e) {
     // Reset visuals if they failed the stroke
     renderTrace();
     updateIcons();
+    startArrowAnim(engine.pts);
   }
 }
 
@@ -120,6 +116,7 @@ function completeStroke() {
 }
 
 function showSuccessAnim() {
+  stopArrowAnim();
   const card = document.getElementById('study-card');
   card.classList.add('success-anim');
   setTimeout(() => card.classList.remove('success-anim'), 400);
@@ -138,12 +135,76 @@ function loadStroke(idx) {
   currentStrokeIdx = idx;
   const charData = currentDataList[currentCharIdx];
   const strokePath = charData.strokes[idx].path;
-  
+
   const isClosed = strokePath.includes('A') || charData.char === 'ㅁ';
   engine.setStroke(strokePath, isClosed);
-  
+
   renderTrace();
   setupIcons();
+  startArrowAnim(engine.pts);
+}
+
+function startArrowAnim(pts) {
+  if (arrowAnimId) cancelAnimationFrame(arrowAnimId);
+  if (!pts || pts.length < 2) return;
+  arrowT = 0;
+  let lastTime = null;
+
+  function drawArrow(ctx, pts, t) {
+    const total = pts.length - 1;
+    const fi = Math.min(t * total, total - 0.01);
+    const i = Math.floor(fi);
+    const frac = fi - i;
+    const px = pts[i].x + (pts[i+1].x - pts[i].x) * frac;
+    const py = pts[i].y + (pts[i+1].y - pts[i].y) * frac;
+
+    // Direction from a bit behind
+    const bi = Math.max(0, i - 3);
+    const dx = px - pts[bi].x;
+    const dy = py - pts[bi].y;
+    const angle = Math.atan2(dy, dx);
+
+    ctx.clearRect(0, 0, 500, 500);
+
+    // Shadow
+    ctx.save();
+    ctx.translate(px, py);
+    ctx.rotate(angle);
+    ctx.shadowColor = 'rgba(0,0,0,0.25)';
+    ctx.shadowBlur = 8;
+
+    // Arrowhead
+    const R = 22, r = 13;
+    ctx.beginPath();
+    ctx.moveTo(R, 0);
+    ctx.lineTo(-r, -r * 0.85);
+    ctx.lineTo(-r * 0.4, 0);
+    ctx.lineTo(-r, r * 0.85);
+    ctx.closePath();
+    ctx.fillStyle = '#fff700';
+    ctx.fill();
+    ctx.strokeStyle = '#e6a800';
+    ctx.lineWidth = 3;
+    ctx.stroke();
+
+    ctx.restore();
+  }
+
+  function step(ts) {
+    if (!lastTime) lastTime = ts;
+    const dt = ts - lastTime;
+    lastTime = ts;
+    // 3초에 한 바퀴 (loop)
+    arrowT = (arrowT + dt / 3000) % 1;
+    drawArrow(aCtx, pts, arrowT);
+    arrowAnimId = requestAnimationFrame(step);
+  }
+  arrowAnimId = requestAnimationFrame(step);
+}
+
+function stopArrowAnim() {
+  if (arrowAnimId) { cancelAnimationFrame(arrowAnimId); arrowAnimId = null; }
+  aCtx.clearRect(0, 0, 500, 500);
 }
 
 function drawGuide() {
