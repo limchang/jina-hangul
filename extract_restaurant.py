@@ -61,7 +61,7 @@ def get_home_content_firecrawl(place_id):
     payload = json.dumps({
         "url": url,
         "formats": ["markdown"],
-        "waitFor": 5000,
+        "waitFor": 2000,
         "mobile": True,
         "onlyMainContent": True,
     }).encode('utf-8')
