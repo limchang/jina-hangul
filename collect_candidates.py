@@ -12,6 +12,8 @@ import urllib.parse
 import os
 import sys
 
+sys.stdout.reconfigure(encoding='utf-8')
+
 BASE = os.path.dirname(os.path.abspath(__file__))
 
 # ── 검색 쿼리 목록 ─────────────────────────────────────────
@@ -59,12 +61,36 @@ def fetch_jina(url, retries=2):
             time.sleep(2)
     return ""
 
+SERVICE_TAGS = {'네이버페이', '예약', '쿠폰', '배달', '톡톡', '주문', '포장', '픽업', '할인'}
+SOLO_CATEGORIES = {
+    '국밥', '생선회', '한식', '중식', '일식', '양식', '분식',
+    '포장마차', '냉면', '초밥', '라멘', '짬뽕',
+    '종합분식', '해장국', '베이커리', '일본식라면',
+}
+
 def clean_name(name):
-    """링크 텍스트에서 카테고리·지역 메타데이터 제거 (예: "소곱길 목포본점 한식 목포 상동" → "소곱길 목포본점")"""
-    # " 카테고리 목포" 패턴 제거 (앞에 최소 2글자 이상 있을 때만)
+    """링크 텍스트에서 서비스 배지·카테고리 메타데이터 제거"""
+    # 패턴1: "이름 카테고리 목포" → 카테고리+목포 제거
     m = re.search(r'\s+[가-힣,·/]+\s+목포\b', name)
     if m and m.start() >= 2:
-        return name[:m.start()].strip()
+        name = name[:m.start()].strip()
+
+    # 패턴2: 서비스 태그·콤마 카테고리·단독 카테고리어 이후 제거
+    parts = name.split()
+    for i, part in enumerate(parts):
+        if i == 0:
+            continue
+        is_category = (
+            part in SERVICE_TAGS
+            or (',' in part and re.match(r'^[가-힣,·/]+$', part))
+            or part in SOLO_CATEGORIES
+            or re.match(r'^[가-힣]{1,4}요리$', part)       # 낙지요리, 복어요리 등
+            or re.match(r'^(?:한|중|일|양)식당$', part)    # 중식당, 한식당 등
+        )
+        if is_category:
+            name = ' '.join(parts[:i]).strip()
+            break
+
     return name
 
 def extract_restaurants(content):
