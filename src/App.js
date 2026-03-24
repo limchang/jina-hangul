@@ -139,7 +139,7 @@ function loadStroke(idx) {
   const isClosed = strokePath.includes('A') || charData.char === 'ㅁ' || charData.char === 'ㅇ';
   engine.setStroke(strokePath, isClosed);
 
-  drawGuide();
+  drawGuide(false);
   renderTrace();
   setupIcons();
   startArrowAnim(engine.pts);
@@ -208,8 +208,8 @@ function stopArrowAnim() {
   aCtx.clearRect(0, 0, 500, 500);
 }
 
-function drawGuide() {
-  gCtx.clearRect(0, 0, 500, 500);
+function drawGuide(clear = true) {
+  if (clear) gCtx.clearRect(0, 0, 500, 500);
   const charData = currentDataList[currentCharIdx];
 
   // Glow layer
