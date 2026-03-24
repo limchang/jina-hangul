@@ -127,6 +127,34 @@ for r in restaurants:
     formats.append({"range": f"B{row}", "format": {"textFormat": {"foregroundColor": fc, "bold": True}}})
 
 retry(lambda: ws.batch_format(formats))
+
+# 테두리
+time.sleep(2)
+border_style = {"style": "SOLID", "width": 1, "color": {"red": 0.8, "green": 0.8, "blue": 0.8}}
+retry(lambda: ws.batch_format([{
+    "range": f"A1:K{total+1}",
+    "format": {
+        "borders": {
+            "top": border_style, "bottom": border_style,
+            "left": border_style, "right": border_style,
+        }
+    }
+}]))
+
+# 헤더 행 고정 + 열 너비 자동조정
+time.sleep(2)
+ws.freeze(rows=1)
+retry(lambda: ss.batch_update({"requests": [{
+    "autoResizeDimensions": {
+        "dimensions": {
+            "sheetId": ws.id,
+            "dimension": "COLUMNS",
+            "startIndex": 0,
+            "endIndex": 11
+        }
+    }
+}]}))
+
 print("  → 서식 완료")
 
 # ══════════════════════════════════════════════════════════
