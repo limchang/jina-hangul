@@ -139,6 +139,7 @@ function loadStroke(idx) {
   const isClosed = strokePath.includes('A') || charData.char === 'ㅁ' || charData.char === 'ㅇ';
   engine.setStroke(strokePath, isClosed);
 
+  drawGuide();
   renderTrace();
   setupIcons();
   startArrowAnim(engine.pts);
@@ -210,20 +211,68 @@ function stopArrowAnim() {
 function drawGuide() {
   gCtx.clearRect(0, 0, 500, 500);
   const charData = currentDataList[currentCharIdx];
-  
+
   // Glow layer
   gCtx.strokeStyle = 'rgba(255,255,255,0.25)';
   gCtx.lineWidth = APP_CONFIG.GUIDE_STROKE_WIDTH + 28;
   gCtx.lineCap = 'round';
   gCtx.lineJoin = 'round';
+  gCtx.setLineDash([]);
   charData.strokes.forEach(s => { gCtx.stroke(new Path2D(s.path)); });
 
-  // Main guide
+  // Main guide (solid white shape)
   gCtx.strokeStyle = APP_CONFIG.GUIDE_COLOR;
   gCtx.lineWidth = APP_CONFIG.GUIDE_STROKE_WIDTH;
   gCtx.lineCap = 'round';
   gCtx.lineJoin = 'round';
+  gCtx.setLineDash([]);
   charData.strokes.forEach(s => { gCtx.stroke(new Path2D(s.path)); });
+
+  // Dashed direction guideline on top (orange dashes with dots)
+  charData.strokes.forEach((s, si) => {
+    const pts = samplePath(s.path, 80);
+    if (pts.length < 2) return;
+
+    // Draw dashed line
+    gCtx.strokeStyle = si === currentStrokeIdx ? 'rgba(255,160,30,0.9)' : 'rgba(255,160,30,0.35)';
+    gCtx.lineWidth = 5;
+    gCtx.lineCap = 'round';
+    gCtx.setLineDash([12, 14]);
+    gCtx.beginPath();
+    gCtx.moveTo(pts[0].x, pts[0].y);
+    for (let i = 1; i < pts.length; i++) gCtx.lineTo(pts[i].x, pts[i].y);
+    gCtx.stroke();
+    gCtx.setLineDash([]);
+
+    // Start dot (green) and end arrow (orange) for current stroke only
+    if (si === currentStrokeIdx) {
+      // Start circle
+      gCtx.beginPath();
+      gCtx.arc(pts[0].x, pts[0].y, 10, 0, Math.PI * 2);
+      gCtx.fillStyle = '#44ee88';
+      gCtx.fill();
+      gCtx.strokeStyle = '#fff';
+      gCtx.lineWidth = 3;
+      gCtx.stroke();
+
+      // End arrowhead
+      const ep = pts[pts.length - 1];
+      const bp = pts[pts.length - 6];
+      const angle = Math.atan2(ep.y - bp.y, ep.x - bp.x);
+      gCtx.save();
+      gCtx.translate(ep.x, ep.y);
+      gCtx.rotate(angle);
+      gCtx.beginPath();
+      gCtx.moveTo(13, 0);
+      gCtx.lineTo(-9, -8);
+      gCtx.lineTo(-5, 0);
+      gCtx.lineTo(-9, 8);
+      gCtx.closePath();
+      gCtx.fillStyle = 'rgba(255,140,20,0.9)';
+      gCtx.fill();
+      gCtx.restore();
+    }
+  });
 }
 
 function renderTrace() {
