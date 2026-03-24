@@ -72,7 +72,7 @@ header {
   width: 150px; height: 65px; background: var(--btn-inactive); border-radius: 35px;
   display: flex; align-items: center; justify-content: center;
   box-shadow: 0 6px 0 var(--btn-inactive-shadow); border: 4px solid white;
-  cursor: pointer; font-size: 2rem; font-weight: 900; color: #8899a6;
+  cursor: pointer; font-size: 1.7rem; font-weight: 900; color: #8899a6;
   transition: all 0.2s; position: relative; overflow: hidden;
 }
 .tab-btn.active {

@@ -136,7 +136,7 @@ function loadStroke(idx) {
   const charData = currentDataList[currentCharIdx];
   const strokePath = charData.strokes[idx].path;
 
-  const isClosed = strokePath.includes('A') || charData.char === 'ㅁ';
+  const isClosed = strokePath.includes('A') || charData.char === 'ㅁ' || charData.char === 'ㅇ';
   engine.setStroke(strokePath, isClosed);
 
   renderTrace();
@@ -260,8 +260,18 @@ function updateIcons() {
 function setupTabs() {
   const tc = document.getElementById('tab-cons');
   const tv = document.getElementById('tab-vow');
-  tc.onclick = () => { currentMode='consonants'; currentDataList=CONSONANTS; tc.classList.add('active'); tv.classList.remove('active'); setupFooter(); loadCharacter(0); };
-  tv.onclick = () => { currentMode='vowels'; currentDataList=VOWELS; tv.classList.add('active'); tc.classList.remove('active'); setupFooter(); loadCharacter(0); };
+  const ts = document.getElementById('tab-syl');
+  const allTabs = [tc, tv, ts];
+  const setActive = (tab, list) => {
+    allTabs.forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    currentDataList = list;
+    setupFooter();
+    loadCharacter(0);
+  };
+  tc.onclick = () => setActive(tc, CONSONANTS);
+  tv.onclick = () => setActive(tv, VOWELS);
+  ts.onclick = () => setActive(ts, SYLLABLES_GA);
 }
 
 function setupFooter() {
