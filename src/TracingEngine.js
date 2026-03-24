@@ -60,12 +60,16 @@ class TracingEngine {
 
   move(x, y) {
     if (!this.isTracing) return;
-    
+
+    // Always track raw pointer for visual effect
+    this.pointerX = x;
+    this.pointerY = y;
+
     let bestDist = Infinity;
     let bestIdx = this.maxReachedIdx;
 
-    // Search ahead up to 35 points to allow fast tracing but strictly prevent start-to-end skipping
-    const searchLimit = Math.min(this.pts.length, this.maxReachedIdx + 35);
+    // Search ahead generously
+    const searchLimit = Math.min(this.pts.length, this.maxReachedIdx + 50);
     for (let i = this.maxReachedIdx; i < searchLimit; i++) {
       const d = Math.hypot(x - this.pts[i].x, y - this.pts[i].y);
       if (d < bestDist) {
@@ -74,14 +78,13 @@ class TracingEngine {
       }
     }
 
-    // Must be reasonably close to the path
-    if (bestDist < 90) {
+    if (bestDist < 140) {
       this.maxReachedIdx = Math.max(this.maxReachedIdx, bestIdx);
       this.offPathCount = 0;
     } else {
-      // Allow a few frames of being off-path before giving up (tolerance for kids)
+      // Very generous tolerance — only break after many consecutive off-path frames
       this.offPathCount = (this.offPathCount || 0) + 1;
-      if (this.offPathCount > 8) {
+      if (this.offPathCount > 20) {
         this.isTracing = false;
         this.maxReachedIdx = 0;
         this.offPathCount = 0;
@@ -110,18 +113,48 @@ class TracingEngine {
 
   draw() {
     if (this.maxReachedIdx === 0) return;
-    
-    this.ctx.beginPath();
-    this.ctx.strokeStyle = this.config.TRACE_COLOR;
-    this.ctx.lineWidth = this.config.TRACE_STROKE_WIDTH;
-    this.ctx.lineCap = 'round';
-    this.ctx.lineJoin = 'round';
-    
-    this.ctx.moveTo(this.pts[0].x, this.pts[0].y);
-    for (let i = 1; i <= this.maxReachedIdx; i++) {
-      this.ctx.lineTo(this.pts[i].x, this.pts[i].y);
+
+    const ctx = this.ctx;
+
+    // Outer glow
+    ctx.beginPath();
+    ctx.strokeStyle = 'rgba(255, 235, 80, 0.3)';
+    ctx.lineWidth = this.config.TRACE_STROKE_WIDTH + 24;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.moveTo(this.pts[0].x, this.pts[0].y);
+    for (let i = 1; i <= this.maxReachedIdx; i++) ctx.lineTo(this.pts[i].x, this.pts[i].y);
+    ctx.stroke();
+
+    // Main trace
+    ctx.beginPath();
+    ctx.strokeStyle = this.config.TRACE_COLOR;
+    ctx.lineWidth = this.config.TRACE_STROKE_WIDTH;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.moveTo(this.pts[0].x, this.pts[0].y);
+    for (let i = 1; i <= this.maxReachedIdx; i++) ctx.lineTo(this.pts[i].x, this.pts[i].y);
+    ctx.stroke();
+
+    // Finger glow effect at current position
+    if (this.isTracing && this.pointerX !== undefined) {
+      const px = this.pointerX, py = this.pointerY;
+      // Pulsing outer ring
+      const grad = ctx.createRadialGradient(px, py, 5, px, py, 55);
+      grad.addColorStop(0, 'rgba(255,255,120,0.7)');
+      grad.addColorStop(0.4, 'rgba(255,220,0,0.35)');
+      grad.addColorStop(1, 'rgba(255,200,0,0)');
+      ctx.beginPath();
+      ctx.arc(px, py, 55, 0, Math.PI * 2);
+      ctx.fillStyle = grad;
+      ctx.fill();
+
+      // Inner bright dot
+      ctx.beginPath();
+      ctx.arc(px, py, 18, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(255,255,200,0.9)';
+      ctx.fill();
     }
-    this.ctx.stroke();
   }
 
   getHandlerPos() {
