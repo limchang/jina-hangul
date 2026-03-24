@@ -1,0 +1,1685 @@
+[
+  {
+    "group": "A",
+    "name": "광양숯불갈비",
+    "category": "갈비 전문",
+    "total_reviews": "~280",
+    "ratio": 3.33,
+    "keywords": [
+      {
+        "rank": 1,
+        "text": "음식이 맛있어요",
+        "count": 153
+      },
+      {
+        "rank": 2,
+        "text": "가성비가 좋아요",
+        "count": 46
+      },
+      {
+        "rank": 3,
+        "text": "매장이 넓어요",
+        "count": 42
+      }
+    ],
+    "verdict": "<strong>3.33배</strong>. 6차 배치 최고 배율! 맛이 2위(가성비)를 3배 이상 압도하는 갈비 전문점.",
+    "rank": 1,
+    "category_short": "갈비"
+  },
+  {
+    "group": "A",
+    "name": "너구리식당",
+    "category": "동태탕/백반",
+    "total_reviews": "~300",
+    "ratio": 3.06,
+    "keywords": [
+      {
+        "rank": 1,
+        "text": "음식이 맛있어요",
+        "count": 165
+      },
+      {
+        "rank": 2,
+        "text": "재료가 신선해요",
+        "count": 54
+      },
+      {
+        "rank": 3,
+        "text": "양이 많아요",
+        "count": 52
+      }
+    ],
+    "verdict": "<strong>3.06배</strong>. 동태탕 전문 백반집. 맛이 신선도의 3배를 넘기는 강력한 압도형.",
+    "rank": 2,
+    "category_short": "동태탕/백반"
+  },
+  {
+    "group": "A",
+    "name": "한국추어탕",
+    "category": "추어탕/보양식 | 목포",
+    "total_reviews": "~600",
+    "ratio": 3.05,
+    "keywords": [
+      {
+        "rank": 1,
+        "text": "음식이 맛있어요",
+        "count": 405
+      },
+      {
+        "rank": 2,
+        "text": "재료가 신선해요",
+        "count": 133
+      },
+      {
+        "rank": 3,
+        "text": "친절해요",
+        "count": 128
+      }
+    ],
+    "verdict": "<strong>3.05배</strong>. 전체 3위 비율! 추어탕/보양식 전문답게 맛에 대한 확신이 압도적. 친절함도 우수.",
+    "rank": 3,
+    "category_short": "추어탕/보양식"
+  },
+  {
+    "group": "A",
+    "name": "영암식당",
+    "category": "한식/고기 전문",
+    "total_reviews": "492",
+    "ratio": 2.76,
+    "keywords": [
+      {
+        "rank": 1,
+        "text": "음식이 맛있어요",
+        "count": 306
+      },
+      {
+        "rank": 2,
+        "text": "친절해요",
+        "count": 111
+      },
+      {
+        "rank": 3,
+        "text": "고기 질이 좋아요",
+        "count": 90
+      }
+    ],
+    "verdict": "<strong>2.76배</strong> 4차 배치 최고 비율! 맛이 친절함을 압도. 고기 질도 높이 평가받는 한식 맛집.",
+    "rank": 4,
+    "category_short": "한식/고기"
+  },
+  {
+    "group": "A",
+    "name": "섬마을해물탕",
+    "category": "해물탕/해물찜 | 목포",
+    "total_reviews": "~350",
+    "ratio": 2.7,
+    "keywords": [
+      {
+        "rank": 1,
+        "text": "음식이 맛있어요",
+        "count": 197
+      },
+      {
+        "rank": 2,
+        "text": "재료가 신선해요",
+        "count": 73
+      },
+      {
+        "rank": 3,
+        "text": "양이 많아요",
+        "count": 71
+      }
+    ],
+    "verdict": "<strong>2.70배</strong>. 해물탕 전문점인데도 신선도보다 맛이 2.7배 압도. 양도 넉넉하다는 평가.",
+    "rank": 5,
+    "category_short": "해물탕/해물찜"
+  },
+  {
+    "group": "A",
+    "name": "우정식육식당",
+    "category": "한우 전문 | 하당동",
+    "total_reviews": "918",
+    "ratio": 2.67,
+    "keywords": [
+      {
+        "rank": 1,
+        "text": "음식이 맛있어요",
+        "count": 398
+      },
+      {
+        "rank": 2,
+        "text": "고기 질이 좋아요",
+        "count": 149
+      },
+      {
+        "rank": 3,
+        "text": "친절해요",
+        "count": 107
+      }
+    ],
+    "verdict": "맛 평가가 2순위(고기 질)의 <strong>2.67배</strong>로 압도적. 식객 허영만 백반기행 출연. 한우 암소 생고기와 뻘낙지 전문.",
+    "rank": 6,
+    "category_short": "한우"
+  },
+  {
+    "group": "A",
+    "name": "카와루라멘 목포본점",
+    "category": "라멘 전문",
+    "total_reviews": "2,264",
+    "ratio": 2.55,
+    "keywords": [
+      {
+        "rank": 1,
+        "text": "음식이 맛있어요",
+        "count": 2088
+      },
+      {
+        "rank": 2,
+        "text": "재료가 신선해요",
+        "count": 819
+      },
+      {
+        "rank": 3,
+        "text": "양이 많아요",
+        "count": 785
+      }
+    ],
+    "verdict": "리뷰 2,264건에 맛 평가 2,088건! <strong>2.55배</strong> 압도적. 목포 라멘 핫플. 아늑한 인테리어도 인기.",
+    "rank": 7,
+    "category_short": "라멘"
+  },
+  {
+    "group": "A",
+    "name": "초원음식점",
+    "category": "한식 전문",
+    "total_reviews": "968",
+    "ratio": 2.52,
+    "keywords": [
+      {
+        "rank": 1,
+        "text": "음식이 맛있어요",
+        "count": 534
+      },
+      {
+        "rank": 2,
+        "text": "특별한 메뉴가 있어요",
+        "count": 212
+      },
+      {
+        "rank": 3,
+        "text": "재료가 신선해요",
+        "count": 160
+      }
+    ],
+    "verdict": "<strong>2.52배</strong> 압도. 특별한 메뉴와 신선한 재료가 뒷받침하는 확실한 맛집.",
+    "rank": 8,
+    "category_short": "한식"
+  },
+  {
+    "group": "A",
+    "name": "선경준치회집",
+    "category": "준치회무침 전문 | 온금동",
+    "total_reviews": "2,038",
+    "ratio": 2.38,
+    "keywords": [
+      {
+        "rank": 1,
+        "text": "음식이 맛있어요",
+        "count": 1037
+      },
+      {
+        "rank": 2,
+        "text": "재료가 신선해요",
+        "count": 436
+      },
+      {
+        "rank": 3,
+        "text": "특별한 메뉴가 있어요",
+        "count": 424
+      }
+    ],
+    "verdict": "<strong>2.38배</strong>. 생방송투데이 출연. \"썩어도 준치\" 속담의 그 생선! 준치회무침 10,000원 가성비.",
+    "rank": 9,
+    "category_short": "준치회"
+  },
+  {
+    "group": "A",
+    "name": "만선식당",
+    "category": "생선회/해산물 전문",
+    "total_reviews": "723",
+    "ratio": 2.36,
+    "keywords": [
+      {
+        "rank": 1,
+        "text": "음식이 맛있어요",
+        "count": 445
+      },
+      {
+        "rank": 2,
+        "text": "재료가 신선해요",
+        "count": 189
+      },
+      {
+        "rank": 3,
+        "text": "특별한 메뉴가 있어요",
+        "count": 189
+      }
+    ],
+    "verdict": "<strong>2.36배</strong>. 회집인데도 맛이 신선도를 2배 이상 압도! 특별 메뉴도 동급으로 높은 평가.",
+    "rank": 10,
+    "category_short": "생선회"
+  },
+  {
+    "group": "A",
+    "name": "부촌",
+    "category": "한정식 전문",
+    "total_reviews": "",
+    "ratio": 2.35,
+    "keywords": [
+      {
+        "rank": 1,
+        "text": "음식이 맛있어요",
+        "count": 291
+      },
+      {
+        "rank": 2,
+        "text": "친절해요",
+        "count": 124
+      },
+      {
+        "rank": 3,
+        "text": "재료가 신선해요",
+        "count": 111
+      }
+    ],
+    "verdict": "<strong>2.35배</strong>. 맛+친절+신선도 삼박자. 목포 한정식 대표 맛집.",
+    "rank": 11,
+    "category_short": "한정식"
+  },
+  {
+    "group": "A",
+    "name": "인동주마을",
+    "category": "한식 전문",
+    "total_reviews": "896",
+    "ratio": 2.35,
+    "keywords": [
+      {
+        "rank": 1,
+        "text": "음식이 맛있어요",
+        "count": 393
+      },
+      {
+        "rank": 2,
+        "text": "특별한 메뉴가 있어요",
+        "count": 167
+      },
+      {
+        "rank": 3,
+        "text": "매장이 넓어요",
+        "count": 137
+      }
+    ],
+    "verdict": "<strong>2.35배</strong>. 특별한 메뉴와 넓은 매장. 인동주(막걸리)와 함께 즐기는 한식 맛집.",
+    "rank": 12,
+    "category_short": "한식"
+  },
+  {
+    "group": "A",
+    "name": "김근호한정식",
+    "category": "한정식 | 목포",
+    "total_reviews": "~500",
+    "ratio": 2.34,
+    "keywords": [
+      {
+        "rank": 1,
+        "text": "음식이 맛있어요",
+        "count": 314
+      },
+      {
+        "rank": 2,
+        "text": "재료가 신선해요",
+        "count": 134
+      },
+      {
+        "rank": 3,
+        "text": "단체모임 하기 좋아요",
+        "count": 124
+      }
+    ],
+    "verdict": "<strong>2.34배</strong>. 한정식답게 맛이 압도적이면서 단체모임에도 좋다는 평가. 양도 넉넉.",
+    "rank": 13,
+    "category_short": "한정식"
+  },
+  {
+    "group": "A",
+    "name": "남도랑",
+    "category": "한식/백반 전문",
+    "total_reviews": "",
+    "ratio": 2.23,
+    "keywords": [
+      {
+        "rank": 1,
+        "text": "음식이 맛있어요",
+        "count": 1538
+      },
+      {
+        "rank": 2,
+        "text": "재료가 신선해요",
+        "count": 690
+      },
+      {
+        "rank": 3,
+        "text": "매장이 청결해요",
+        "count": 382
+      }
+    ],
+    "verdict": "<strong>2.23배</strong>. 신선한 재료에 청결한 매장까지. 리뷰 대비 맛 평가 비율이 매우 높은 한식 맛집.",
+    "rank": 14,
+    "category_short": "한식"
+  },
+  {
+    "group": "A",
+    "name": "해남해장국",
+    "category": "해장국 전문 | 53년 전통 | 목포역 근처",
+    "total_reviews": "1,280",
+    "ratio": 2.21,
+    "keywords": [
+      {
+        "rank": 1,
+        "text": "음식이 맛있어요",
+        "count": 654
+      },
+      {
+        "rank": 2,
+        "text": "양이 많아요",
+        "count": 296
+      },
+      {
+        "rank": 3,
+        "text": "특별한 메뉴가 있어요",
+        "count": 198
+      }
+    ],
+    "verdict": "<strong>2.21배</strong>. 백종원 3대 천왕 출연. 1972년 창업 53년 전통. 아침 7시 오픈. 뼈해장국 12,000원.",
+    "rank": 15,
+    "category_short": "해장국"
+  },
+  {
+    "group": "A",
+    "name": "독천골",
+    "category": "낙지요리 전문",
+    "total_reviews": "",
+    "ratio": 2.21,
+    "keywords": [
+      {
+        "rank": 1,
+        "text": "음식이 맛있어요",
+        "count": 1285
+      },
+      {
+        "rank": 2,
+        "text": "재료가 신선해요",
+        "count": 581
+      },
+      {
+        "rank": 3,
+        "text": "친절해요",
+        "count": 434
+      }
+    ],
+    "verdict": "<strong>2.21배</strong>. 목포 대표 낙지요리 전문점. 신선한 재료와 친절한 서비스까지 갖춘 맛집.",
+    "rank": 16,
+    "category_short": "낙지"
+  },
+  {
+    "group": "A",
+    "name": "독천식당",
+    "category": "낙지요리 전문 | 목포역 근처",
+    "total_reviews": "2,501",
+    "ratio": 2.2,
+    "keywords": [
+      {
+        "rank": 1,
+        "text": "음식이 맛있어요",
+        "count": 1204
+      },
+      {
+        "rank": 2,
+        "text": "재료가 신선해요",
+        "count": 548
+      },
+      {
+        "rank": 3,
+        "text": "매장이 넓어요",
+        "count": 360
+      }
+    ],
+    "verdict": "<strong>2.20배</strong>. 배틀트립 출연. 낙지호롱구이, 연포탕, 갈낙탕 인기. 낙지비빔밥 14,000원.",
+    "rank": 17,
+    "category_short": "낙지"
+  },
+  {
+    "group": "A",
+    "name": "88포장마차",
+    "category": "포장마차/안주 전문",
+    "total_reviews": "",
+    "ratio": 2.2,
+    "keywords": [
+      {
+        "rank": 1,
+        "text": "음식이 맛있어요",
+        "count": 490
+      },
+      {
+        "rank": 2,
+        "text": "특별한 메뉴가 있어요",
+        "count": 223
+      },
+      {
+        "rank": 3,
+        "text": "친절해요",
+        "count": 168
+      }
+    ],
+    "verdict": "<strong>2.20배</strong>. 목포 야시장 인근 포장마차. 특별한 안주 메뉴와 맛으로 사랑받는 곳.",
+    "rank": 18,
+    "category_short": "포차"
+  },
+  {
+    "group": "A",
+    "name": "다원옥",
+    "category": "국밥 전문",
+    "total_reviews": "~133",
+    "ratio": 2.17,
+    "keywords": [
+      {
+        "rank": 1,
+        "text": "음식이 맛있어요",
+        "count": 113
+      },
+      {
+        "rank": 2,
+        "text": "인테리어가 멋져요",
+        "count": 52
+      },
+      {
+        "rank": 3,
+        "text": "친절해요",
+        "count": 52
+      }
+    ],
+    "verdict": "<strong>2.17배</strong>. 목포 평화광장 국밥집. 맛이 인테리어·친절함의 2배 이상 압도.",
+    "rank": 19,
+    "category_short": "국밥"
+  },
+  {
+    "group": "A",
+    "name": "영란횟집",
+    "category": "생선회 전문",
+    "total_reviews": "1,737",
+    "ratio": 2.15,
+    "keywords": [
+      {
+        "rank": 1,
+        "text": "음식이 맛있어요",
+        "count": 766
+      },
+      {
+        "rank": 2,
+        "text": "재료가 신선해요",
+        "count": 356
+      },
+      {
+        "rank": 3,
+        "text": "특별한 메뉴가 있어요",
+        "count": 335
+      }
+    ],
+    "verdict": "<strong>2.15배</strong>. 회집인데 맛이 신선도를 2배 이상 압도하는 드문 케이스! 리뷰 1,737건 검증.",
+    "rank": 20,
+    "category_short": "생선회"
+  },
+  {
+    "group": "A",
+    "name": "돌집",
+    "category": "한식/백반",
+    "total_reviews": "~800",
+    "ratio": 2.1,
+    "keywords": [
+      {
+        "rank": 1,
+        "text": "음식이 맛있어요",
+        "count": 530
+      },
+      {
+        "rank": 2,
+        "text": "양이 많아요",
+        "count": 252
+      },
+      {
+        "rank": 3,
+        "text": "친절해요",
+        "count": 175
+      }
+    ],
+    "verdict": "<strong>2.10배</strong>. 식객 허영만 백반기행 출연 맛집. 양도 많지만 맛이 확실히 앞서는 백반집.",
+    "rank": 21,
+    "category_short": "한식/백반"
+  },
+  {
+    "group": "A",
+    "name": "장터식당",
+    "category": "꽃게요리 전문 | 향동시장 근처",
+    "total_reviews": "3,299",
+    "ratio": 2.09,
+    "keywords": [
+      {
+        "rank": 1,
+        "text": "음식이 맛있어요",
+        "count": 1575
+      },
+      {
+        "rank": 2,
+        "text": "특별한 메뉴가 있어요",
+        "count": 753
+      },
+      {
+        "rank": 3,
+        "text": "재료가 신선해요",
+        "count": 660
+      }
+    ],
+    "verdict": "<strong>2.09배</strong>. 생생정보통 출연. 꽃게살 비빔밥의 성지. 꽃게무침 2인 30,000원.",
+    "rank": 22,
+    "category_short": "꽃게"
+  },
+  {
+    "group": "A",
+    "name": "1977남도정식",
+    "category": "한정식 전문",
+    "total_reviews": "312",
+    "ratio": 2.07,
+    "keywords": [
+      {
+        "rank": 1,
+        "text": "음식이 맛있어요",
+        "count": 250
+      },
+      {
+        "rank": 2,
+        "text": "재료가 신선해요",
+        "count": 121
+      },
+      {
+        "rank": 3,
+        "text": "양이 많아요",
+        "count": 103
+      }
+    ],
+    "verdict": "<strong>2.07배</strong>. 맛+신선도+양 삼박자. 인테리어도 멋진(80건) 남도 한정식 맛집.",
+    "rank": 23,
+    "category_short": "한정식"
+  },
+  {
+    "group": "A",
+    "name": "중화루",
+    "category": "중화요리 전문 | 목포역 근처",
+    "total_reviews": "814",
+    "ratio": 2.05,
+    "keywords": [
+      {
+        "rank": 1,
+        "text": "음식이 맛있어요",
+        "count": 470
+      },
+      {
+        "rank": 2,
+        "text": "특별한 메뉴가 있어요",
+        "count": 229
+      },
+      {
+        "rank": 3,
+        "text": "친절해요",
+        "count": 126
+      }
+    ],
+    "verdict": "<strong>2.05배</strong>. 생활의 달인 출연. 중깐(중화자장면)이 시그니처. 중깐/짬뽕 8,000원.",
+    "rank": 24,
+    "category_short": "중식"
+  },
+  {
+    "group": "A",
+    "name": "조선쫄복탕",
+    "category": "복어요리 전문",
+    "total_reviews": "1,511",
+    "ratio": 2.03,
+    "keywords": [
+      {
+        "rank": 1,
+        "text": "음식이 맛있어요",
+        "count": 917
+      },
+      {
+        "rank": 2,
+        "text": "특별한 메뉴가 있어요",
+        "count": 451
+      },
+      {
+        "rank": 3,
+        "text": "재료가 신선해요",
+        "count": 291
+      }
+    ],
+    "verdict": "<strong>2.03배</strong>. 리뷰 1,511건의 복어 전문점. 특별한 메뉴(쫄복탕)가 강점이면서도 맛이 2배 압도.",
+    "rank": 25,
+    "category_short": "복어"
+  },
+  {
+    "group": "B",
+    "name": "송학낙지회관",
+    "category": "낙지요리 전문",
+    "total_reviews": "",
+    "ratio": 1.97,
+    "keywords": [
+      {
+        "rank": 1,
+        "text": "음식이 맛있어요",
+        "count": 590
+      },
+      {
+        "rank": 2,
+        "text": "재료가 신선해요",
+        "count": 300
+      }
+    ],
+    "verdict": "<strong>1.97배</strong>로 2배에 근접. 낙지 전문점치고 맛이 신선도를 크게 앞서는 곳.",
+    "rank": 26,
+    "category_short": "낙지"
+  },
+  {
+    "group": "B",
+    "name": "성식당 목포본점",
+    "category": "떡갈비 전문 | 60년 전통 | 향동시장",
+    "total_reviews": "129",
+    "ratio": 1.95,
+    "keywords": [
+      {
+        "rank": 1,
+        "text": "음식이 맛있어요",
+        "count": 107
+      },
+      {
+        "rank": 2,
+        "text": "재료가 신선해요",
+        "count": 55
+      },
+      {
+        "rank": 3,
+        "text": "양이 많아요",
+        "count": 45
+      }
+    ],
+    "verdict": "<strong>1.95배</strong>로 2배에 근접! 허영만/백종원/배틀트립 출연 레전드. 60년 전통 떡갈비 백반.",
+    "rank": 27,
+    "category_short": "떡갈비"
+  },
+  {
+    "group": "B",
+    "name": "평광포미아구찜전문점",
+    "category": "아구찜 전문 | 평화광장",
+    "total_reviews": "2,545",
+    "ratio": 1.94,
+    "keywords": [
+      {
+        "rank": 1,
+        "text": "음식이 맛있어요",
+        "count": 1796
+      },
+      {
+        "rank": 2,
+        "text": "양이 많아요",
+        "count": 925
+      },
+      {
+        "rank": 3,
+        "text": "재료가 신선해요",
+        "count": 759
+      }
+    ],
+    "verdict": "<strong>1.94배</strong>. 맛+양+신선도 삼박자. 리뷰 2,500건 이상 검증. 볶음밥까지 먹으면 대만족.",
+    "rank": 28,
+    "category_short": "아구찜"
+  },
+  {
+    "group": "B",
+    "name": "백성식당",
+    "category": "한식 전문",
+    "total_reviews": "",
+    "ratio": 1.93,
+    "keywords": [
+      {
+        "rank": 1,
+        "text": "음식이 맛있어요",
+        "count": 822
+      },
+      {
+        "rank": 2,
+        "text": "친절해요",
+        "count": 426
+      },
+      {
+        "rank": 3,
+        "text": "재료가 신선해요",
+        "count": 377
+      }
+    ],
+    "verdict": "<strong>1.93배</strong>. 맛 평가가 높으면서 친절함과 신선도도 고르게 좋은 한식 맛집.",
+    "rank": 29,
+    "category_short": "한식"
+  },
+  {
+    "group": "B",
+    "name": "명인집",
+    "category": "한식 | 근대역사관 인근",
+    "total_reviews": "~450",
+    "ratio": 1.85,
+    "keywords": [
+      {
+        "rank": 1,
+        "text": "음식이 맛있어요",
+        "count": 283
+      },
+      {
+        "rank": 2,
+        "text": "재료가 신선해요",
+        "count": 153
+      },
+      {
+        "rank": 3,
+        "text": "인테리어가 멋져요",
+        "count": 141
+      }
+    ],
+    "verdict": "<strong>1.85배</strong>. 근대역사관 인근 한식 맛집. 맛과 인테리어, 특별한 메뉴 모두 고르게 좋은 평가.",
+    "rank": 30,
+    "category_short": "한식"
+  },
+  {
+    "group": "B",
+    "name": "하당먹거리",
+    "category": "낙지탕탕이 전문 | 옥암동",
+    "total_reviews": "2,570",
+    "ratio": 1.83,
+    "keywords": [
+      {
+        "rank": 1,
+        "text": "음식이 맛있어요",
+        "count": 1489
+      },
+      {
+        "rank": 2,
+        "text": "재료가 신선해요",
+        "count": 815
+      },
+      {
+        "rank": 3,
+        "text": "특별한 메뉴가 있어요",
+        "count": 559
+      }
+    ],
+    "verdict": "<strong>1.83배</strong>. 전현무계획/맛있는녀석들/블루리본 선정. 낙지탕탕이 2인 59,000원.",
+    "rank": 31,
+    "category_short": "낙지탕탕이"
+  },
+  {
+    "group": "B",
+    "name": "고하도포차",
+    "category": "포차/해산물 | 고하도",
+    "total_reviews": "258",
+    "ratio": 1.81,
+    "keywords": [
+      {
+        "rank": 1,
+        "text": "음식이 맛있어요",
+        "count": 195
+      },
+      {
+        "rank": 2,
+        "text": "기본 안주가 좋아요",
+        "count": 108
+      },
+      {
+        "rank": 3,
+        "text": "친절해요",
+        "count": 99
+      }
+    ],
+    "verdict": "<strong>1.81배</strong>. 기본 안주가 좋고 가성비도 좋다는 평. 친절함도 높은 점수.",
+    "rank": 32,
+    "category_short": "포차/해산물"
+  },
+  {
+    "group": "B",
+    "name": "소곱길 목포본점",
+    "category": "곱창 전문",
+    "total_reviews": "~300",
+    "ratio": 1.72,
+    "keywords": [
+      {
+        "rank": 1,
+        "text": "음식이 맛있어요",
+        "count": 160
+      },
+      {
+        "rank": 2,
+        "text": "재료가 신선해요",
+        "count": 93
+      },
+      {
+        "rank": 3,
+        "text": "양이 많아요",
+        "count": 59
+      }
+    ],
+    "verdict": "<strong>1.72배</strong>. 목포 곱창 전문점. 신선한 재료에 맛까지 좋다는 평가가 고르게 분포.",
+    "rank": 33,
+    "category_short": "곱창"
+  },
+  {
+    "group": "B",
+    "name": "남경회관",
+    "category": "한식 전문",
+    "total_reviews": "1,373",
+    "ratio": 1.71,
+    "keywords": [
+      {
+        "rank": 1,
+        "text": "음식이 맛있어요",
+        "count": 569
+      },
+      {
+        "rank": 2,
+        "text": "가성비가 좋아요",
+        "count": 333
+      },
+      {
+        "rank": 3,
+        "text": "양이 많아요",
+        "count": 299
+      }
+    ],
+    "verdict": "<strong>1.71배</strong>. 리뷰 1,373건의 검증된 한식당. 맛+가성비+양 삼박자 균형형.",
+    "rank": 34,
+    "category_short": "한식"
+  },
+  {
+    "group": "B",
+    "name": "유달제면소",
+    "category": "퓨전 한식 | 목포",
+    "total_reviews": "3,682",
+    "ratio": 1.69,
+    "keywords": [
+      {
+        "rank": 1,
+        "text": "음식이 맛있어요",
+        "count": 3385
+      },
+      {
+        "rank": 2,
+        "text": "특별한 메뉴가 있어요",
+        "count": 2008
+      },
+      {
+        "rank": 3,
+        "text": "재료가 신선해요",
+        "count": 1820
+      }
+    ],
+    "verdict": "<strong>1.69배</strong>. 리뷰 3,600건 이상의 인기 맛집. 특별한 메뉴와 신선도가 맛과 고르게 높은 균형형.",
+    "rank": 35,
+    "category_short": "퓨전 한식"
+  },
+  {
+    "group": "B",
+    "name": "뜰채(낙지요리)",
+    "category": "낙지요리 전문",
+    "total_reviews": "2,201",
+    "ratio": 1.68,
+    "keywords": [
+      {
+        "rank": 1,
+        "text": "음식이 맛있어요",
+        "count": 955
+      },
+      {
+        "rank": 2,
+        "text": "재료가 신선해요",
+        "count": 568
+      },
+      {
+        "rank": 3,
+        "text": "친절해요",
+        "count": 552
+      }
+    ],
+    "verdict": "<strong>1.68배</strong>. 블로그리뷰 16,740건의 목포 대표 낙지 맛집. 맛+신선도+친절함 고루 우수.",
+    "rank": 36,
+    "category_short": "낙지"
+  },
+  {
+    "group": "B",
+    "name": "모아음식점",
+    "category": "한식/백반 전문",
+    "total_reviews": "580",
+    "ratio": 1.67,
+    "keywords": [
+      {
+        "rank": 1,
+        "text": "음식이 맛있어요",
+        "count": 364
+      },
+      {
+        "rank": 2,
+        "text": "반찬이 잘 나와요",
+        "count": 218
+      },
+      {
+        "rank": 3,
+        "text": "재료가 신선해요",
+        "count": 144
+      }
+    ],
+    "verdict": "<strong>1.67배</strong>. \"반찬이 잘 나와요\"가 2순위인 드문 케이스. 맛+반찬+신선도 삼박자 백반 맛집.",
+    "rank": 37,
+    "category_short": "한식/백반"
+  },
+  {
+    "group": "B",
+    "name": "태동반점",
+    "category": "중식 전문",
+    "total_reviews": "2,351",
+    "ratio": 1.64,
+    "keywords": [
+      {
+        "rank": 1,
+        "text": "음식이 맛있어요",
+        "count": 1191
+      },
+      {
+        "rank": 2,
+        "text": "가성비가 좋아요",
+        "count": 725
+      },
+      {
+        "rank": 3,
+        "text": "특별한 메뉴가 있어요",
+        "count": 685
+      }
+    ],
+    "verdict": "<strong>1.64배</strong>. 맛+가성비+특별메뉴 삼박자. 리뷰 2,351건의 목포 대표 중식당.",
+    "rank": 38,
+    "category_short": "중식"
+  },
+  {
+    "group": "B",
+    "name": "해태초밥",
+    "category": "초밥/일식 | 평화광장",
+    "total_reviews": "6,070",
+    "ratio": 1.61,
+    "keywords": [
+      {
+        "rank": 1,
+        "text": "음식이 맛있어요",
+        "count": 5405
+      },
+      {
+        "rank": 2,
+        "text": "재료가 신선해요",
+        "count": 3367
+      },
+      {
+        "rank": 3,
+        "text": "친절해요",
+        "count": 2109
+      }
+    ],
+    "verdict": "<strong>1.61배</strong>. 리뷰 6,000건 이상의 목포 대표 초밥집. 맛·신선도·친절함·가성비 모두 높은 올라운더.",
+    "rank": 39,
+    "category_short": "초밥/일식"
+  },
+  {
+    "group": "B",
+    "name": "서울분식",
+    "category": "돈까스/분식 전문 | 대성동",
+    "total_reviews": "1,743",
+    "ratio": 1.6,
+    "keywords": [
+      {
+        "rank": 1,
+        "text": "음식이 맛있어요",
+        "count": 1500
+      },
+      {
+        "rank": 2,
+        "text": "양이 많아요",
+        "count": 939
+      },
+      {
+        "rank": 3,
+        "text": "가성비가 좋아요",
+        "count": 660
+      }
+    ],
+    "verdict": "<strong>1.60배</strong>. 생활의달인/백종원 3대천왕 출연. 맛+양+가성비 올라운더. 돈까스 9,000원.",
+    "rank": 40,
+    "category_short": "돈까스"
+  },
+  {
+    "group": "B",
+    "name": "이모식당",
+    "category": "한식/백반",
+    "total_reviews": "606",
+    "ratio": 1.59,
+    "keywords": [
+      {
+        "rank": 1,
+        "text": "음식이 맛있어요",
+        "count": 303
+      },
+      {
+        "rank": 2,
+        "text": "반찬이 잘 나와요",
+        "count": 190
+      },
+      {
+        "rank": 3,
+        "text": "가성비가 좋아요",
+        "count": 114
+      }
+    ],
+    "verdict": "<strong>1.59배</strong>. 반찬이 잘 나오는 백반집. 맛과 반찬 품질 모두 높은 평가.",
+    "rank": 41,
+    "category_short": "한식/백반"
+  },
+  {
+    "group": "B",
+    "name": "제일식당",
+    "category": "한식 전문",
+    "total_reviews": "60",
+    "ratio": 1.58,
+    "keywords": [
+      {
+        "rank": 1,
+        "text": "음식이 맛있어요",
+        "count": 19
+      },
+      {
+        "rank": 2,
+        "text": "가성비가 좋아요",
+        "count": 12
+      },
+      {
+        "rank": 3,
+        "text": "친절해요",
+        "count": 10
+      }
+    ],
+    "verdict": "<strong>1.58배</strong>. 리뷰 60건의 소규모 한식당이지만 맛+가성비+친절 삼박자 고른 평가.",
+    "rank": 42,
+    "category_short": "한식"
+  },
+  {
+    "group": "C",
+    "name": "용당반점",
+    "category": "중식 전문",
+    "total_reviews": "",
+    "ratio": 1.47,
+    "keywords": [
+      {
+        "rank": 1,
+        "text": "음식이 맛있어요",
+        "count": 128
+      },
+      {
+        "rank": 2,
+        "text": "특별한 메뉴가 있어요",
+        "count": 87
+      }
+    ],
+    "verdict": "1.47배. 맛과 특별한 메뉴가 고르게 평가. 소규모지만 개성 있는 중식당.",
+    "rank": 43,
+    "category_short": "중식"
+  },
+  {
+    "group": "C",
+    "name": "튼실이네산낙지전복",
+    "category": "낙지/전복 전문",
+    "total_reviews": "~1,200",
+    "ratio": 1.37,
+    "keywords": [
+      {
+        "rank": 1,
+        "text": "음식이 맛있어요",
+        "count": 842
+      },
+      {
+        "rank": 2,
+        "text": "재료가 신선해요",
+        "count": 613
+      },
+      {
+        "rank": 3,
+        "text": "매장이 넓어요",
+        "count": 412
+      }
+    ],
+    "verdict": "1.37배. 산낙지·전복 전문점답게 신선도가 맛과 거의 동급. 매장도 넓어 단체 모임에 적합.",
+    "rank": 44,
+    "category_short": "낙지/전복"
+  },
+  {
+    "group": "C",
+    "name": "바다조개전골",
+    "category": "조개전골 | 평화광장",
+    "total_reviews": "1,766",
+    "ratio": 1.31,
+    "keywords": [
+      {
+        "rank": 1,
+        "text": "음식이 맛있어요",
+        "count": 1297
+      },
+      {
+        "rank": 2,
+        "text": "재료가 신선해요",
+        "count": 992
+      },
+      {
+        "rank": 3,
+        "text": "양이 많아요",
+        "count": 731
+      }
+    ],
+    "verdict": "<strong>1.31배</strong>. 조개전골 전문점답게 신선도가 맛과 거의 동급. 양도 넉넉하다는 평가 다수.",
+    "rank": 45,
+    "category_short": "조개전골"
+  },
+  {
+    "group": "C",
+    "name": "본전회수산",
+    "category": "회/해산물 전문",
+    "total_reviews": "",
+    "ratio": 1.3,
+    "keywords": [
+      {
+        "rank": 1,
+        "text": "음식이 맛있어요",
+        "count": 1830
+      },
+      {
+        "rank": 2,
+        "text": "재료가 신선해요",
+        "count": 1406
+      }
+    ],
+    "verdict": "1.30배. 회집 특성상 맛과 신선도가 거의 동급. 두 평가 모두 매우 높은 수준.",
+    "rank": 46,
+    "category_short": "회/해산물"
+  },
+  {
+    "group": "C",
+    "name": "긴자회수산",
+    "category": "회/해산물 전문 | 목포 핫플",
+    "total_reviews": "3,379",
+    "ratio": 1.26,
+    "keywords": [
+      {
+        "rank": 1,
+        "text": "음식이 맛있어요",
+        "count": 2459
+      },
+      {
+        "rank": 2,
+        "text": "재료가 신선해요",
+        "count": 1948
+      },
+      {
+        "rank": 3,
+        "text": "양이 많아요",
+        "count": 1256
+      }
+    ],
+    "verdict": "1.26배. 맛/신선도/양 모두 높은 올라운더. 리뷰 3,379건의 핫플.",
+    "rank": 47,
+    "category_short": "회/해산물"
+  },
+  {
+    "group": "C",
+    "name": "진양횟집",
+    "category": "회정식 전문",
+    "total_reviews": "~200",
+    "ratio": 1.24,
+    "keywords": [
+      {
+        "rank": 1,
+        "text": "음식이 맛있어요",
+        "count": 77
+      },
+      {
+        "rank": 2,
+        "text": "재료가 신선해요",
+        "count": 62
+      },
+      {
+        "rank": 3,
+        "text": "가성비가 좋아요",
+        "count": 33
+      }
+    ],
+    "verdict": "1.24배. 회정식 전문점으로 맛과 신선도가 고르게 높은 전형적 해산물 패턴.",
+    "rank": 48,
+    "category_short": "회정식"
+  },
+  {
+    "group": "C",
+    "name": "원조갯내음",
+    "category": "탕탕이/해산물 전문",
+    "total_reviews": "",
+    "ratio": 1.3,
+    "keywords": [
+      {
+        "rank": 1,
+        "text": "음식이 맛있어요",
+        "count": 552
+      },
+      {
+        "rank": 2,
+        "text": "재료가 신선해요",
+        "count": 464
+      }
+    ],
+    "verdict": "1.30배 (추정). 해산물 전문점 특유의 맛-신선도 동급 패턴. 갯내음 가득한 탕탕이 맛집.",
+    "rank": 49,
+    "category_short": "해산물"
+  },
+  {
+    "group": "C",
+    "name": "해촌",
+    "category": "회/해산물 전문",
+    "total_reviews": "",
+    "ratio": 1.18,
+    "keywords": [
+      {
+        "rank": 1,
+        "text": "음식이 맛있어요",
+        "count": 380
+      },
+      {
+        "rank": 2,
+        "text": "재료가 신선해요",
+        "count": 322
+      }
+    ],
+    "verdict": "1.18배. 회집 장르 특성. 맛과 신선도가 거의 동급으로 높게 평가.",
+    "rank": 50,
+    "category_short": "회/해산물"
+  },
+  {
+    "group": "C",
+    "name": "윤이네수산",
+    "category": "생선회 전문",
+    "total_reviews": "1,785",
+    "ratio": 1.11,
+    "keywords": [
+      {
+        "rank": 1,
+        "text": "음식이 맛있어요",
+        "count": 1369
+      },
+      {
+        "rank": 2,
+        "text": "재료가 신선해요",
+        "count": 1235
+      },
+      {
+        "rank": 3,
+        "text": "양이 많아요",
+        "count": 930
+      }
+    ],
+    "verdict": "1.11배. 맛=신선도 거의 동급! 양도 풍성. 회집의 전형적 우수 패턴. 가성비(662건)도 높이 평가.",
+    "rank": 51,
+    "category_short": "생선회"
+  },
+  {
+    "group": "C",
+    "name": "목포연희네포차 항구포차9호점",
+    "category": "포장마차/해물 | 목포항",
+    "total_reviews": "13,155",
+    "ratio": 1.05,
+    "keywords": [
+      {
+        "rank": 1,
+        "text": "음식이 맛있어요",
+        "count": 11881
+      },
+      {
+        "rank": 2,
+        "text": "특별한 메뉴가 있어요",
+        "count": 11284
+      },
+      {
+        "rank": 3,
+        "text": "반려동물과 가기 좋아요",
+        "count": 6920
+      }
+    ],
+    "verdict": "1.05배. 맛과 특별메뉴(육꼬비)가 거의 동급! 목포 최다 리뷰 13,155건. 구글 평점 4.6.",
+    "rank": 52,
+    "category_short": "포차/해물"
+  },
+  {
+    "group": "C",
+    "name": "남태평양",
+    "category": "생선회 전문",
+    "total_reviews": "~250",
+    "ratio": 1.03,
+    "keywords": [
+      {
+        "rank": 1,
+        "text": "재료가 신선해요",
+        "count": 70
+      },
+      {
+        "rank": 2,
+        "text": "음식이 맛있어요",
+        "count": 68
+      },
+      {
+        "rank": 3,
+        "text": "특별한 메뉴가 있어요",
+        "count": 43
+      }
+    ],
+    "verdict": "1.03배. 신선도가 맛을 역전한 유일한 케이스! 재료 신선도가 1위인 횟집.",
+    "rank": 53,
+    "category_short": "생선회"
+  },
+  {
+    "rank": 0,
+    "group": "A",
+    "name": "청해식당",
+    "category": "해산물 | 목포 해안로",
+    "category_short": "해산물",
+    "total_reviews": "109",
+    "ratio": 3.12,
+    "keywords": [
+      {
+        "rank": 1,
+        "text": "음식이 맛있어요",
+        "count": 53
+      },
+      {
+        "rank": 2,
+        "text": "친절해요",
+        "count": 17
+      },
+      {
+        "rank": 3,
+        "text": "매장이 넓어요",
+        "count": 14
+      }
+    ],
+    "verdict": "맛 평가가 2순위(친절함)의 <strong>3.12배</strong>로 압도적. 해안로 위치 해산물 전문."
+  },
+  {
+    "rank": 0,
+    "group": "B",
+    "name": "오거리식당",
+    "category": "한식 | 목포 해안로",
+    "category_short": "한식",
+    "total_reviews": "334",
+    "ratio": 1.78,
+    "keywords": [
+      {
+        "rank": 1,
+        "text": "음식이 맛있어요",
+        "count": 169
+      },
+      {
+        "rank": 2,
+        "text": "친절해요",
+        "count": 95
+      },
+      {
+        "rank": 3,
+        "text": "재료가 신선해요",
+        "count": 90
+      }
+    ],
+    "verdict": "맛 평가가 2순위(친절함)의 <strong>1.78배</strong>. 친절도와 신선도도 고르게 높은 균형형."
+  },
+  {
+    "rank": 0,
+    "group": "B",
+    "name": "대흥오리",
+    "category": "오리 전문 | 목포 평화로",
+    "category_short": "오리구이",
+    "total_reviews": "58",
+    "ratio": 1.86,
+    "keywords": [
+      {
+        "rank": 1,
+        "text": "음식이 맛있어요",
+        "count": 54
+      },
+      {
+        "rank": 2,
+        "text": "친절해요",
+        "count": 29
+      },
+      {
+        "rank": 3,
+        "text": "고기 질이 좋아요",
+        "count": 23
+      }
+    ],
+    "verdict": "맛 평가가 2순위(친절함)의 <strong>1.86배</strong>. 고기 질 평가도 좋은 오리 전문점."
+  },
+  {
+    "rank": 0,
+    "group": "A",
+    "name": "다원옥 목포평화광장점",
+    "category": "국밥",
+    "category_short": "국밥",
+    "total_reviews": "136",
+    "ratio": 2.17,
+    "keywords": [
+      {
+        "rank": 1,
+        "text": "음식이 맛있어요",
+        "count": 117
+      },
+      {
+        "rank": 2,
+        "text": "양이 많아요",
+        "count": 54
+      },
+      {
+        "rank": 3,
+        "text": "매장이 넓어요",
+        "count": 54
+      }
+    ],
+    "verdict": "맛 평가(117)가 2순위(양이 많아요, 54)의 <strong>2.17배</strong>로 압도적. 매장이 넓어요도 높게 평가.",
+    "place_id": "2008285676"
+  },
+  {
+    "rank": 0,
+    "group": "C",
+    "name": "석암생소금구이 목포평화광장점",
+    "category": "육류,고기요리",
+    "category_short": "육류,고기요리",
+    "total_reviews": "466",
+    "ratio": 1.22,
+    "keywords": [
+      {
+        "rank": 1,
+        "text": "음식이 맛있어요",
+        "count": 429
+      },
+      {
+        "rank": 2,
+        "text": "고기 질이 좋아요",
+        "count": 351
+      },
+      {
+        "rank": 3,
+        "text": "매장이 넓어요",
+        "count": 210
+      }
+    ],
+    "verdict": "맛(429)과 고기 질이 좋아요(351)이 <strong>1.22배</strong>로 근접. 여러 강점이 동급 수준.",
+    "place_id": "2016758755"
+  },
+  {
+    "rank": 0,
+    "group": "B",
+    "name": "족자카야",
+    "category": "족발,보쌈",
+    "category_short": "족발,보쌈",
+    "total_reviews": "717",
+    "ratio": 1.84,
+    "keywords": [
+      {
+        "rank": 1,
+        "text": "음식이 맛있어요",
+        "count": 696
+      },
+      {
+        "rank": 2,
+        "text": "친절해요",
+        "count": 379
+      },
+      {
+        "rank": 3,
+        "text": "인테리어가 멋져요",
+        "count": 346
+      }
+    ],
+    "verdict": "맛 평가(696)가 2순위(친절해요, 379)의 <strong>1.84배</strong>. 친절해요도 고르게 높은 균형형. 인테리어가 멋져요도 높게 평가.",
+    "place_id": "1444088650"
+  },
+  {
+    "rank": 0,
+    "group": "B",
+    "name": "소곱길 목포본점",
+    "category": "한식",
+    "category_short": "한식",
+    "total_reviews": "171",
+    "ratio": 1.71,
+    "keywords": [
+      {
+        "rank": 1,
+        "text": "음식이 맛있어요",
+        "count": 161
+      },
+      {
+        "rank": 2,
+        "text": "재료가 신선해요",
+        "count": 94
+      },
+      {
+        "rank": 3,
+        "text": "양이 많아요",
+        "count": 60
+      }
+    ],
+    "verdict": "맛 평가(161)가 2순위(재료가 신선해요, 94)의 <strong>1.71배</strong>. 재료가 신선해요도 고르게 높은 균형형. 양이 많아요도 높게 평가.",
+    "place_id": "2019860154"
+  },
+  {
+    "rank": 0,
+    "group": "B",
+    "name": "목포온김에",
+    "category": "한식",
+    "category_short": "한식",
+    "total_reviews": "26",
+    "ratio": 1.67,
+    "keywords": [
+      {
+        "rank": 1,
+        "text": "음식이 맛있어요",
+        "count": 20
+      },
+      {
+        "rank": 2,
+        "text": "재료가 신선해요",
+        "count": 12
+      },
+      {
+        "rank": 3,
+        "text": "인테리어가 멋져요",
+        "count": 9
+      }
+    ],
+    "verdict": "맛 평가(20)가 2순위(재료가 신선해요, 12)의 <strong>1.67배</strong>. 재료가 신선해요도 고르게 높은 균형형. 인테리어가 멋져요도 높게 평가.",
+    "place_id": "2098617797"
+  },
+  {
+    "rank": 0,
+    "group": "A",
+    "name": "예원",
+    "category": "중식당",
+    "category_short": "중식당",
+    "total_reviews": "550",
+    "ratio": 3.13,
+    "keywords": [
+      {
+        "rank": 1,
+        "text": "음식이 맛있어요",
+        "count": 347
+      },
+      {
+        "rank": 2,
+        "text": "친절해요",
+        "count": 111
+      },
+      {
+        "rank": 3,
+        "text": "매장이 넓어요",
+        "count": 99
+      }
+    ],
+    "verdict": "맛 평가(347)가 2순위(친절해요, 111)의 <strong>3.13배</strong>로 압도적. 매장이 넓어요도 높게 평가.",
+    "place_id": "1779686868"
+  },
+  {
+    "rank": 0,
+    "group": "A",
+    "name": "소심한남자",
+    "category": "일식당",
+    "category_short": "일식당",
+    "total_reviews": "629",
+    "ratio": 2.65,
+    "keywords": [
+      {
+        "rank": 1,
+        "text": "음식이 맛있어요",
+        "count": 379
+      },
+      {
+        "rank": 2,
+        "text": "친절해요",
+        "count": 143
+      },
+      {
+        "rank": 3,
+        "text": "재료가 신선해요",
+        "count": 136
+      }
+    ],
+    "verdict": "맛 평가(379)가 2순위(친절해요, 143)의 <strong>2.65배</strong>로 압도적. 재료가 신선해요도 높게 평가.",
+    "place_id": "980871720"
+  }
+]
