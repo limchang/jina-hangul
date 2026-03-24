@@ -28,10 +28,10 @@ const VOWELS = [
   { char:'ㅑ', strokes:[{path:'M 250 130 L 250 370'}, {path:'M 250 210 L 330 210'}, {path:'M 250 290 L 330 290'}] },
   { char:'ㅓ', strokes:[{path:'M 170 250 L 250 250'}, {path:'M 250 130 L 250 370'}] },
   { char:'ㅕ', strokes:[{path:'M 170 210 L 250 210'}, {path:'M 170 290 L 250 290'}, {path:'M 250 130 L 250 370'}] },
-  { char:'ㅗ', strokes:[{path:'M 250 150 L 250 250'}, {path:'M 160 250 L 340 250'}] },
-  { char:'ㅛ', strokes:[{path:'M 210 150 L 210 250'}, {path:'M 290 150 L 290 250'}, {path:'M 160 250 L 340 250'}] },
-  { char:'ㅜ', strokes:[{path:'M 160 250 L 340 250'}, {path:'M 250 250 L 250 350'}] },
-  { char:'ㅠ', strokes:[{path:'M 160 250 L 340 250'}, {path:'M 210 250 L 210 350'}, {path:'M 290 250 L 290 350'}] },
+  { char:'ㅗ', strokes:[{path:'M 250 130 L 250 260'}, {path:'M 130 260 L 370 260'}] },
+  { char:'ㅛ', strokes:[{path:'M 190 130 L 190 260'}, {path:'M 310 130 L 310 260'}, {path:'M 130 260 L 370 260'}] },
+  { char:'ㅜ', strokes:[{path:'M 130 240 L 370 240'}, {path:'M 250 240 L 250 370'}] },
+  { char:'ㅠ', strokes:[{path:'M 130 240 L 370 240'}, {path:'M 190 240 L 190 370'}, {path:'M 310 240 L 310 370'}] },
   { char:'ㅡ', strokes:[{path:'M 150 250 L 350 250'}] },
   { char:'ㅣ', strokes:[{path:'M 250 130 L 250 370'}] }
 ];
