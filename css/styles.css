@@ -95,7 +95,10 @@ main { flex: 1; display: flex; align-items: center; justify-content: center; wid
 .nav-arrow:active { transform: scale(0.95) translateY(4px); box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
 
 .study-card {
-  width: 750px; height: 650px; border-radius: 40px;
+  width: min(650px, calc(100vh - 280px), calc(100vw - 220px));
+  height: min(650px, calc(100vh - 280px), calc(100vw - 220px));
+  aspect-ratio: 1 / 1;
+  border-radius: 40px;
   background:
     radial-gradient(circle at 20% 20%, rgba(255,255,255,0.18) 0%, transparent 50%),
     radial-gradient(circle at 80% 80%, rgba(255,255,255,0.12) 0%, transparent 50%),
