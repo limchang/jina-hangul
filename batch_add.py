@@ -3,8 +3,7 @@
 candidates.json에서 N개를 골라 자동 분석 후 restaurants.json에 추가 + 시트 업데이트
 Usage: python batch_add.py [개수=10]
 """
-import json, os, sys, time, subprocess, re
-import urllib.request
+import json, os, sys, subprocess
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 sys.stdout.reconfigure(encoding='utf-8')
@@ -15,7 +14,7 @@ ENV["PYTHONIOENCODING"] = "utf-8"
 
 BASE = os.path.dirname(os.path.abspath(__file__))
 N       = int(sys.argv[1]) if len(sys.argv) > 1 else 10
-WORKERS = int(sys.argv[2]) if len(sys.argv) > 2 else 3  # 동시 처리 수
+WORKERS = int(sys.argv[2]) if len(sys.argv) > 2 else 5  # 동시 처리 수
 
 # 카페/베이커리/비음식 제외 키워드
 SKIP_KEYWORDS = ['카페', '베이커리', '디저트', '샐러드', '편의점', '마트', 'SUKSAN', '케이블카맛집']
@@ -39,27 +38,6 @@ filtered = [
 
 print(f"후보 {len(filtered)}개 중 {N}개 처리 시작\n")
 
-# ── 카테고리 추출 (Jina home 페이지에서) ──────────────────
-JINA_HEADERS = {'User-Agent': 'Mozilla/5.0', 'Accept': 'text/plain'}
-
-def fetch_jina(url):
-    req = urllib.request.Request("https://r.jina.ai/" + url, headers=JINA_HEADERS)
-    with urllib.request.urlopen(req, timeout=20) as r:
-        return r.read().decode('utf-8')
-
-def get_category(place_id, name=""):
-    try:
-        content = fetch_jina(f"https://m.place.naver.com/restaurant/{place_id}/home")
-        # 패턴: "식당명 카테고리" (예: "족자카야 족발,보쌈")
-        if name:
-            m = re.search(re.escape(name) + r'\s+([가-힣,·/]+)', content[:3000])
-            if m:
-                cat = m.group(1).strip()
-                if len(cat) < 30:
-                    return cat
-    except:
-        pass
-    return ""
 
 # ── 자동 verdict 생성 ──────────────────────────────────────
 def auto_verdict(name, ratio, group, keywords):
@@ -91,7 +69,7 @@ def process_one(cand):
         return name, pid, None, "키워드 없음"
     if data.get("total_reviews", 0) < 10:
         return name, pid, None, f"리뷰 {data.get('total_reviews')}건"
-    category = data.get("category", "") or get_category(pid, name)
+    category = data.get("category", "")
     cat_short = category.split("|")[0].strip() if category else ""
     entry = {
         "rank": 0,
