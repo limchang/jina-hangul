@@ -28,11 +28,23 @@ existing_ids   = {r.get("place_id","") for r in existing}
 with open(os.path.join(BASE, "candidates.json"), encoding='utf-8') as f:
     candidates = json.load(f)
 
+# ── 블랙리스트 로드 ────────────────────────────────────────
+bl_path = os.path.join(BASE, "blacklist.json")
+if os.path.exists(bl_path):
+    with open(bl_path, encoding='utf-8') as f:
+        blacklist = json.load(f)
+    bl_names = {r["name"] for r in blacklist}
+    bl_ids   = {r["place_id"] for r in blacklist}
+else:
+    bl_names, bl_ids = set(), set()
+
 # ── 후보 필터링 ────────────────────────────────────────────
 filtered = [
     c for c in candidates
     if c["name"] not in existing_names
     and c["place_id"] not in existing_ids
+    and c["name"] not in bl_names
+    and c["place_id"] not in bl_ids
     and not any(kw in c["name"] for kw in SKIP_KEYWORDS)
 ]
 

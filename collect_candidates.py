@@ -127,6 +127,16 @@ def main():
         existing = json.load(f)
     existing_names = {r["name"] for r in existing}
 
+    # 블랙리스트 로드
+    bl_path = os.path.join(BASE, "blacklist.json")
+    if os.path.exists(bl_path):
+        with open(bl_path, encoding="utf-8") as f:
+            blacklist = json.load(f)
+        bl_names = {r["name"] for r in blacklist}
+        bl_ids   = {r["place_id"] for r in blacklist}
+    else:
+        bl_names, bl_ids = set(), set()
+
     print(f"기존 등록: {len(existing_names)}곳")
     if skip_verify:
         print("[빠른 모드] 목포 소재 검증 건너뜀 (모든 쿼리에 '목포' 포함으로 신뢰)")
@@ -141,7 +151,10 @@ def main():
         content = fetch_jina(url)
         found = extract_restaurants(content)
         new = {pid: info for pid, info in found.items()
-               if pid not in all_candidates and info["name"] not in existing_names}
+               if pid not in all_candidates
+               and info["name"] not in existing_names
+               and info["name"] not in bl_names
+               and pid not in bl_ids}
         all_candidates.update(new)
         print(f"+{len(new)}개 (누적 {len(all_candidates)}개)")
         time.sleep(0.5)
