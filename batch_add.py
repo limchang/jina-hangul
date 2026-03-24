@@ -14,7 +14,7 @@ ENV["PYTHONIOENCODING"] = "utf-8"
 
 BASE = os.path.dirname(os.path.abspath(__file__))
 N       = int(sys.argv[1]) if len(sys.argv) > 1 else 10
-WORKERS = int(sys.argv[2]) if len(sys.argv) > 2 else 5  # 동시 처리 수
+WORKERS = int(sys.argv[2]) if len(sys.argv) > 2 else 3  # 동시 처리 수
 
 # 카페/베이커리/비음식 제외 키워드
 SKIP_KEYWORDS = ['카페', '베이커리', '디저트', '샐러드', '편의점', '마트', 'SUKSAN', '케이블카맛집']
