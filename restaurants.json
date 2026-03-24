@@ -5629,5 +5629,845 @@
     ],
     "verdict": "맛 평가(209)가 2순위(양이 많아요, 120)의 <strong>1.74배</strong>. 양이 많아요도 고르게 높은 균형형. 재료가 신선해요도 높게 평가.",
     "place_id": "2099848138"
+  },
+  {
+    "rank": 0,
+    "group": "C",
+    "name": "알퐁스카페",
+    "category": "",
+    "category_short": "",
+    "total_reviews": "207",
+    "ratio": 1.03,
+    "keywords": [
+      {
+        "rank": 1,
+        "text": "인테리어가 멋져요",
+        "count": 147
+      },
+      {
+        "rank": 2,
+        "text": "커피가 맛있어요",
+        "count": 143
+      },
+      {
+        "rank": 3,
+        "text": "디저트가 맛있어요",
+        "count": 103
+      }
+    ],
+    "verdict": "맛(147)과 커피가 맛있어요(143)이 <strong>1.03배</strong>로 근접. 여러 강점이 동급 수준.",
+    "place_id": "1273189330"
+  },
+  {
+    "rank": 0,
+    "group": "C",
+    "name": "나나방콕 목포평화광장점",
+    "category": "",
+    "category_short": "",
+    "total_reviews": "3745",
+    "ratio": 1.45,
+    "keywords": [
+      {
+        "rank": 1,
+        "text": "음식이 맛있어요",
+        "count": 3455
+      },
+      {
+        "rank": 2,
+        "text": "인테리어가 멋져요",
+        "count": 2383
+      },
+      {
+        "rank": 3,
+        "text": "재료가 신선해요",
+        "count": 1828
+      }
+    ],
+    "verdict": "맛(3455)과 인테리어가 멋져요(2383)이 <strong>1.45배</strong>로 근접. 여러 강점이 동급 수준.",
+    "place_id": "2081741495"
+  },
+  {
+    "rank": 0,
+    "group": "A",
+    "name": "비꾸에",
+    "category": "",
+    "category_short": "",
+    "total_reviews": "199",
+    "ratio": 2.02,
+    "keywords": [
+      {
+        "rank": 1,
+        "text": "음식이 맛있어요",
+        "count": 190
+      },
+      {
+        "rank": 2,
+        "text": "재료가 신선해요",
+        "count": 94
+      },
+      {
+        "rank": 3,
+        "text": "현지 맛에 가까워요",
+        "count": 84
+      }
+    ],
+    "verdict": "맛 평가(190)가 2순위(재료가 신선해요, 94)의 <strong>2.02배</strong>로 압도적. 현지 맛에 가까워요도 높게 평가.",
+    "place_id": "1466454740"
+  },
+  {
+    "rank": 0,
+    "group": "A",
+    "name": "국수나무 목포석현점",
+    "category": "국수나무 목포석현점",
+    "category_short": "국수나무 목포석현점",
+    "total_reviews": "97",
+    "ratio": 2.05,
+    "keywords": [
+      {
+        "rank": 1,
+        "text": "음식이 맛있어요",
+        "count": 88
+      },
+      {
+        "rank": 2,
+        "text": "재료가 신선해요",
+        "count": 43
+      },
+      {
+        "rank": 3,
+        "text": "양이 많아요",
+        "count": 42
+      }
+    ],
+    "verdict": "맛 평가(88)가 2순위(재료가 신선해요, 43)의 <strong>2.05배</strong>로 압도적. 양이 많아요도 높게 평가.",
+    "place_id": "2054244266"
+  },
+  {
+    "rank": 0,
+    "group": "B",
+    "name": "이연규유달전통맷돌면옥 하당큰집 본점",
+    "category": "",
+    "category_short": "",
+    "total_reviews": "1219",
+    "ratio": 1.59,
+    "keywords": [
+      {
+        "rank": 1,
+        "text": "음식이 맛있어요",
+        "count": 1074
+      },
+      {
+        "rank": 2,
+        "text": "재료가 신선해요",
+        "count": 676
+      },
+      {
+        "rank": 3,
+        "text": "양이 많아요",
+        "count": 446
+      }
+    ],
+    "verdict": "맛 평가(1074)가 2순위(재료가 신선해요, 676)의 <strong>1.59배</strong>. 재료가 신선해요도 고르게 높은 균형형. 양이 많아요도 높게 평가.",
+    "place_id": "13039371"
+  },
+  {
+    "rank": 0,
+    "group": "B",
+    "name": "트라이팟",
+    "category": "",
+    "category_short": "",
+    "total_reviews": "1238",
+    "ratio": 1.62,
+    "keywords": [
+      {
+        "rank": 1,
+        "text": "음식이 맛있어요",
+        "count": 1158
+      },
+      {
+        "rank": 2,
+        "text": "인테리어가 멋져요",
+        "count": 716
+      },
+      {
+        "rank": 3,
+        "text": "재료가 신선해요",
+        "count": 706
+      }
+    ],
+    "verdict": "맛 평가(1158)가 2순위(인테리어가 멋져요, 716)의 <strong>1.62배</strong>. 인테리어가 멋져요도 고르게 높은 균형형. 재료가 신선해요도 높게 평가.",
+    "place_id": "1620964854"
+  },
+  {
+    "rank": 0,
+    "group": "B",
+    "name": "마지아레스토",
+    "category": "",
+    "category_short": "",
+    "total_reviews": "942",
+    "ratio": 1.8,
+    "keywords": [
+      {
+        "rank": 1,
+        "text": "음식이 맛있어요",
+        "count": 500
+      },
+      {
+        "rank": 2,
+        "text": "특별한 메뉴가 있어요",
+        "count": 278
+      },
+      {
+        "rank": 3,
+        "text": "인테리어가 멋져요",
+        "count": 230
+      }
+    ],
+    "verdict": "맛 평가(500)가 2순위(특별한 메뉴가 있어요, 278)의 <strong>1.80배</strong>. 특별한 메뉴가 있어요도 고르게 높은 균형형. 인테리어가 멋져요도 높게 평가.",
+    "place_id": "1556196399"
+  },
+  {
+    "rank": 0,
+    "group": "B",
+    "name": "호남로52",
+    "category": "",
+    "category_short": "",
+    "total_reviews": "35",
+    "ratio": 1.58,
+    "keywords": [
+      {
+        "rank": 1,
+        "text": "음식이 맛있어요",
+        "count": 19
+      },
+      {
+        "rank": 2,
+        "text": "재료가 신선해요",
+        "count": 12
+      },
+      {
+        "rank": 3,
+        "text": "특별한 메뉴가 있어요",
+        "count": 11
+      }
+    ],
+    "verdict": "맛 평가(19)가 2순위(재료가 신선해요, 12)의 <strong>1.58배</strong>. 재료가 신선해요도 고르게 높은 균형형. 특별한 메뉴가 있어요도 높게 평가.",
+    "place_id": "1087894275"
+  },
+  {
+    "rank": 0,
+    "group": "C",
+    "name": "와플랑 목포평화광장점",
+    "category": "와플랑 목포평화광장점",
+    "category_short": "와플랑 목포평화광장점",
+    "total_reviews": "2219",
+    "ratio": 1.1,
+    "keywords": [
+      {
+        "rank": 1,
+        "text": "친절해요",
+        "count": 1016
+      },
+      {
+        "rank": 2,
+        "text": "디저트가 맛있어요",
+        "count": 924
+      },
+      {
+        "rank": 3,
+        "text": "음식이 맛있어요",
+        "count": 790
+      }
+    ],
+    "verdict": "맛(1016)과 디저트가 맛있어요(924)이 <strong>1.10배</strong>로 근접. 여러 강점이 동급 수준.",
+    "place_id": "1178003742"
+  },
+  {
+    "rank": 0,
+    "group": "A",
+    "name": "구라파소년",
+    "category": "",
+    "category_short": "",
+    "total_reviews": "240",
+    "ratio": 2.14,
+    "keywords": [
+      {
+        "rank": 1,
+        "text": "음식이 맛있어요",
+        "count": 154
+      },
+      {
+        "rank": 2,
+        "text": "인테리어가 멋져요",
+        "count": 72
+      },
+      {
+        "rank": 3,
+        "text": "친절해요",
+        "count": 59
+      }
+    ],
+    "verdict": "맛 평가(154)가 2순위(인테리어가 멋져요, 72)의 <strong>2.14배</strong>로 압도적. 친절해요도 높게 평가.",
+    "place_id": "744223265"
+  },
+  {
+    "rank": 0,
+    "group": "A",
+    "name": "온도 비스트로",
+    "category": "",
+    "category_short": "",
+    "total_reviews": "254",
+    "ratio": 2.14,
+    "keywords": [
+      {
+        "rank": 1,
+        "text": "음식이 맛있어요",
+        "count": 212
+      },
+      {
+        "rank": 2,
+        "text": "인테리어가 멋져요",
+        "count": 99
+      },
+      {
+        "rank": 3,
+        "text": "재료가 신선해요",
+        "count": 87
+      }
+    ],
+    "verdict": "맛 평가(212)가 2순위(인테리어가 멋져요, 99)의 <strong>2.14배</strong>로 압도적. 재료가 신선해요도 높게 평가.",
+    "place_id": "1169059941"
+  },
+  {
+    "rank": 0,
+    "group": "C",
+    "name": "레이디벅스 터미널점",
+    "category": "레이디벅스 터미널점",
+    "category_short": "레이디벅스 터미널점",
+    "total_reviews": "1690",
+    "ratio": 1.13,
+    "keywords": [
+      {
+        "rank": 1,
+        "text": "커피가 맛있어요",
+        "count": 1037
+      },
+      {
+        "rank": 2,
+        "text": "인테리어가 멋져요",
+        "count": 919
+      },
+      {
+        "rank": 3,
+        "text": "디저트가 맛있어요",
+        "count": 735
+      }
+    ],
+    "verdict": "맛(1037)과 인테리어가 멋져요(919)이 <strong>1.13배</strong>로 근접. 여러 강점이 동급 수준.",
+    "place_id": "1737058016"
+  },
+  {
+    "rank": 0,
+    "group": "B",
+    "name": "피렌체역",
+    "category": "",
+    "category_short": "",
+    "total_reviews": "124",
+    "ratio": 1.51,
+    "keywords": [
+      {
+        "rank": 1,
+        "text": "음식이 맛있어요",
+        "count": 119
+      },
+      {
+        "rank": 2,
+        "text": "특별한 메뉴가 있어요",
+        "count": 79
+      },
+      {
+        "rank": 3,
+        "text": "재료가 신선해요",
+        "count": 76
+      }
+    ],
+    "verdict": "맛 평가(119)가 2순위(특별한 메뉴가 있어요, 79)의 <strong>1.51배</strong>. 특별한 메뉴가 있어요도 고르게 높은 균형형. 재료가 신선해요도 높게 평가.",
+    "place_id": "1886862682"
+  },
+  {
+    "rank": 0,
+    "group": "C",
+    "name": "쑥꿀레",
+    "category": "",
+    "category_short": "",
+    "total_reviews": "2594",
+    "ratio": 1.37,
+    "keywords": [
+      {
+        "rank": 1,
+        "text": "음식이 맛있어요",
+        "count": 1230
+      },
+      {
+        "rank": 2,
+        "text": "특별한 메뉴가 있어요",
+        "count": 898
+      },
+      {
+        "rank": 3,
+        "text": "친절해요",
+        "count": 300
+      }
+    ],
+    "verdict": "맛(1230)과 특별한 메뉴가 있어요(898)이 <strong>1.37배</strong>로 근접. 여러 강점이 동급 수준.",
+    "place_id": "11717943"
+  },
+  {
+    "rank": 0,
+    "group": "B",
+    "name": "잠만포차",
+    "category": "",
+    "category_short": "",
+    "total_reviews": "173",
+    "ratio": 1.68,
+    "keywords": [
+      {
+        "rank": 1,
+        "text": "음식이 맛있어요",
+        "count": 109
+      },
+      {
+        "rank": 2,
+        "text": "기본 안주가 좋아요",
+        "count": 65
+      },
+      {
+        "rank": 3,
+        "text": "친절해요",
+        "count": 48
+      }
+    ],
+    "verdict": "맛 평가(109)가 2순위(기본 안주가 좋아요, 65)의 <strong>1.68배</strong>. 기본 안주가 좋아요도 고르게 높은 균형형. 친절해요도 높게 평가.",
+    "place_id": "1453857220"
+  },
+  {
+    "rank": 0,
+    "group": "B",
+    "name": "키요시",
+    "category": "",
+    "category_short": "",
+    "total_reviews": "724",
+    "ratio": 1.87,
+    "keywords": [
+      {
+        "rank": 1,
+        "text": "음식이 맛있어요",
+        "count": 658
+      },
+      {
+        "rank": 2,
+        "text": "기본 안주가 좋아요",
+        "count": 351
+      },
+      {
+        "rank": 3,
+        "text": "인테리어가 멋져요",
+        "count": 349
+      }
+    ],
+    "verdict": "맛 평가(658)가 2순위(기본 안주가 좋아요, 351)의 <strong>1.87배</strong>. 기본 안주가 좋아요도 고르게 높은 균형형. 인테리어가 멋져요도 높게 평가.",
+    "place_id": "1674561366"
+  },
+  {
+    "rank": 0,
+    "group": "B",
+    "name": "이자카야 야화",
+    "category": "",
+    "category_short": "",
+    "total_reviews": "221",
+    "ratio": 1.94,
+    "keywords": [
+      {
+        "rank": 1,
+        "text": "음식이 맛있어요",
+        "count": 200
+      },
+      {
+        "rank": 2,
+        "text": "인테리어가 멋져요",
+        "count": 103
+      },
+      {
+        "rank": 3,
+        "text": "기본 안주가 좋아요",
+        "count": 88
+      }
+    ],
+    "verdict": "맛 평가(200)가 2순위(인테리어가 멋져요, 103)의 <strong>1.94배</strong>. 인테리어가 멋져요도 고르게 높은 균형형. 기본 안주가 좋아요도 높게 평가.",
+    "place_id": "1851606038"
+  },
+  {
+    "rank": 0,
+    "group": "C",
+    "name": "나리옥",
+    "category": "",
+    "category_short": "",
+    "total_reviews": "863",
+    "ratio": 1.11,
+    "keywords": [
+      {
+        "rank": 1,
+        "text": "뷰가 좋아요",
+        "count": 414
+      },
+      {
+        "rank": 2,
+        "text": "커피가 맛있어요",
+        "count": 373
+      },
+      {
+        "rank": 3,
+        "text": "인테리어가 멋져요",
+        "count": 350
+      }
+    ],
+    "verdict": "맛(414)과 커피가 맛있어요(373)이 <strong>1.11배</strong>로 근접. 여러 강점이 동급 수준.",
+    "place_id": "1170918272"
+  },
+  {
+    "rank": 0,
+    "group": "C",
+    "name": "카페브런치 1009",
+    "category": "",
+    "category_short": "",
+    "total_reviews": "322",
+    "ratio": 1.28,
+    "keywords": [
+      {
+        "rank": 1,
+        "text": "음식이 맛있어요",
+        "count": 146
+      },
+      {
+        "rank": 2,
+        "text": "뷰가 좋아요",
+        "count": 114
+      },
+      {
+        "rank": 3,
+        "text": "친절해요",
+        "count": 81
+      }
+    ],
+    "verdict": "맛(146)과 뷰가 좋아요(114)이 <strong>1.28배</strong>로 근접. 여러 강점이 동급 수준.",
+    "place_id": "1501147878"
+  },
+  {
+    "rank": 0,
+    "group": "B",
+    "name": "유달콩물",
+    "category": "",
+    "category_short": "",
+    "total_reviews": "1219",
+    "ratio": 1.59,
+    "keywords": [
+      {
+        "rank": 1,
+        "text": "음식이 맛있어요",
+        "count": 1074
+      },
+      {
+        "rank": 2,
+        "text": "재료가 신선해요",
+        "count": 676
+      },
+      {
+        "rank": 3,
+        "text": "양이 많아요",
+        "count": 446
+      }
+    ],
+    "verdict": "맛 평가(1074)가 2순위(재료가 신선해요, 676)의 <strong>1.59배</strong>. 재료가 신선해요도 고르게 높은 균형형. 양이 많아요도 높게 평가.",
+    "place_id": "11631880"
+  },
+  {
+    "rank": 0,
+    "group": "B",
+    "name": "시골집순두부 목포본점",
+    "category": "",
+    "category_short": "",
+    "total_reviews": "1263",
+    "ratio": 1.8,
+    "keywords": [
+      {
+        "rank": 1,
+        "text": "음식이 맛있어요",
+        "count": 833
+      },
+      {
+        "rank": 2,
+        "text": "재료가 신선해요",
+        "count": 463
+      },
+      {
+        "rank": 3,
+        "text": "매장이 넓어요",
+        "count": 337
+      }
+    ],
+    "verdict": "맛 평가(833)가 2순위(재료가 신선해요, 463)의 <strong>1.80배</strong>. 재료가 신선해요도 고르게 높은 균형형. 매장이 넓어요도 높게 평가.",
+    "place_id": "16822775"
+  },
+  {
+    "rank": 0,
+    "group": "A",
+    "name": "수가정",
+    "category": "",
+    "category_short": "",
+    "total_reviews": "743",
+    "ratio": 3.43,
+    "keywords": [
+      {
+        "rank": 1,
+        "text": "음식이 맛있어요",
+        "count": 398
+      },
+      {
+        "rank": 2,
+        "text": "친절해요",
+        "count": 116
+      },
+      {
+        "rank": 3,
+        "text": "가성비가 좋아요",
+        "count": 112
+      }
+    ],
+    "verdict": "맛 평가(398)가 2순위(친절해요, 116)의 <strong>3.43배</strong>로 압도적. 가성비가 좋아요도 높게 평가.",
+    "place_id": "12879943"
+  },
+  {
+    "rank": 0,
+    "group": "A",
+    "name": "도남 평화광장점",
+    "category": "도남 평화광장점",
+    "category_short": "도남 평화광장점",
+    "total_reviews": "55",
+    "ratio": 2.2,
+    "keywords": [
+      {
+        "rank": 1,
+        "text": "음식이 맛있어요",
+        "count": 44
+      },
+      {
+        "rank": 2,
+        "text": "매장이 넓어요",
+        "count": 20
+      },
+      {
+        "rank": 3,
+        "text": "친절해요",
+        "count": 18
+      }
+    ],
+    "verdict": "맛 평가(44)가 2순위(매장이 넓어요, 20)의 <strong>2.20배</strong>로 압도적. 친절해요도 높게 평가.",
+    "place_id": "1101757400"
+  },
+  {
+    "rank": 0,
+    "group": "A",
+    "name": "정다운전복순두부",
+    "category": "",
+    "category_short": "",
+    "total_reviews": "302",
+    "ratio": 2.18,
+    "keywords": [
+      {
+        "rank": 1,
+        "text": "음식이 맛있어요",
+        "count": 194
+      },
+      {
+        "rank": 2,
+        "text": "재료가 신선해요",
+        "count": 89
+      },
+      {
+        "rank": 3,
+        "text": "친절해요",
+        "count": 60
+      }
+    ],
+    "verdict": "맛 평가(194)가 2순위(재료가 신선해요, 89)의 <strong>2.18배</strong>로 압도적. 친절해요도 높게 평가.",
+    "place_id": "1579075154"
+  },
+  {
+    "rank": 0,
+    "group": "A",
+    "name": "중앙휴게실",
+    "category": "",
+    "category_short": "",
+    "total_reviews": "377",
+    "ratio": 2.75,
+    "keywords": [
+      {
+        "rank": 1,
+        "text": "음식이 맛있어요",
+        "count": 173
+      },
+      {
+        "rank": 2,
+        "text": "친절해요",
+        "count": 63
+      },
+      {
+        "rank": 3,
+        "text": "뷰가 좋아요",
+        "count": 46
+      }
+    ],
+    "verdict": "맛 평가(173)가 2순위(친절해요, 63)의 <strong>2.75배</strong>로 압도적. 뷰가 좋아요도 높게 평가.",
+    "place_id": "16771077"
+  },
+  {
+    "rank": 0,
+    "group": "B",
+    "name": "목유닭 본점",
+    "category": "",
+    "category_short": "",
+    "total_reviews": "554",
+    "ratio": 1.93,
+    "keywords": [
+      {
+        "rank": 1,
+        "text": "음식이 맛있어요",
+        "count": 515
+      },
+      {
+        "rank": 2,
+        "text": "뷰가 좋아요",
+        "count": 267
+      },
+      {
+        "rank": 3,
+        "text": "재료가 신선해요",
+        "count": 237
+      }
+    ],
+    "verdict": "맛 평가(515)가 2순위(뷰가 좋아요, 267)의 <strong>1.93배</strong>. 뷰가 좋아요도 고르게 높은 균형형. 재료가 신선해요도 높게 평가.",
+    "place_id": "1323519783"
+  },
+  {
+    "rank": 0,
+    "group": "A",
+    "name": "유달산주차장",
+    "category": "",
+    "category_short": "",
+    "total_reviews": "193",
+    "ratio": 3.5,
+    "keywords": [
+      {
+        "rank": 1,
+        "text": "음식이 맛있어요",
+        "count": 91
+      },
+      {
+        "rank": 2,
+        "text": "친절해요",
+        "count": 26
+      },
+      {
+        "rank": 3,
+        "text": "재료가 신선해요",
+        "count": 25
+      }
+    ],
+    "verdict": "맛 평가(91)가 2순위(친절해요, 26)의 <strong>3.50배</strong>로 압도적. 재료가 신선해요도 높게 평가.",
+    "place_id": "1695091386"
+  },
+  {
+    "rank": 0,
+    "group": "B",
+    "name": "복사꽃식당",
+    "category": "",
+    "category_short": "",
+    "total_reviews": "120",
+    "ratio": 1.72,
+    "keywords": [
+      {
+        "rank": 1,
+        "text": "음식이 맛있어요",
+        "count": 117
+      },
+      {
+        "rank": 2,
+        "text": "양이 많아요",
+        "count": 68
+      },
+      {
+        "rank": 3,
+        "text": "가성비가 좋아요",
+        "count": 57
+      }
+    ],
+    "verdict": "맛 평가(117)가 2순위(양이 많아요, 68)의 <strong>1.72배</strong>. 양이 많아요도 고르게 높은 균형형. 가성비가 좋아요도 높게 평가.",
+    "place_id": "1275036445"
+  },
+  {
+    "rank": 0,
+    "group": "B",
+    "name": "대양정",
+    "category": "",
+    "category_short": "",
+    "total_reviews": "953",
+    "ratio": 1.55,
+    "keywords": [
+      {
+        "rank": 1,
+        "text": "음식이 맛있어요",
+        "count": 891
+      },
+      {
+        "rank": 2,
+        "text": "재료가 신선해요",
+        "count": 576
+      },
+      {
+        "rank": 3,
+        "text": "양이 많아요",
+        "count": 415
+      }
+    ],
+    "verdict": "맛 평가(891)가 2순위(재료가 신선해요, 576)의 <strong>1.55배</strong>. 재료가 신선해요도 고르게 높은 균형형. 양이 많아요도 높게 평가.",
+    "place_id": "1477518497"
+  },
+  {
+    "rank": 0,
+    "group": "A",
+    "name": "안골정",
+    "category": "",
+    "category_short": "",
+    "total_reviews": "488",
+    "ratio": 2.58,
+    "keywords": [
+      {
+        "rank": 1,
+        "text": "음식이 맛있어요",
+        "count": 261
+      },
+      {
+        "rank": 2,
+        "text": "친절해요",
+        "count": 101
+      },
+      {
+        "rank": 3,
+        "text": "양이 많아요",
+        "count": 89
+      }
+    ],
+    "verdict": "맛 평가(261)가 2순위(친절해요, 101)의 <strong>2.58배</strong>로 압도적. 양이 많아요도 높게 평가.",
+    "place_id": "11697697"
   }
 ]
