@@ -150,15 +150,19 @@ function drawGuide() {
   gCtx.clearRect(0, 0, 500, 500);
   const charData = currentDataList[currentCharIdx];
   
+  // Glow layer
+  gCtx.strokeStyle = 'rgba(255,255,255,0.25)';
+  gCtx.lineWidth = APP_CONFIG.GUIDE_STROKE_WIDTH + 28;
+  gCtx.lineCap = 'round';
+  gCtx.lineJoin = 'round';
+  charData.strokes.forEach(s => { gCtx.stroke(new Path2D(s.path)); });
+
+  // Main guide
   gCtx.strokeStyle = APP_CONFIG.GUIDE_COLOR;
   gCtx.lineWidth = APP_CONFIG.GUIDE_STROKE_WIDTH;
   gCtx.lineCap = 'round';
   gCtx.lineJoin = 'round';
-  
-  charData.strokes.forEach(s => {
-    const p2d = new Path2D(s.path);
-    gCtx.stroke(p2d);
-  });
+  charData.strokes.forEach(s => { gCtx.stroke(new Path2D(s.path)); });
 }
 
 function renderTrace() {
