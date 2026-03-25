@@ -59,6 +59,9 @@ function renderTrace() {
 }
 
 function getIconImageUrl(char) {
+  if (typeof ICON_MAP !== 'undefined' && ICON_MAP[char]) {
+    return ICON_MAP[char];
+  }
   return `icons/${char}/character/img.png`;
 }
 
