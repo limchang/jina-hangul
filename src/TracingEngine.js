@@ -82,13 +82,9 @@ class TracingEngine {
       this.maxReachedIdx = Math.max(this.maxReachedIdx, bestIdx);
       this.offPathCount = 0;
     } else {
-      // Very generous tolerance — only break after many consecutive off-path frames
+      // 경로에서 벗어나도 터치 중에는 드래그를 유지함
+      // offPathCount만 증가시키고 트레이싱을 끊지 않음
       this.offPathCount = (this.offPathCount || 0) + 1;
-      if (this.offPathCount > 20) {
-        this.isTracing = false;
-        this.maxReachedIdx = 0;
-        this.offPathCount = 0;
-      }
     }
   }
 
