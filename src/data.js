@@ -58,13 +58,13 @@ let selectedVowel = 'ㅏ';
 function getPathXCoords(pathStr) {
   const xs = [];
   // M/L x y
-  const ml = pathStr.matchAll(/[ML]\s*([\d.]+)\s+([\d.]+)/g);
+  const ml = pathStr.matchAll(/[ML]\s*(-?[\d.]+)\s+(-?[\d.]+)/g);
   for (const m of ml) xs.push(parseFloat(m[1]));
   // Q cx cy x y
-  const qs = pathStr.matchAll(/Q\s*([\d.]+)\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)/g);
+  const qs = pathStr.matchAll(/Q\s*(-?[\d.]+)\s+(-?[\d.]+)\s+(-?[\d.]+)\s+(-?[\d.]+)/g);
   for (const m of qs) { xs.push(parseFloat(m[1])); xs.push(parseFloat(m[3])); }
-  // A rx ry ... x y (마지막 2개가 좌표)
-  const as = pathStr.matchAll(/A\s+[\d.]+\s+[\d.]+\s+[\d.]+\s+[\d.]+\s+[\d.]+\s+([\d.]+)\s+([\d.]+)/g);
+  // A rx ry ... x y
+  const as = pathStr.matchAll(/A\s+[\d.]+\s+[\d.]+\s+[\d.]+\s+[\d.]+\s+[\d.]+\s+(-?[\d.]+)\s+(-?[\d.]+)/g);
   for (const m of as) xs.push(parseFloat(m[1]));
   return xs;
 }
