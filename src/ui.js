@@ -28,7 +28,7 @@ function setupPanels() {
     });
 
     // 모음 선택 (ㅏ ㅑ ㅓ ㅕ)
-    Object.keys(VOWEL_OFFSETS).forEach(v => {
+    COMBINE_VOWELS.forEach(v => {
       const div = document.createElement('div');
       div.className = 'thumb';
       if (v === selectedVowel) div.classList.add('active');
@@ -100,7 +100,7 @@ function updatePanelActive() {
   const vowThumbs = document.querySelectorAll('#vow-list .thumb');
   vowThumbs.forEach((el, i) => {
     if (appMode === 'combine') {
-      const vowKeys = Object.keys(VOWEL_OFFSETS);
+      const vowKeys = COMBINE_VOWELS;
       if (vowKeys[i] === selectedVowel) {
         el.classList.add('active');
       } else {

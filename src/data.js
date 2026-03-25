@@ -36,15 +36,14 @@ const VOWELS = [
   { char:'ㅣ', strokes:[{path:'M 250 130 L 250 370'}] }
 ];
 
-// 붙이기 모드: 모음별 오프셋 데이터 (기존 VOWELS 좌표 + x오프셋 200)
-const VOWEL_OFFSETS = {
-  'ㅏ': [{path:'M 450 130 L 450 370'}, {path:'M 450 250 L 530 250'}],
-  'ㅑ': [{path:'M 450 130 L 450 370'}, {path:'M 450 210 L 530 210'}, {path:'M 450 290 L 530 290'}],
-  'ㅓ': [{path:'M 370 250 L 450 250'}, {path:'M 450 130 L 450 370'}],
-  'ㅕ': [{path:'M 370 210 L 450 210'}, {path:'M 370 290 L 450 290'}, {path:'M 450 130 L 450 370'}],
+// 모음 원본 데이터 (500×500 기준, 좌표를 상대값으로 활용)
+const VOWEL_TEMPLATES = {
+  'ㅏ': [{dx: 0, path:'M 0 130 L 0 370'}, {dx: 0, path:'M 0 250 L 80 250'}],
+  'ㅑ': [{dx: 0, path:'M 0 130 L 0 370'}, {dx: 0, path:'M 0 210 L 80 210'}, {dx: 0, path:'M 0 290 L 80 290'}],
+  'ㅓ': [{dx: -80, path:'M -80 250 L 0 250'}, {dx: 0, path:'M 0 130 L 0 370'}],
+  'ㅕ': [{dx: -80, path:'M -80 210 L 0 210'}, {dx: -80, path:'M -80 290 L 0 290'}, {dx: 0, path:'M 0 130 L 0 370'}],
 };
 
-// 자음+모음 글자 이름 매핑
 const SYLLABLE_NAMES = {
   'ㅏ': '가나다라마바사아자차카타파하',
   'ㅑ': '갸냐댜랴먀뱌셔야쟈챠캬탸퍄햐',
@@ -52,17 +51,102 @@ const SYLLABLE_NAMES = {
   'ㅕ': '겨녀뎌려며벼셔여져쳐켜텨펴혀',
 };
 
-// 현재 선택된 모음
+const COMBINE_VOWELS = ['ㅏ', 'ㅑ', 'ㅓ', 'ㅕ'];
 let selectedVowel = 'ㅏ';
 
-// 동적 조합 생성
+// path 문자열에서 모든 x좌표를 추출
+function getPathXCoords(pathStr) {
+  const xs = [];
+  // M/L x y
+  const ml = pathStr.matchAll(/[ML]\s*([\d.]+)\s+([\d.]+)/g);
+  for (const m of ml) xs.push(parseFloat(m[1]));
+  // Q cx cy x y
+  const qs = pathStr.matchAll(/Q\s*([\d.]+)\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)/g);
+  for (const m of qs) { xs.push(parseFloat(m[1])); xs.push(parseFloat(m[3])); }
+  // A rx ry ... x y (마지막 2개가 좌표)
+  const as = pathStr.matchAll(/A\s+[\d.]+\s+[\d.]+\s+[\d.]+\s+[\d.]+\s+[\d.]+\s+([\d.]+)\s+([\d.]+)/g);
+  for (const m of as) xs.push(parseFloat(m[1]));
+  return xs;
+}
+
+// 자음의 x 범위 계산
+function getConsonantXBounds(consonant) {
+  let minX = Infinity, maxX = -Infinity;
+  consonant.strokes.forEach(s => {
+    getPathXCoords(s.path).forEach(x => {
+      if (x < minX) minX = x;
+      if (x > maxX) maxX = x;
+    });
+  });
+  return { minX, maxX };
+}
+
+// path 문자열 내 모든 x좌표를 offset만큼 이동
+function offsetPathX(pathStr, offset) {
+  let result = pathStr;
+  // M x y, L x y
+  result = result.replace(/([ML])\s*([\d.]+)(\s+[\d.]+)/g, (_, cmd, x, rest) =>
+    `${cmd} ${parseFloat(x) + offset}${rest}`
+  );
+  // Q cx cy x y
+  result = result.replace(/Q\s*([\d.]+)(\s+[\d.]+)\s+([\d.]+)(\s+[\d.]+)/g, (_, cx, cyR, x, yR) =>
+    `Q ${parseFloat(cx) + offset}${cyR} ${parseFloat(x) + offset}${yR}`
+  );
+  // A rx ry rot large sweep x y
+  result = result.replace(/A\s+([\d.]+\s+[\d.]+\s+[\d.]+\s+[\d.]+\s+[\d.]+)\s+([\d.]+)(\s+[\d.]+)/g, (_, params, x, yR) =>
+    `A ${params} ${parseFloat(x) + offset}${yR}`
+  );
+  return result;
+}
+
+// 동적 조합 생성 — 자음별 x범위 계산 → 여백 → ㅏ 배치 → 가운데 정렬
 function buildSyllables(vowelChar) {
-  const vowelStrokes = VOWEL_OFFSETS[vowelChar];
+  const vt = VOWEL_TEMPLATES[vowelChar];
   const names = SYLLABLE_NAMES[vowelChar];
-  return CONSONANTS.map((c, i) => ({
-    char: names[i],
-    strokes: [...c.strokes, ...vowelStrokes]
-  }));
+  const GAP = 60; // 자음과 모음 사이 여백
+  const STROKE_W = APP_CONFIG.GUIDE_STROKE_WIDTH; // 74
+
+  return CONSONANTS.map((c, i) => {
+    const { minX, maxX } = getConsonantXBounds(c);
+    // 자음 오른쪽 끝 + 획 반폭 + 여백 = 모음 세로줄 x
+    const vowelBaseX = maxX + STROKE_W / 2 + GAP;
+
+    // 모음 획 생성 (baseX 기준으로 오프셋)
+    const vowelStrokes = vt.map(t => {
+      // 원본 path에서 x=0 기준 → vowelBaseX로 이동
+      const rawPath = t.path;
+      return { path: offsetPathX(rawPath, vowelBaseX) };
+    });
+
+    // 모음 오른쪽 끝 계산
+    let vowMaxX = 0;
+    vowelStrokes.forEach(s => {
+      getPathXCoords(s.path).forEach(x => { if (x > vowMaxX) vowMaxX = x; });
+    });
+    vowMaxX += STROKE_W / 2;
+
+    // 전체 글자 너비
+    const totalLeft = minX - STROKE_W / 2;
+    const totalWidth = vowMaxX - totalLeft;
+
+    // 캔버스(700) 가운데 정렬용 오프셋
+    const centerOffset = (700 - totalWidth) / 2 - totalLeft;
+
+    // 자음 획에 오프셋 적용
+    const consStrokes = c.strokes.map(s => ({
+      path: offsetPathX(s.path, centerOffset)
+    }));
+
+    // 모음 획에도 오프셋 적용
+    const finalVowelStrokes = vowelStrokes.map(s => ({
+      path: offsetPathX(s.path, centerOffset)
+    }));
+
+    return {
+      char: names[i],
+      strokes: [...consStrokes, ...finalVowelStrokes]
+    };
+  });
 }
 
 let SYLLABLES = buildSyllables('ㅏ');
