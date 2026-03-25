@@ -45,6 +45,10 @@ function getPointerPos(e) {
 function onPointerDown(e) {
   e.preventDefault();
 
+  // 비활성 카드 터치 시 무시
+  const cardEl = e.currentTarget;
+  if (cardEl && !cardEl.classList.contains('active-card')) return;
+
   // 터치 ID 추적 시작
   if (e.touches && e.touches.length > 0) {
     activeTouchId = e.touches[0].identifier;
@@ -99,19 +103,17 @@ function onTouchCancel(e) {
 }
 
 function setupInput() {
-  const card = document.getElementById('study-card');
+  // 양쪽 카드 모두에 이벤트 등록
+  ['card-cons', 'card-syl'].forEach(id => {
+    const card = document.getElementById(id);
+    card.addEventListener('mousedown', onPointerDown);
+    card.addEventListener('mousemove', onPointerMove);
+    card.addEventListener('touchstart', onPointerDown, { passive: false });
+    card.addEventListener('touchmove', onPointerMove, { passive: false });
+    card.addEventListener('touchend', onPointerUp, { passive: false });
+    card.addEventListener('touchcancel', onTouchCancel, { passive: false });
+  });
 
-  // 마우스
-  card.addEventListener('mousedown', onPointerDown);
-  card.addEventListener('mousemove', onPointerMove);
   window.addEventListener('mouseup', onPointerUp);
-
-  // 터치 — touchend도 card에 바인딩하여 다른 요소로 빠져나가는 것 방지
-  card.addEventListener('touchstart', onPointerDown, { passive: false });
-  card.addEventListener('touchmove', onPointerMove, { passive: false });
-  card.addEventListener('touchend', onPointerUp, { passive: false });
-  card.addEventListener('touchcancel', onTouchCancel, { passive: false });
-
-  // window에도 touchend 등록 (카드 밖에서 손 뗄 경우 대비)
   window.addEventListener('touchend', onPointerUp, { passive: false });
 }

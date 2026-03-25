@@ -29,21 +29,28 @@
         <div class="panel-list" id="cons-list"></div>
       </aside>
 
-      <!-- 가운데: 가+나+... 패널 -->
-      <aside class="side-panel mid-panel" id="panel-syl">
-        <div class="panel-label">가나다</div>
-        <div class="panel-list" id="syl-list"></div>
-      </aside>
-
-      <!-- 가운데: 카드 + 화살표 -->
+      <!-- 가운데: 카드 2개 나란히 -->
       <main>
         <div class="nav-arrow left" title="이전">&#10094;</div>
 
-        <div class="study-card" id="study-card">
-          <canvas id="guide-canvas"></canvas>
-          <canvas id="arrow-canvas"></canvas>
-          <canvas id="trace-canvas"></canvas>
-          <div id="overlay-icons"></div>
+        <div class="cards-row">
+          <!-- 자음 카드 -->
+          <div class="study-card active-card" id="card-cons" data-card="cons">
+            <div class="card-label">자음</div>
+            <canvas class="guide-cv" id="guide-canvas-cons"></canvas>
+            <canvas class="arrow-cv" id="arrow-canvas-cons"></canvas>
+            <canvas class="trace-cv" id="trace-canvas-cons"></canvas>
+            <div class="overlay-icons" id="overlay-cons"></div>
+          </div>
+
+          <!-- 음절 카드 -->
+          <div class="study-card" id="card-syl" data-card="syl">
+            <div class="card-label">가나다</div>
+            <canvas class="guide-cv" id="guide-canvas-syl"></canvas>
+            <canvas class="arrow-cv" id="arrow-canvas-syl"></canvas>
+            <canvas class="trace-cv" id="trace-canvas-syl"></canvas>
+            <div class="overlay-icons" id="overlay-syl"></div>
+          </div>
         </div>
 
         <div class="nav-arrow right" title="다음">&#10095;</div>
@@ -58,14 +65,14 @@
   </div>
 
   <script src="src/icon-map.js?v=1"></script>
-  <script src="src/data.js?v=8"></script>
-  <script src="src/TracingEngine.js?v=8"></script>
-  <script src="src/particles.js?v=1"></script>
-  <script src="src/arrow.js?v=1"></script>
-  <script src="src/render.js?v=2"></script>
-  <script src="src/input.js?v=2"></script>
-  <script src="src/ui.js?v=2"></script>
-  <script src="src/App.js?v=9"></script>
+  <script src="src/data.js?v=9"></script>
+  <script src="src/TracingEngine.js?v=9"></script>
+  <script src="src/particles.js?v=2"></script>
+  <script src="src/arrow.js?v=2"></script>
+  <script src="src/render.js?v=3"></script>
+  <script src="src/input.js?v=3"></script>
+  <script src="src/ui.js?v=3"></script>
+  <script src="src/App.js?v=10"></script>
 </body>
 
 </html>
