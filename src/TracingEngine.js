@@ -132,26 +132,16 @@ class TracingEngine {
     for (let i = 1; i <= this.maxReachedIdx; i++) ctx.lineTo(this.pts[i].x, this.pts[i].y);
     ctx.stroke();
 
-    // 손가락 글로우 — 부드러운 빛
+    // 손가락 글로우
     if (this.isTracing && this.pointerX !== undefined) {
       const px = this.pointerX, py = this.pointerY;
-      const t = Date.now() / 1000;
-      const pulse = 0.9 + Math.sin(t * 4) * 0.1;
-
-      // 부드러운 후광
-      const grad = ctx.createRadialGradient(px, py, 4, px, py, 50 * pulse);
-      grad.addColorStop(0, 'rgba(255,255,220,0.6)');
-      grad.addColorStop(0.4, 'rgba(255,230,100,0.2)');
-      grad.addColorStop(1, 'rgba(255,220,80,0)');
+      const grad = ctx.createRadialGradient(px, py, 2, px, py, 40);
+      grad.addColorStop(0, 'rgba(255,255,240,0.5)');
+      grad.addColorStop(0.5, 'rgba(255,240,200,0.15)');
+      grad.addColorStop(1, 'rgba(255,230,150,0)');
       ctx.beginPath();
-      ctx.arc(px, py, 50 * pulse, 0, Math.PI * 2);
+      ctx.arc(px, py, 40, 0, Math.PI * 2);
       ctx.fillStyle = grad;
-      ctx.fill();
-
-      // 밝은 코어
-      ctx.beginPath();
-      ctx.arc(px, py, 14, 0, Math.PI * 2);
-      ctx.fillStyle = 'rgba(255,255,240,0.8)';
       ctx.fill();
     }
   }
