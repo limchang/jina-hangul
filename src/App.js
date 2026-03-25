@@ -21,8 +21,7 @@ function initApp() {
 
   engine = new TracingEngine(tCtx, APP_CONFIG);
 
-  setupTabs();
-  setupFooter();
+  setupPanels();
   setupNav();
   setupInput();
 

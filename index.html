@@ -19,31 +19,36 @@
           <path d="M25 50 L50 25 L75 50 V75 H60 V55 H40 V75 H25 Z" fill="white" />
         </svg>
       </div>
-      <div class="tab-container">
-        <div class="tab-btn active" id="tab-cons" title="자음">자 음</div>
-        <div class="tab-btn" id="tab-vow" title="모음">모 음</div>
-
-      </div>
+      <h1 class="app-title">진아의 한글 공부</h1>
     </header>
 
-    <main>
-      <div class="nav-arrow left" title="이전">&#10094;</div>
+    <div class="main-layout">
+      <!-- 왼쪽: 자음 패널 -->
+      <aside class="side-panel left-panel" id="panel-cons">
+        <div class="panel-label">자 음</div>
+        <div class="panel-list" id="cons-list"></div>
+      </aside>
 
-      <div class="study-card" id="study-card">
-        <!-- Background guide will be drawn here -->
-        <canvas id="guide-canvas"></canvas>
-        <!-- Arrow guide animation -->
-        <canvas id="arrow-canvas"></canvas>
-        <!-- The user's active drawing will be drawn here -->
-        <canvas id="trace-canvas"></canvas>
-        <!-- Icons (Gazelle and Star) overlay -->
-        <div id="overlay-icons"></div>
-      </div>
+      <!-- 가운데: 카드 + 화살표 -->
+      <main>
+        <div class="nav-arrow left" title="이전">&#10094;</div>
 
-      <div class="nav-arrow right" title="다음">&#10095;</div>
-    </main>
+        <div class="study-card" id="study-card">
+          <canvas id="guide-canvas"></canvas>
+          <canvas id="arrow-canvas"></canvas>
+          <canvas id="trace-canvas"></canvas>
+          <div id="overlay-icons"></div>
+        </div>
 
-    <footer id="footer-menu"></footer>
+        <div class="nav-arrow right" title="다음">&#10095;</div>
+      </main>
+
+      <!-- 오른쪽: 모음 패널 -->
+      <aside class="side-panel right-panel" id="panel-vow">
+        <div class="panel-label">모 음</div>
+        <div class="panel-list" id="vow-list"></div>
+      </aside>
+    </div>
   </div>
 
   <script src="src/data.js?v=8"></script>
@@ -51,8 +56,8 @@
   <script src="src/arrow.js?v=1"></script>
   <script src="src/render.js?v=1"></script>
   <script src="src/input.js?v=1"></script>
-  <script src="src/ui.js?v=1"></script>
-  <script src="src/App.js?v=7"></script>
+  <script src="src/ui.js?v=2"></script>
+  <script src="src/App.js?v=8"></script>
 </body>
 
 </html>
