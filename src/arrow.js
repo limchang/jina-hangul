@@ -22,7 +22,7 @@ function startArrowAnim(pts) {
 
 function drawArrowFrame(ctx, pts, t) {
   const total = pts.length - 1;
-  ctx.clearRect(0, 0, 500, 500);
+  ctx.clearRect(0, 0, cvW, cvH);
 
   // 현재 화살표 위치 인덱스
   const headIdx = Math.min(Math.floor(t * total), total - 1);
@@ -109,5 +109,5 @@ function drawArrowFrame(ctx, pts, t) {
 
 function stopArrowAnim() {
   if (arrowAnimId) { cancelAnimationFrame(arrowAnimId); arrowAnimId = null; }
-  aCtx.clearRect(0, 0, 500, 500);
+  aCtx.clearRect(0, 0, cvW, cvH);
 }

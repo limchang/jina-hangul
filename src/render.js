@@ -1,7 +1,7 @@
 // render.js — 가이드/트레이스 렌더링 + 아이콘
 
 function drawGuide(clear = true) {
-  if (clear) gCtx.clearRect(0, 0, 500, 500);
+  if (clear) gCtx.clearRect(0, 0, cvW, cvH);
   const charData = currentDataList[currentCharIdx];
 
   // 음절은 획이 많으므로 가이드 두께를 줄임
@@ -55,7 +55,7 @@ function drawGuide(clear = true) {
 }
 
 function renderTrace() {
-  tCtx.clearRect(0, 0, 500, 500);
+  tCtx.clearRect(0, 0, cvW, cvH);
   engine.draw();
   // 파티클 렌더링
   if (typeof particleSystem !== 'undefined') {
@@ -86,8 +86,8 @@ function updateIcons() {
   const hp = engine.getHandlerPos();
   const tp = engine.getTargetPos();
 
-  handlerIcon.style.left = `${(hp.x / 500) * 100}%`;
-  handlerIcon.style.top = `${(hp.y / 500) * 100}%`;
-  targetIcon.style.left = `${(tp.x / 500) * 100}%`;
-  targetIcon.style.top = `${(tp.y / 500) * 100}%`;
+  handlerIcon.style.left = `${(hp.x / cvW) * 100}%`;
+  handlerIcon.style.top = `${(hp.y / cvH) * 100}%`;
+  targetIcon.style.left = `${(tp.x / cvW) * 100}%`;
+  targetIcon.style.top = `${(tp.y / cvH) * 100}%`;
 }

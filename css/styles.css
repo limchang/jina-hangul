@@ -3,7 +3,6 @@
 :root {
   --bg-primary: #76d2f9;
   --bg-secondary: #9cedff;
-  --card-bg: rgba(255, 255, 255, 0.95);
   --btn-pink: #ff6eb4;
   --btn-pink-shadow: #d1498b;
   --btn-purple: #9254ff;
@@ -25,17 +24,14 @@ body, html {
 
 #bg-layer {
   position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-  background: radial-gradient(circle at 15% 50%, rgba(255, 255, 255, 0.2), transparent 25%),
-              radial-gradient(circle at 85% 30%, rgba(255, 255, 255, 0.2), transparent 25%), var(--bg-primary);
   background-image:
-    linear-gradient(45deg, var(--bg-secondary) 25%, transparent 25%, transparent 75%, var(--bg-secondary) 75%, var(--bg-secondary)),
-    linear-gradient(45deg, var(--bg-secondary) 25%, var(--bg-primary) 25%, var(--bg-primary) 75%, var(--bg-secondary) 75%, var(--bg-secondary));
+    linear-gradient(45deg, var(--bg-secondary) 25%, transparent 25%, transparent 75%, var(--bg-secondary) 75%),
+    linear-gradient(45deg, var(--bg-secondary) 25%, var(--bg-primary) 25%, var(--bg-primary) 75%, var(--bg-secondary) 75%);
   background-size: 100px 100px;
   background-position: 0 0, 50px 50px;
   z-index: -1;
   animation: bgPan 30s linear infinite;
 }
-
 @keyframes bgPan {
   from { background-position: 0 0, 50px 50px; }
   to { background-position: -200px -200px, -150px -150px; }
@@ -60,16 +56,14 @@ header {
   width: 56px; height: 56px; background: var(--btn-pink); border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
   box-shadow: 0 5px 0 var(--btn-pink-shadow), 0 10px 20px rgba(255, 110, 180, 0.4);
-  border: 3px solid white; cursor: pointer; transition: all 0.15s;
-  flex-shrink: 0;
+  border: 3px solid white; cursor: pointer; transition: all 0.15s; flex-shrink: 0;
 }
-.btn-home svg { width: 28px; height: 28px; fill: white; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2)); }
+.btn-home svg { width: 28px; height: 28px; fill: white; }
 .btn-home:active { transform: translateY(4px) scale(0.95); box-shadow: 0 2px 0 var(--btn-pink-shadow); }
 
 .app-title {
   font-size: 1.5rem; font-weight: 700; color: white;
-  text-shadow: 0 2px 8px rgba(0,0,0,0.15);
-  letter-spacing: 2px;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.15); letter-spacing: 2px;
 }
 
 /* ─── Main Layout ─── */
@@ -78,13 +72,11 @@ header {
   overflow: hidden; min-height: 0;
 }
 
-/* ─── Side Panels (자음/모음) ─── */
+/* ─── Side Panels ─── */
 .side-panel {
   width: 200px; display: flex; flex-direction: column;
-  background: rgba(255, 255, 255, 0.25);
-  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.25); backdrop-filter: blur(10px);
 }
-
 .left-panel { border-right: 2px solid rgba(255,255,255,0.3); }
 .right-panel { border-left: 2px solid rgba(255,255,255,0.3); }
 
@@ -99,8 +91,7 @@ header {
 .panel-list {
   flex: 1; overflow-y: auto; overflow-x: hidden;
   display: grid; grid-template-columns: 1fr 1fr;
-  gap: 8px; padding: 10px 10px;
-  align-content: start;
+  gap: 8px; padding: 10px; align-content: start;
   scrollbar-width: none;
 }
 .panel-list::-webkit-scrollbar { display: none; }
@@ -118,14 +109,10 @@ header {
   transform: scale(1.1); box-shadow: 0 10px 20px rgba(255, 110, 180, 0.3), 0 4px 0 var(--btn-pink-shadow);
 }
 
-/* ─── Center: Cards Row ─── */
+/* ─── Center ─── */
 main {
   flex: 1; display: flex; align-items: center; justify-content: center;
   position: relative; min-width: 0; padding: 20px 0;
-}
-
-.cards-row {
-  display: flex; gap: 24px; align-items: center; justify-content: center;
 }
 
 .nav-arrow {
@@ -138,13 +125,11 @@ main {
 .nav-arrow.left { left: 15px; }
 .nav-arrow.right { right: 15px; }
 .nav-arrow:hover { transform: scale(1.05); border-color: var(--btn-purple); }
-.nav-arrow:active { transform: scale(0.95) translateY(4px); box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+.nav-arrow:active { transform: scale(0.95) translateY(4px); }
 
+/* 카드: 모드에 따라 정사각형 or 가로형 */
 .study-card {
-  --card-size: min(550px, calc(100vh - 180px), calc((100vw - 560px) / 2 - 20px));
-  width: var(--card-size);
-  height: var(--card-size);
-  aspect-ratio: 1 / 1;
+  height: min(550px, calc(100vh - 180px));
   border-radius: 36px;
   background:
     radial-gradient(circle at 20% 20%, rgba(255,255,255,0.18) 0%, transparent 50%),
@@ -152,46 +137,36 @@ main {
     linear-gradient(145deg, #5bb8f5 0%, #3a9de8 40%, #2e7fd6 100%);
   box-shadow: 0 20px 40px rgba(0,0,0,0.15), inset 0 0 0 5px rgba(255,255,255,0.35), 0 0 0 3px rgba(255,255,255,0.6);
   position: relative; border: 5px solid rgba(255,255,255,0.7);
-  transition: box-shadow 0.3s, border-color 0.3s;
-  cursor: pointer;
 }
 
-/* 활성 카드 강조 */
-.study-card.active-card {
-  border-color: #ffeb3b;
-  box-shadow: 0 20px 40px rgba(0,0,0,0.15), inset 0 0 0 5px rgba(255,255,255,0.35), 0 0 0 5px rgba(255,235,59,0.5);
+/* 정사각형 (자음/모음) */
+.study-card.card-square {
+  width: min(550px, calc(100vh - 180px));
+  aspect-ratio: 1 / 1;
 }
 
-/* 비활성 카드 약간 어둡게 */
-.study-card:not(.active-card) {
-  opacity: 0.7;
+/* 가로형 (음절 = 자음+ㅏ) */
+.study-card.card-wide {
+  width: min(1000px, calc(100vw - 540px));
+  aspect-ratio: 2 / 1;
 }
 
 .study-card::after {
-  content: '';
-  position: absolute; inset: 0; border-radius: 31px;
+  content: ''; position: absolute; inset: 0; border-radius: 31px;
   background:
     radial-gradient(circle at 10% 90%, rgba(255,255,255,0.12) 0%, transparent 35%),
     radial-gradient(circle at 90% 10%, rgba(255,255,255,0.1) 0%, transparent 30%);
   pointer-events: none; z-index: 1;
 }
 
-.card-label {
-  position: absolute; top: 10px; left: 50%; transform: translateX(-50%);
-  font-size: 0.85rem; font-weight: 700; color: rgba(255,255,255,0.7);
-  z-index: 35; letter-spacing: 2px;
-  text-shadow: 0 1px 4px rgba(0,0,0,0.15);
-}
-
-.guide-cv, .trace-cv, .arrow-cv {
+#guide-canvas, #trace-canvas, #arrow-canvas {
   position: absolute; top: 0; left: 0; width: 100%; height: 100%;
   border-radius: 30px; pointer-events: none;
 }
-.guide-cv { z-index: 10; }
-.arrow-cv { z-index: 15; }
-.trace-cv { z-index: 20; }
-
-.overlay-icons {
+#guide-canvas { z-index: 10; }
+#arrow-canvas { z-index: 15; }
+#trace-canvas { z-index: 20; }
+#overlay-icons {
   position: absolute; top: 0; left: 0; width: 100%; height: 100%;
   pointer-events: none; z-index: 30;
 }
@@ -201,7 +176,7 @@ main {
   filter: drop-shadow(0 10px 18px rgba(0,0,0,0.25));
   transform: translate(-50%, -50%); transition: transform 0.1s;
 }
-.character-handler:active { transform: translate(-50%, -50%) scale(1.15) rotate(5deg); pointer-events: none;}
+.character-handler:active { transform: translate(-50%, -50%) scale(1.15) rotate(5deg); pointer-events: none; }
 
 .target-icon {
   position: absolute; width: 90px; z-index: 50; pointer-events: none;

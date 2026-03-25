@@ -1,4 +1,4 @@
-// ui.js — 자음/모음 패널 + 듀얼 카드 네비게이션
+// ui.js — 자음/모음 패널 + 네비게이션
 
 function setupPanels() {
   const consList = document.getElementById('cons-list');
@@ -12,9 +12,8 @@ function setupPanels() {
     div.className = 'thumb';
     div.innerText = item.char;
     div.onclick = () => {
-      stopArrowAnim();
-      setActiveCard('cons');
-      resize();
+      currentMode = 'consonants';
+      currentDataList = CONSONANTS;
       loadCharacter(i);
       updatePanelActive();
     };
@@ -26,7 +25,10 @@ function setupPanels() {
     div.className = 'thumb';
     div.innerText = item.char;
     div.onclick = () => {
-      // 모음은 별도 모드 — 단일 카드로 처리 (추후 확장)
+      currentMode = 'vowels';
+      currentDataList = VOWELS;
+      loadCharacter(i);
+      updatePanelActive();
     };
     vowList.appendChild(div);
   });
@@ -35,7 +37,17 @@ function setupPanels() {
 function updatePanelActive() {
   const consThumbs = document.querySelectorAll('#cons-list .thumb');
   consThumbs.forEach((el, i) => {
-    if (i === currentCharIdx) {
+    if ((currentMode === 'consonants' || currentMode === 'syllables') && i === currentCharIdx) {
+      el.classList.add('active');
+      el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    } else {
+      el.classList.remove('active');
+    }
+  });
+
+  const vowThumbs = document.querySelectorAll('#vow-list .thumb');
+  vowThumbs.forEach((el, i) => {
+    if (currentMode === 'vowels' && i === currentCharIdx) {
       el.classList.add('active');
       el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     } else {
@@ -44,9 +56,7 @@ function updatePanelActive() {
   });
 }
 
-function updateFooterActive() {
-  updatePanelActive();
-}
+function updateFooterActive() { updatePanelActive(); }
 
 function setupNav() {
   document.querySelector('.nav-arrow.left').onclick = () => prevChar();
@@ -54,28 +64,22 @@ function setupNav() {
 }
 
 function nextChar() {
-  stopArrowAnim();
-  if (currentMode === 'consonants') {
-    // 자음 완성 전에 화살표로 다음 → 그냥 다음 글자 자음부터
-    const nextIdx = (currentCharIdx + 1) % CONSONANTS.length;
-    setActiveCard('cons');
-    resize();
-    loadCharacter(nextIdx);
+  if (currentMode === 'syllables') {
+    // 음절 모드에서 다음 → 다음 글자 자음
+    currentMode = 'consonants';
+    currentDataList = CONSONANTS;
+    loadCharacter((currentCharIdx + 1) % CONSONANTS.length);
   } else {
-    // 음절 모드에서 다음 → 다음 글자 자음부터
-    const nextIdx = (currentCharIdx + 1) % CONSONANTS.length;
-    setActiveCard('cons');
-    resize();
-    loadCharacter(nextIdx);
+    loadCharacter((currentCharIdx + 1) % currentDataList.length);
   }
   updatePanelActive();
 }
 
 function prevChar() {
-  stopArrowAnim();
-  const prevIdx = (currentCharIdx - 1 + CONSONANTS.length) % CONSONANTS.length;
-  setActiveCard('cons');
-  resize();
-  loadCharacter(prevIdx);
+  if (currentMode === 'syllables') {
+    currentMode = 'consonants';
+    currentDataList = CONSONANTS;
+  }
+  loadCharacter((currentCharIdx - 1 + currentDataList.length) % currentDataList.length);
   updatePanelActive();
 }
