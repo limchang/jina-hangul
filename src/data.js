@@ -37,11 +37,16 @@ const VOWELS = [
 ];
 
 // 모음 원본 데이터 (500×500 기준, 좌표를 상대값으로 활용)
+// 모음 템플릿
+// dir: 'right' = 자음 오른쪽에 배치 (가로 확장), 'bottom' = 자음 아래에 배치 (세로 확장)
+// path는 x=0,y=0 기준 상대좌표
 const VOWEL_TEMPLATES = {
-  'ㅏ': [{dx: 0, path:'M 0 130 L 0 370'}, {dx: 0, path:'M 0 250 L 80 250'}],
-  'ㅑ': [{dx: 0, path:'M 0 130 L 0 370'}, {dx: 0, path:'M 0 210 L 80 210'}, {dx: 0, path:'M 0 290 L 80 290'}],
-  'ㅓ': [{dx: -80, path:'M -80 250 L 0 250'}, {dx: 0, path:'M 0 130 L 0 370'}],
-  'ㅕ': [{dx: -80, path:'M -80 210 L 0 210'}, {dx: -80, path:'M -80 290 L 0 290'}, {dx: 0, path:'M 0 130 L 0 370'}],
+  'ㅏ':  { dir:'right', strokes:[{path:'M 0 130 L 0 370'}, {path:'M 0 250 L 80 250'}] },
+  'ㅑ':  { dir:'right', strokes:[{path:'M 0 130 L 0 370'}, {path:'M 0 210 L 80 210'}, {path:'M 0 290 L 80 290'}] },
+  'ㅓ':  { dir:'right', strokes:[{path:'M -80 250 L 0 250'}, {path:'M 0 130 L 0 370'}] },
+  'ㅕ':  { dir:'right', strokes:[{path:'M -80 210 L 0 210'}, {path:'M -80 290 L 0 290'}, {path:'M 0 130 L 0 370'}] },
+  'ㅜ':  { dir:'bottom', strokes:[{path:'M 130 0 L 370 0'}, {path:'M 250 0 L 250 130'}] },
+  'ㅠ':  { dir:'bottom', strokes:[{path:'M 130 0 L 370 0'}, {path:'M 190 0 L 190 130'}, {path:'M 310 0 L 310 130'}] },
 };
 
 const SYLLABLE_NAMES = {
@@ -49,9 +54,11 @@ const SYLLABLE_NAMES = {
   'ㅑ': '갸냐댜랴먀뱌셔야쟈챠캬탸퍄햐',
   'ㅓ': '거너더러머버서어저처커터퍼허',
   'ㅕ': '겨녀뎌려며벼셔여져쳐켜텨펴혀',
+  'ㅜ': '구누두루무부수우주추쿠투푸후',
+  'ㅠ': '규뉴듀류뮤뷰슈유쥬츄큐튜퓨휴',
 };
 
-const COMBINE_VOWELS = ['ㅏ', 'ㅑ', 'ㅓ', 'ㅕ'];
+const COMBINE_VOWELS = ['ㅏ', 'ㅑ', 'ㅓ', 'ㅕ', 'ㅜ', 'ㅠ'];
 let selectedVowel = 'ㅏ';
 
 // path 문자열에서 모든 x좌표를 추출
@@ -69,6 +76,18 @@ function getPathXCoords(pathStr) {
   return xs;
 }
 
+// path 문자열에서 모든 y좌표를 추출
+function getPathYCoords(pathStr) {
+  const ys = [];
+  const ml = pathStr.matchAll(/[ML]\s*(-?[\d.]+)\s+(-?[\d.]+)/g);
+  for (const m of ml) ys.push(parseFloat(m[2]));
+  const qs = pathStr.matchAll(/Q\s*(-?[\d.]+)\s+(-?[\d.]+)\s+(-?[\d.]+)\s+(-?[\d.]+)/g);
+  for (const m of qs) { ys.push(parseFloat(m[2])); ys.push(parseFloat(m[4])); }
+  const as = pathStr.matchAll(/A\s+[\d.]+\s+[\d.]+\s+[\d.]+\s+[\d.]+\s+[\d.]+\s+(-?[\d.]+)\s+(-?[\d.]+)/g);
+  for (const m of as) ys.push(parseFloat(m[2]));
+  return ys;
+}
+
 // 자음의 x 범위 계산
 function getConsonantXBounds(consonant) {
   let minX = Infinity, maxX = -Infinity;
@@ -79,6 +98,48 @@ function getConsonantXBounds(consonant) {
     });
   });
   return { minX, maxX };
+}
+
+// 자음의 y 범위 계산
+function getConsonantYBounds(consonant) {
+  let minY = Infinity, maxY = -Infinity;
+  consonant.strokes.forEach(s => {
+    getPathYCoords(s.path).forEach(y => {
+      if (y < minY) minY = y;
+      if (y > maxY) maxY = y;
+    });
+  });
+  return { minY, maxY };
+}
+
+// path를 토큰으로 분해 → y좌표만 offset → 재조립
+function offsetPathY(pathStr, offset) {
+  const tokens = pathStr.match(/[A-Za-z]|[-+]?[\d.]+/g);
+  if (!tokens) return pathStr;
+  const result = [];
+  let i = 0;
+  while (i < tokens.length) {
+    const t = tokens[i];
+    if (t === 'M' || t === 'L') {
+      result.push(t, tokens[i+1], String(parseFloat(tokens[i+2]) + offset));
+      i += 3;
+    } else if (t === 'Q') {
+      result.push(t, tokens[i+1], String(parseFloat(tokens[i+2]) + offset),
+                     tokens[i+3], String(parseFloat(tokens[i+4]) + offset));
+      i += 5;
+    } else if (t === 'A') {
+      result.push(t, tokens[i+1], tokens[i+2], tokens[i+3], tokens[i+4], tokens[i+5],
+                     tokens[i+6], String(parseFloat(tokens[i+7]) + offset));
+      i += 8;
+    } else if (t === 'Z') {
+      result.push(t);
+      i += 1;
+    } else {
+      result.push(t);
+      i += 1;
+    }
+  }
+  return result.join(' ');
 }
 
 // path를 토큰으로 분해 → x좌표만 offset → 재조립
@@ -116,57 +177,89 @@ function offsetPathX(pathStr, offset) {
   return result.join(' ');
 }
 
-// 동적 조합 생성 — 자음별 x범위 계산 → 여백 → ㅏ 배치 → 가운데 정렬
+// 동적 조합 생성
 function buildSyllables(vowelChar) {
-  const vt = VOWEL_TEMPLATES[vowelChar];
+  const tmpl = VOWEL_TEMPLATES[vowelChar];
   const names = SYLLABLE_NAMES[vowelChar];
-  const GAP = 60; // 자음과 모음 사이 여백
-  const STROKE_W = 74;
+  const GAP = 60;
+  const SW = 74;
+  const HALF = SW / 2;
 
-  // 모음 템플릿의 x 최소값 계산 (ㅓ/ㅕ는 음수)
+  if (tmpl.dir === 'right') {
+    return buildSyllablesRight(tmpl.strokes, names, GAP, SW, HALF);
+  } else {
+    return buildSyllablesBottom(tmpl.strokes, names, GAP, SW, HALF);
+  }
+}
+
+// 가로형 (ㅏㅑㅓㅕ): 자음 오른쪽에 모음, 캔버스 700×500
+function buildSyllablesRight(vtStrokes, names, GAP, SW, HALF) {
   let vowelMinDx = 0;
-  vt.forEach(t => {
+  vtStrokes.forEach(t => {
     getPathXCoords(t.path).forEach(x => { if (x < vowelMinDx) vowelMinDx = x; });
   });
 
   return CONSONANTS.map((c, i) => {
     const { minX, maxX } = getConsonantXBounds(c);
-    // 모음의 가장 왼쪽 점이 자음 오른쪽 끝 + gap에 오도록
-    const vowelBaseX = maxX + STROKE_W / 2 + GAP - vowelMinDx;
+    const vowelBaseX = maxX + HALF + GAP - vowelMinDx;
 
-    // 모음 획 생성 (baseX 기준으로 오프셋)
-    const vowelStrokes = vt.map(t => {
-      return { path: offsetPathX(t.path, vowelBaseX) };
-    });
+    const vowelStrokes = vtStrokes.map(t => ({ path: offsetPathX(t.path, vowelBaseX) }));
 
-    // 모음 오른쪽 끝 계산
     let vowMaxX = 0;
     vowelStrokes.forEach(s => {
       getPathXCoords(s.path).forEach(x => { if (x > vowMaxX) vowMaxX = x; });
     });
-    vowMaxX += STROKE_W / 2;
 
-    // 전체 글자 너비
-    const totalLeft = minX - STROKE_W / 2;
-    const totalWidth = vowMaxX - totalLeft;
+    const totalLeft = minX - HALF;
+    const totalRight = vowMaxX + HALF;
+    const centerOffset = (700 - (totalRight - totalLeft)) / 2 - totalLeft;
 
-    // 캔버스(700) 가운데 정렬용 오프셋
-    const centerOffset = (700 - totalWidth) / 2 - totalLeft;
+    const consStrokes = c.strokes.map(s => ({ path: offsetPathX(s.path, centerOffset) }));
+    const finalVowelStrokes = vowelStrokes.map(s => ({ path: offsetPathX(s.path, centerOffset) }));
 
-    // 자음 획에 오프셋 적용
+    return { char: names[i], strokes: [...consStrokes, ...finalVowelStrokes] };
+  });
+}
+
+// 세로형 (ㅜㅠ): 자음 아래에 모음, 캔버스 500×700
+function buildSyllablesBottom(vtStrokes, names, GAP, SW, HALF) {
+  // 모음 템플릿의 y 최소값
+  let vowelMinDy = 0;
+  vtStrokes.forEach(t => {
+    getPathYCoords(t.path).forEach(y => { if (y < vowelMinDy) vowelMinDy = y; });
+  });
+
+  return CONSONANTS.map((c, i) => {
+    const { minY, maxY } = getConsonantYBounds(c);
+    const vowelBaseY = maxY + HALF + GAP - vowelMinDy;
+
+    const vowelStrokes = vtStrokes.map(t => ({ path: offsetPathY(t.path, vowelBaseY) }));
+
+    let vowMaxY = 0;
+    vowelStrokes.forEach(s => {
+      getPathYCoords(s.path).forEach(y => { if (y > vowMaxY) vowMaxY = y; });
+    });
+
+    const totalTop = minY - HALF;
+    const totalBottom = vowMaxY + HALF;
+    const centerOffsetY = (700 - (totalBottom - totalTop)) / 2 - totalTop;
+
+    // x축은 500 기준 가운데 정렬
+    let allXs = [];
+    c.strokes.forEach(s => { allXs.push(...getPathXCoords(s.path)); });
+    vowelStrokes.forEach(s => { allXs.push(...getPathXCoords(s.path)); });
+    const xLeft = Math.min(...allXs) - HALF;
+    const xRight = Math.max(...allXs) + HALF;
+    const centerOffsetX = (500 - (xRight - xLeft)) / 2 - xLeft;
+
     const consStrokes = c.strokes.map(s => ({
-      path: offsetPathX(s.path, centerOffset)
+      path: offsetPathX(offsetPathY(s.path, centerOffsetY), centerOffsetX)
     }));
-
-    // 모음 획에도 오프셋 적용
     const finalVowelStrokes = vowelStrokes.map(s => ({
-      path: offsetPathX(s.path, centerOffset)
+      path: offsetPathX(offsetPathY(s.path, centerOffsetY), centerOffsetX)
     }));
 
-    return {
-      char: names[i],
-      strokes: [...consStrokes, ...finalVowelStrokes]
-    };
+    return { char: names[i], strokes: [...consStrokes, ...finalVowelStrokes] };
   });
 }
 

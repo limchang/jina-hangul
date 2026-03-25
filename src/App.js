@@ -66,11 +66,17 @@ function setupModeToggle() {
 
 function setCardMode(mode) {
   const card = document.getElementById('study-card');
-  card.classList.remove('card-square', 'card-wide');
+  card.classList.remove('card-square', 'card-wide', 'card-tall');
 
   if (mode === 'syllables') {
-    card.classList.add('card-wide');
-    cvW = 700; cvH = 500;
+    const dir = VOWEL_TEMPLATES[selectedVowel].dir;
+    if (dir === 'bottom') {
+      card.classList.add('card-tall');
+      cvW = 500; cvH = 700;
+    } else {
+      card.classList.add('card-wide');
+      cvW = 700; cvH = 500;
+    }
   } else {
     card.classList.add('card-square');
     cvW = 500; cvH = 500;

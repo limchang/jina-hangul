@@ -161,11 +161,18 @@ main {
   aspect-ratio: 1 / 1;
 }
 
-/* 가로형 (음절 = 자음+ㅏ): 높이 = 정사각형과 동일, 가로 = 높이×1.4 */
+/* 가로형 (ㅏㅑㅓㅕ): 높이 = 정사각형과 동일, 가로 = 높이×1.4 */
 .study-card.card-wide {
   height: min(550px, calc(100vh - 180px));
   width: calc(min(550px, calc(100vh - 180px)) * 1.4);
   max-width: calc(100vw - 540px);
+}
+
+/* 세로형 (ㅜㅠ): 너비 = 정사각형과 동일, 높이 = 너비×1.4 */
+.study-card.card-tall {
+  width: min(550px, calc(100vh - 180px));
+  height: calc(min(550px, calc(100vh - 180px)) * 1.4);
+  max-height: calc(100vh - 180px);
 }
 
 .study-card::after {
