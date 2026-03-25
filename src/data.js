@@ -185,6 +185,91 @@ function offsetPathX(pathStr, offset) {
   return result.join(' ');
 }
 
+// 자음에 곡선(Q/A)이 포함되어 있는지 확인
+function hasConsonantCurves(consonant) {
+  return consonant.strokes.some(s => /[QA]/.test(s.path));
+}
+
+// 직선 자음의 x좌표를 중심 기준으로 스케일 (곡률 유지 — 곡선 자음은 건너뜀)
+// scale: 0~1 (1이면 원래 크기)
+function scaleConsonantX(consonant, scale) {
+  if (hasConsonantCurves(consonant)) return consonant; // 곡선은 건드리지 않음
+  if (scale >= 1) return consonant;
+
+  const { minX, maxX } = getConsonantXBounds(consonant);
+  const cx = (minX + maxX) / 2;
+
+  return {
+    char: consonant.char,
+    strokes: consonant.strokes.map(s => ({
+      path: scalePathXAroundCenter(s.path, cx, scale)
+    }))
+  };
+}
+
+// path의 x좌표를 cx 기준으로 scale 적용
+function scalePathXAroundCenter(pathStr, cx, scale) {
+  const tokens = pathStr.match(/[A-Za-z]|[-+]?[\d.]+/g);
+  if (!tokens) return pathStr;
+  const result = [];
+  let i = 0;
+  while (i < tokens.length) {
+    const t = tokens[i];
+    if (t === 'M' || t === 'L') {
+      const x = parseFloat(tokens[i+1]);
+      const newX = cx + (x - cx) * scale;
+      result.push(t, String(Math.round(newX * 10) / 10), tokens[i+2]);
+      i += 3;
+    } else if (t === 'Z') {
+      result.push(t);
+      i += 1;
+    } else {
+      result.push(t);
+      i += 1;
+    }
+  }
+  return result.join(' ');
+}
+
+// 직선 자음의 y좌표를 중심 기준으로 스케일
+function scaleConsonantY(consonant, scale) {
+  if (hasConsonantCurves(consonant)) return consonant;
+  if (scale >= 1) return consonant;
+
+  const { minY, maxY } = getConsonantYBounds(consonant);
+  const cy = (minY + maxY) / 2;
+
+  return {
+    char: consonant.char,
+    strokes: consonant.strokes.map(s => ({
+      path: scalePathYAroundCenter(s.path, cy, scale)
+    }))
+  };
+}
+
+function scalePathYAroundCenter(pathStr, cy, scale) {
+  const tokens = pathStr.match(/[A-Za-z]|[-+]?[\d.]+/g);
+  if (!tokens) return pathStr;
+  const result = [];
+  let i = 0;
+  while (i < tokens.length) {
+    const t = tokens[i];
+    if (t === 'M' || t === 'L') {
+      const y = parseFloat(tokens[i+2]);
+      const newY = cy + (y - cy) * scale;
+      result.push(t, tokens[i+1], String(Math.round(newY * 10) / 10));
+      i += 3;
+    } else if (t === 'Z') {
+      result.push(t);
+      i += 1;
+    } else {
+      result.push(t);
+      i += 1;
+    }
+  }
+  return result.join(' ');
+}
+
 // 동적 조합 생성
 function buildSyllables(vowelChar) {
   const tmpl = VOWEL_TEMPLATES[vowelChar];
@@ -207,10 +292,30 @@ function buildSyllablesRight(vtStrokes, names, GAP, SW, HALF) {
     getPathXCoords(t.path).forEach(x => { if (x < vowelMinDx) vowelMinDx = x; });
   });
 
-  return CONSONANTS.map((c, i) => {
-    const { minX, maxX } = getConsonantXBounds(c);
-    const vowelBaseX = maxX + HALF + GAP - vowelMinDx;
+  // 모음 폭 계산 (템플릿 기준)
+  let vowelMaxDx = 0;
+  vtStrokes.forEach(t => {
+    getPathXCoords(t.path).forEach(x => { if (x > vowelMaxDx) vowelMaxDx = x; });
+  });
+  const vowelWidth = (vowelMaxDx - vowelMinDx) + SW; // 모음 전체 폭 (획폭 포함)
 
+  const TARGET_W = 700; // 캔버스 폭
+
+  return CONSONANTS.map((c, i) => {
+    // 자음 스케일링: 자음폭 + gap + 모음폭이 캔버스를 넘으면 자음을 축소
+    let cons = c;
+    let { minX, maxX } = getConsonantXBounds(cons);
+    const consWidth = (maxX - minX) + SW;
+    const totalNeeded = consWidth + GAP + vowelWidth;
+
+    if (totalNeeded > TARGET_W && !hasConsonantCurves(c)) {
+      const availForCons = TARGET_W - GAP - vowelWidth;
+      const scale = (availForCons - SW) / (consWidth - SW); // 획폭 제외한 부분만 스케일
+      cons = scaleConsonantX(c, Math.max(scale, 0.6)); // 최소 60%
+      ({ minX, maxX } = getConsonantXBounds(cons));
+    }
+
+    const vowelBaseX = maxX + HALF + GAP - vowelMinDx;
     const vowelStrokes = vtStrokes.map(t => ({ path: offsetPathX(t.path, vowelBaseX) }));
 
     let vowMaxX = 0;
@@ -220,9 +325,9 @@ function buildSyllablesRight(vtStrokes, names, GAP, SW, HALF) {
 
     const totalLeft = minX - HALF;
     const totalRight = vowMaxX + HALF;
-    const centerOffset = (700 - (totalRight - totalLeft)) / 2 - totalLeft;
+    const centerOffset = (TARGET_W - (totalRight - totalLeft)) / 2 - totalLeft;
 
-    const consStrokes = c.strokes.map(s => ({ path: offsetPathX(s.path, centerOffset) }));
+    const consStrokes = cons.strokes.map(s => ({ path: offsetPathX(s.path, centerOffset) }));
     const finalVowelStrokes = vowelStrokes.map(s => ({ path: offsetPathX(s.path, centerOffset) }));
 
     return { char: names[i], strokes: [...consStrokes, ...finalVowelStrokes] };
@@ -237,8 +342,28 @@ function buildSyllablesBottom(vtStrokes, names, GAP, SW, HALF) {
     getPathYCoords(t.path).forEach(y => { if (y < vowelMinDy) vowelMinDy = y; });
   });
 
+  // 모음 높이 계산
+  let vowelMaxDy = 0;
+  vtStrokes.forEach(t => {
+    getPathYCoords(t.path).forEach(y => { if (y > vowelMaxDy) vowelMaxDy = y; });
+  });
+  const vowelHeight = (vowelMaxDy - vowelMinDy) + SW;
+  const TARGET_H = 700;
+
   return CONSONANTS.map((c, i) => {
-    const { minY, maxY } = getConsonantYBounds(c);
+    let { minY, maxY } = getConsonantYBounds(c);
+    const consHeight = (maxY - minY) + SW;
+    const totalNeeded = consHeight + GAP + vowelHeight;
+
+    // 세로형에서는 자음 y축 스케일링 (곡선 건너뜀)
+    let cons = c;
+    if (totalNeeded > TARGET_H && !hasConsonantCurves(c)) {
+      const availForCons = TARGET_H - GAP - vowelHeight;
+      const scale = (availForCons - SW) / (consHeight - SW);
+      cons = scaleConsonantY(c, Math.max(scale, 0.6));
+      ({ minY, maxY } = getConsonantYBounds(cons));
+    }
+
     const vowelBaseY = maxY + HALF + GAP - vowelMinDy;
 
     const vowelStrokes = vtStrokes.map(t => ({ path: offsetPathY(t.path, vowelBaseY) }));
@@ -254,13 +379,13 @@ function buildSyllablesBottom(vtStrokes, names, GAP, SW, HALF) {
 
     // x축은 500 기준 가운데 정렬
     let allXs = [];
-    c.strokes.forEach(s => { allXs.push(...getPathXCoords(s.path)); });
+    cons.strokes.forEach(s => { allXs.push(...getPathXCoords(s.path)); });
     vowelStrokes.forEach(s => { allXs.push(...getPathXCoords(s.path)); });
     const xLeft = Math.min(...allXs) - HALF;
     const xRight = Math.max(...allXs) + HALF;
     const centerOffsetX = (500 - (xRight - xLeft)) / 2 - xLeft;
 
-    const consStrokes = c.strokes.map(s => ({
+    const consStrokes = cons.strokes.map(s => ({
       path: offsetPathX(offsetPathY(s.path, centerOffsetY), centerOffsetX)
     }));
     const finalVowelStrokes = vowelStrokes.map(s => ({
