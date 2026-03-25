@@ -53,6 +53,9 @@ function onPointerDown(e) {
   const pos = getPointerPos(e);
   if (engine.start(pos.x, pos.y)) {
     stopArrowAnim();
+    // 터치 시작 시 반짝 파티클
+    particleSystem.burst(pos.x, pos.y, 15);
+    startParticleLoop();
     renderTrace();
     updateIcons();
     handlerIcon.style.transform = 'translate(-50%, -50%) scale(1.15) rotate(5deg)';
@@ -64,6 +67,8 @@ function onPointerMove(e) {
   e.preventDefault();
   const pos = getPointerPos(e);
   engine.move(pos.x, pos.y);
+  // 이동 중 파티클 뿌리기
+  particleSystem.emit(pos.x, pos.y, 3);
   renderTrace();
   updateIcons();
 }
@@ -77,8 +82,12 @@ function onPointerUp(e) {
   if (!engine.isTracing) return;
   handlerIcon.style.transform = 'translate(-50%, -50%)';
   if (engine.end()) {
+    // 획 완성 파티클 폭발
+    const tp = engine.getTargetPos();
+    particleSystem.burst(tp.x, tp.y, 40);
     completeStroke();
   } else {
+    stopParticleLoop();
     renderTrace();
     updateIcons();
     startArrowAnim(engine.pts);

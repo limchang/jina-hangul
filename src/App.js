@@ -83,6 +83,10 @@ function showSuccessAnim() {
   card.classList.add('success-anim');
   setTimeout(() => card.classList.remove('success-anim'), 400);
   overlay.innerHTML = '';
+  // 글자 완성 대폭발 축하 파티클!
+  particleSystem.celebrate(250, 250);
+  startParticleLoop();
+  setTimeout(() => stopParticleLoop(), 2000);
 }
 
 window.addEventListener('load', initApp);

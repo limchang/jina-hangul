@@ -81,6 +81,10 @@ function drawGuide(clear = true) {
 function renderTrace() {
   tCtx.clearRect(0, 0, 500, 500);
   engine.draw();
+  // 파티클 렌더링
+  if (typeof particleSystem !== 'undefined') {
+    particleSystem.draw(tCtx);
+  }
 }
 
 function getIconImageUrl(char) {
