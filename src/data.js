@@ -45,8 +45,12 @@ const VOWEL_TEMPLATES = {
   'ㅑ':  { dir:'right', strokes:[{path:'M 0 130 L 0 370'}, {path:'M 0 210 L 80 210'}, {path:'M 0 290 L 80 290'}] },
   'ㅓ':  { dir:'right', strokes:[{path:'M -80 250 L 0 250'}, {path:'M 0 130 L 0 370'}] },
   'ㅕ':  { dir:'right', strokes:[{path:'M -80 210 L 0 210'}, {path:'M -80 290 L 0 290'}, {path:'M 0 130 L 0 370'}] },
+  'ㅗ':  { dir:'bottom', strokes:[{path:'M 250 0 L 250 -130'}, {path:'M 130 0 L 370 0'}] },
+  'ㅛ':  { dir:'bottom', strokes:[{path:'M 190 0 L 190 -130'}, {path:'M 310 0 L 310 -130'}, {path:'M 130 0 L 370 0'}] },
   'ㅜ':  { dir:'bottom', strokes:[{path:'M 130 0 L 370 0'}, {path:'M 250 0 L 250 130'}] },
   'ㅠ':  { dir:'bottom', strokes:[{path:'M 130 0 L 370 0'}, {path:'M 190 0 L 190 130'}, {path:'M 310 0 L 310 130'}] },
+  'ㅡ':  { dir:'bottom', strokes:[{path:'M 150 0 L 350 0'}] },
+  'ㅣ':  { dir:'right', strokes:[{path:'M 0 130 L 0 370'}] },
 };
 
 const SYLLABLE_NAMES = {
@@ -54,11 +58,15 @@ const SYLLABLE_NAMES = {
   'ㅑ': '갸냐댜랴먀뱌셔야쟈챠캬탸퍄햐',
   'ㅓ': '거너더러머버서어저처커터퍼허',
   'ㅕ': '겨녀뎌려며벼셔여져쳐켜텨펴혀',
+  'ㅗ': '고노도로모보소오조초코토포호',
+  'ㅛ': '교뇨됴료묘뵤쇼요죠쵸쿄툐표효',
   'ㅜ': '구누두루무부수우주추쿠투푸후',
   'ㅠ': '규뉴듀류뮤뷰슈유쥬츄큐튜퓨휴',
+  'ㅡ': '그느드르므브스으즈츠크트프흐',
+  'ㅣ': '기니디리미비시이지치키티피히',
 };
 
-const COMBINE_VOWELS = ['ㅏ', 'ㅑ', 'ㅓ', 'ㅕ', 'ㅜ', 'ㅠ'];
+const COMBINE_VOWELS = ['ㅏ', 'ㅑ', 'ㅓ', 'ㅕ', 'ㅗ', 'ㅛ', 'ㅜ', 'ㅠ', 'ㅡ', 'ㅣ'];
 let selectedVowel = 'ㅏ';
 
 // path 문자열에서 모든 x좌표를 추출
