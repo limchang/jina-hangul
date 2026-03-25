@@ -41,6 +41,6 @@ const APP_CONFIG = {
   GUIDE_STROKE_WIDTH: 74,
   TRACE_COLOR: '#ffeb3b',
   TRACE_STROKE_WIDTH: 74,
-  DEFAULT_CHAR_IMG: 'gazelle.png',
+  DEFAULT_CHAR_IMG: 'img.png',
   STARFISH_SVG: `<svg viewBox="0 0 100 100"><path d="M50,5 L63,38 L95,38 L69,59 L79,91 L50,72 L21,91 L31,59 L5,38 L37,38 Z" fill="#ff9133" stroke="#cc5500" stroke-width="2"/><circle cx="42" cy="45" r="4" fill="black"/><circle cx="58" cy="45" r="4" fill="black"/><path d="M46,55 Q50,60 54,55" fill="none" stroke="black" stroke-width="2"/></svg>`
 };

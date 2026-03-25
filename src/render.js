@@ -69,7 +69,7 @@ function setupIcons() {
   const char = currentDataList[currentCharIdx].char;
   overlay.innerHTML = `
     <div id="target-icon" class="target-icon">${APP_CONFIG.STARFISH_SVG}</div>
-    <img id="handler-icon" class="character-handler" src="${getIconImageUrl(char)}" onerror="this.src='gazelle.png'">
+    <img id="handler-icon" class="character-handler" src="${getIconImageUrl(char)}" onerror="this.src='img.png'">
   `;
   handlerIcon = document.getElementById('handler-icon');
   targetIcon = document.getElementById('target-icon');
