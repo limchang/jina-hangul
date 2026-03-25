@@ -80,7 +80,7 @@ header {
 
 /* ─── Side Panels (자음/모음) ─── */
 .side-panel {
-  width: 120px; display: flex; flex-direction: column;
+  width: 200px; display: flex; flex-direction: column;
   background: rgba(255, 255, 255, 0.25);
   backdrop-filter: blur(10px);
 }
@@ -98,19 +98,19 @@ header {
 
 .panel-list {
   flex: 1; overflow-y: auto; overflow-x: hidden;
-  display: flex; flex-direction: column; align-items: center;
-  gap: 8px; padding: 10px 8px;
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 8px; padding: 10px 10px;
+  align-content: start;
   scrollbar-width: none;
 }
 .panel-list::-webkit-scrollbar { display: none; }
 
 .thumb {
-  min-width: 80px; width: 80px; height: 70px; background: white; border-radius: 18px;
+  height: 65px; background: white; border-radius: 18px;
   display: flex; align-items: center; justify-content: center;
-  font-size: 2.2rem; font-weight: 900; color: var(--text-dark);
+  font-size: 2rem; font-weight: 900; color: var(--text-dark);
   box-shadow: 0 5px 10px rgba(0,0,0,0.08), 0 3px 0 var(--btn-inactive);
   cursor: pointer; transition: all 0.2s; border: 3px solid var(--btn-inactive);
-  flex-shrink: 0;
 }
 .thumb:hover { transform: translateY(-3px); border-color: var(--btn-purple); color: var(--btn-purple); }
 .thumb.active {
@@ -137,8 +137,8 @@ main {
 .nav-arrow:active { transform: scale(0.95) translateY(4px); box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
 
 .study-card {
-  width: min(650px, calc(100vh - 160px), calc(100vw - 380px));
-  height: min(650px, calc(100vh - 160px), calc(100vw - 380px));
+  width: min(650px, calc(100vh - 160px), calc(100vw - 540px));
+  height: min(650px, calc(100vh - 160px), calc(100vw - 540px));
   aspect-ratio: 1 / 1;
   border-radius: 40px;
   background:
