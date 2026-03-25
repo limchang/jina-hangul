@@ -86,6 +86,7 @@ header {
 }
 
 .left-panel { border-right: 2px solid rgba(255,255,255,0.3); }
+.mid-panel { border-right: 2px solid rgba(255,255,255,0.3); }
 .right-panel { border-left: 2px solid rgba(255,255,255,0.3); }
 
 .panel-label {
@@ -137,8 +138,8 @@ main {
 .nav-arrow:active { transform: scale(0.95) translateY(4px); box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
 
 .study-card {
-  width: min(650px, calc(100vh - 160px), calc(100vw - 540px));
-  height: min(650px, calc(100vh - 160px), calc(100vw - 540px));
+  width: min(650px, calc(100vh - 160px), calc(100vw - 740px));
+  height: min(650px, calc(100vh - 160px), calc(100vw - 740px));
   aspect-ratio: 1 / 1;
   border-radius: 40px;
   background:

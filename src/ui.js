@@ -1,24 +1,18 @@
-// ui.js — 자음/모음 양쪽 패널 UI + 네비게이션
-
-function setupTabs() {
-  // 탭 대신 양쪽 패널 클릭으로 전환
-  // 자음 패널 항목 클릭 시 자음 모드로 전환
-  // 모음 패널 항목 클릭 시 모음 모드로 전환
-}
+// ui.js — 자음/가나다/모음 패널 UI + 네비게이션
 
 function setupPanels() {
   const consList = document.getElementById('cons-list');
+  const sylList = document.getElementById('syl-list');
   const vowList = document.getElementById('vow-list');
 
   consList.innerHTML = '';
+  sylList.innerHTML = '';
   vowList.innerHTML = '';
 
   CONSONANTS.forEach((item, i) => {
     const div = document.createElement('div');
     div.className = 'thumb';
     div.innerText = item.char;
-    div.dataset.type = 'cons';
-    div.dataset.index = i;
     div.onclick = () => {
       currentDataList = CONSONANTS;
       currentMode = 'consonants';
@@ -28,12 +22,23 @@ function setupPanels() {
     consList.appendChild(div);
   });
 
+  SYLLABLES_A.forEach((item, i) => {
+    const div = document.createElement('div');
+    div.className = 'thumb';
+    div.innerText = item.char;
+    div.onclick = () => {
+      currentDataList = SYLLABLES_A;
+      currentMode = 'syllables';
+      loadCharacter(i);
+      updatePanelActive();
+    };
+    sylList.appendChild(div);
+  });
+
   VOWELS.forEach((item, i) => {
     const div = document.createElement('div');
     div.className = 'thumb';
     div.innerText = item.char;
-    div.dataset.type = 'vow';
-    div.dataset.index = i;
     div.onclick = () => {
       currentDataList = VOWELS;
       currentMode = 'vowels';
@@ -44,32 +49,23 @@ function setupPanels() {
   });
 }
 
-function setupFooter() {
-  // 이제 footer 대신 panels 사용
-  setupPanels();
-}
-
 function updatePanelActive() {
-  // 자음 패널
-  const consThumbs = document.querySelectorAll('#cons-list .thumb');
-  consThumbs.forEach((el, i) => {
-    if (currentMode === 'consonants' && i === currentCharIdx) {
-      el.classList.add('active');
-      el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    } else {
-      el.classList.remove('active');
-    }
-  });
+  const panels = [
+    { id: 'cons-list', mode: 'consonants' },
+    { id: 'syl-list', mode: 'syllables' },
+    { id: 'vow-list', mode: 'vowels' }
+  ];
 
-  // 모음 패널
-  const vowThumbs = document.querySelectorAll('#vow-list .thumb');
-  vowThumbs.forEach((el, i) => {
-    if (currentMode === 'vowels' && i === currentCharIdx) {
-      el.classList.add('active');
-      el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    } else {
-      el.classList.remove('active');
-    }
+  panels.forEach(({ id, mode }) => {
+    const thumbs = document.querySelectorAll(`#${id} .thumb`);
+    thumbs.forEach((el, i) => {
+      if (currentMode === mode && i === currentCharIdx) {
+        el.classList.add('active');
+        el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      } else {
+        el.classList.remove('active');
+      }
+    });
   });
 }
 
@@ -82,19 +78,17 @@ function setupNav() {
   document.querySelector('.nav-arrow.right').onclick = () => nextChar();
 }
 
+const MODE_ORDER = ['consonants', 'syllables', 'vowels'];
+const MODE_DATA = { consonants: () => CONSONANTS, syllables: () => SYLLABLES_A, vowels: () => VOWELS };
+
 function nextChar() {
   const nextIdx = currentCharIdx + 1;
   if (nextIdx >= currentDataList.length) {
-    // 자음 끝이면 모음으로, 모음 끝이면 자음으로
-    if (currentMode === 'consonants') {
-      currentDataList = VOWELS;
-      currentMode = 'vowels';
-      loadCharacter(0);
-    } else {
-      currentDataList = CONSONANTS;
-      currentMode = 'consonants';
-      loadCharacter(0);
-    }
+    const mi = MODE_ORDER.indexOf(currentMode);
+    const nextMode = MODE_ORDER[(mi + 1) % MODE_ORDER.length];
+    currentMode = nextMode;
+    currentDataList = MODE_DATA[nextMode]();
+    loadCharacter(0);
   } else {
     loadCharacter(nextIdx);
   }
@@ -104,15 +98,11 @@ function nextChar() {
 function prevChar() {
   const prevIdx = currentCharIdx - 1;
   if (prevIdx < 0) {
-    if (currentMode === 'consonants') {
-      currentDataList = VOWELS;
-      currentMode = 'vowels';
-      loadCharacter(VOWELS.length - 1);
-    } else {
-      currentDataList = CONSONANTS;
-      currentMode = 'consonants';
-      loadCharacter(CONSONANTS.length - 1);
-    }
+    const mi = MODE_ORDER.indexOf(currentMode);
+    const prevMode = MODE_ORDER[(mi - 1 + MODE_ORDER.length) % MODE_ORDER.length];
+    currentMode = prevMode;
+    currentDataList = MODE_DATA[prevMode]();
+    loadCharacter(currentDataList.length - 1);
   } else {
     loadCharacter(prevIdx);
   }
