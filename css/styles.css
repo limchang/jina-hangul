@@ -147,8 +147,8 @@ main {
 
 /* 가로형 (음절 = 자음+ㅏ) */
 .study-card.card-wide {
-  width: min(1000px, calc(100vw - 540px));
-  aspect-ratio: 2 / 1;
+  width: min(935px, calc(100vw - 540px));
+  aspect-ratio: 85 / 50;
 }
 
 .study-card::after {
