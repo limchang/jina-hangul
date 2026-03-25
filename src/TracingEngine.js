@@ -132,63 +132,27 @@ class TracingEngine {
     for (let i = 1; i <= this.maxReachedIdx; i++) ctx.lineTo(this.pts[i].x, this.pts[i].y);
     ctx.stroke();
 
-    // 마법 손가락 이펙트 — 터치 중일 때
+    // 손가락 글로우 — 부드러운 빛
     if (this.isTracing && this.pointerX !== undefined) {
       const px = this.pointerX, py = this.pointerY;
       const t = Date.now() / 1000;
-      const pulse = 0.8 + Math.sin(t * 6) * 0.2;
+      const pulse = 0.9 + Math.sin(t * 4) * 0.1;
 
-      // 외곽 큰 빛 후광
-      const grad1 = ctx.createRadialGradient(px, py, 0, px, py, 80 * pulse);
-      grad1.addColorStop(0, 'rgba(255,255,180,0.5)');
-      grad1.addColorStop(0.3, 'rgba(255,220,60,0.25)');
-      grad1.addColorStop(0.6, 'rgba(255,150,255,0.1)');
-      grad1.addColorStop(1, 'rgba(255,200,0,0)');
+      // 부드러운 후광
+      const grad = ctx.createRadialGradient(px, py, 4, px, py, 50 * pulse);
+      grad.addColorStop(0, 'rgba(255,255,220,0.6)');
+      grad.addColorStop(0.4, 'rgba(255,230,100,0.2)');
+      grad.addColorStop(1, 'rgba(255,220,80,0)');
       ctx.beginPath();
-      ctx.arc(px, py, 80 * pulse, 0, Math.PI * 2);
-      ctx.fillStyle = grad1;
+      ctx.arc(px, py, 50 * pulse, 0, Math.PI * 2);
+      ctx.fillStyle = grad;
       ctx.fill();
-
-      // 중간 마법 링 (회전)
-      ctx.save();
-      ctx.translate(px, py);
-      ctx.rotate(t * 2);
-      const grad2 = ctx.createRadialGradient(0, 0, 20, 0, 0, 45 * pulse);
-      grad2.addColorStop(0, 'rgba(255,255,255,0)');
-      grad2.addColorStop(0.5, 'rgba(180,130,255,0.3)');
-      grad2.addColorStop(0.8, 'rgba(255,200,100,0.15)');
-      grad2.addColorStop(1, 'rgba(255,255,255,0)');
-      ctx.beginPath();
-      ctx.arc(0, 0, 45 * pulse, 0, Math.PI * 2);
-      ctx.fillStyle = grad2;
-      ctx.fill();
-      ctx.restore();
 
       // 밝은 코어
-      const grad3 = ctx.createRadialGradient(px, py, 0, px, py, 22);
-      grad3.addColorStop(0, 'rgba(255,255,255,0.95)');
-      grad3.addColorStop(0.4, 'rgba(255,255,180,0.8)');
-      grad3.addColorStop(1, 'rgba(255,230,100,0)');
       ctx.beginPath();
-      ctx.arc(px, py, 22, 0, Math.PI * 2);
-      ctx.fillStyle = grad3;
+      ctx.arc(px, py, 14, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(255,255,240,0.8)';
       ctx.fill();
-
-      // 미니 별 4개 (회전하며 주위를 돔)
-      ctx.save();
-      ctx.translate(px, py);
-      for (let i = 0; i < 4; i++) {
-        const a = t * 3 + (i * Math.PI / 2);
-        const r = 30 + Math.sin(t * 4 + i) * 8;
-        const sx = Math.cos(a) * r;
-        const sy = Math.sin(a) * r;
-        const ss = 3 + Math.sin(t * 8 + i * 2) * 1.5;
-        ctx.beginPath();
-        ctx.arc(sx, sy, ss, 0, Math.PI * 2);
-        ctx.fillStyle = `hsla(${(i * 90 + t * 100) % 360}, 100%, 80%, 0.9)`;
-        ctx.fill();
-      }
-      ctx.restore();
     }
   }
 
