@@ -123,16 +123,20 @@ function buildSyllables(vowelChar) {
   const GAP = 60; // 자음과 모음 사이 여백
   const STROKE_W = 74;
 
+  // 모음 템플릿의 x 최소값 계산 (ㅓ/ㅕ는 음수)
+  let vowelMinDx = 0;
+  vt.forEach(t => {
+    getPathXCoords(t.path).forEach(x => { if (x < vowelMinDx) vowelMinDx = x; });
+  });
+
   return CONSONANTS.map((c, i) => {
     const { minX, maxX } = getConsonantXBounds(c);
-    // 자음 오른쪽 끝 + 획 반폭 + 여백 = 모음 세로줄 x
-    const vowelBaseX = maxX + STROKE_W / 2 + GAP;
+    // 모음의 가장 왼쪽 점이 자음 오른쪽 끝 + gap에 오도록
+    const vowelBaseX = maxX + STROKE_W / 2 + GAP - vowelMinDx;
 
     // 모음 획 생성 (baseX 기준으로 오프셋)
     const vowelStrokes = vt.map(t => {
-      // 원본 path에서 x=0 기준 → vowelBaseX로 이동
-      const rawPath = t.path;
-      return { path: offsetPathX(rawPath, vowelBaseX) };
+      return { path: offsetPathX(t.path, vowelBaseX) };
     });
 
     // 모음 오른쪽 끝 계산
