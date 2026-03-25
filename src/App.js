@@ -70,7 +70,7 @@ function setCardMode(mode) {
 
   if (mode === 'syllables') {
     card.classList.add('card-wide');
-    cvW = 1000; cvH = 500;
+    cvW = 700; cvH = 500;
   } else {
     card.classList.add('card-square');
     cvW = 500; cvH = 500;
