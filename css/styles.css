@@ -161,10 +161,10 @@ main {
   aspect-ratio: 1 / 1;
 }
 
-/* 가로형 (음절 = 자음+ㅏ): 높이는 정사각형과 동일, 가로만 1.7배 */
+/* 가로형 (음절 = 자음+ㅏ): 높이 = 정사각형과 동일, 가로 = 높이×2 */
 .study-card.card-wide {
   height: min(550px, calc(100vh - 180px));
-  width: calc(min(550px, calc(100vh - 180px)) * 1.7);
+  width: calc(min(550px, calc(100vh - 180px)) * 2);
   max-width: calc(100vw - 540px);
 }
 
