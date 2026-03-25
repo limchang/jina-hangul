@@ -104,7 +104,7 @@ function buildSyllables(vowelChar) {
   const vt = VOWEL_TEMPLATES[vowelChar];
   const names = SYLLABLE_NAMES[vowelChar];
   const GAP = 60; // 자음과 모음 사이 여백
-  const STROKE_W = APP_CONFIG.GUIDE_STROKE_WIDTH; // 74
+  const STROKE_W = 74;
 
   return CONSONANTS.map((c, i) => {
     const { minX, maxX } = getConsonantXBounds(c);
