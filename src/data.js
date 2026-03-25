@@ -36,19 +36,36 @@ const VOWELS = [
   { char:'ㅣ', strokes:[{path:'M 250 130 L 250 370'}] }
 ];
 
-// 자음 + ㅏ 조합 (가~하)
-// 캔버스: 700 × 500
-// 왼쪽: 자음 (기존 좌표 그대로, 150~350)
-// 오른쪽: ㅏ (기존 좌표 + x오프셋 200)
-const SYL_A = [
-  {path:'M 450 130 L 450 370'},  // ㅏ 세로 (250+200)
-  {path:'M 450 250 L 530 250'}   // ㅏ 가로 (250+200, 330+200)
-];
+// 붙이기 모드: 모음별 오프셋 데이터 (기존 VOWELS 좌표 + x오프셋 200)
+const VOWEL_OFFSETS = {
+  'ㅏ': [{path:'M 450 130 L 450 370'}, {path:'M 450 250 L 530 250'}],
+  'ㅑ': [{path:'M 450 130 L 450 370'}, {path:'M 450 210 L 530 210'}, {path:'M 450 290 L 530 290'}],
+  'ㅓ': [{path:'M 370 250 L 450 250'}, {path:'M 450 130 L 450 370'}],
+  'ㅕ': [{path:'M 370 210 L 450 210'}, {path:'M 370 290 L 450 290'}, {path:'M 450 130 L 450 370'}],
+};
 
-const SYLLABLES_A = CONSONANTS.map((c, i) => ({
-  char: '가나다라마바사아자차카타파하'[i],
-  strokes: [...c.strokes, ...SYL_A]
-}));
+// 자음+모음 글자 이름 매핑
+const SYLLABLE_NAMES = {
+  'ㅏ': '가나다라마바사아자차카타파하',
+  'ㅑ': '갸냐댜랴먀뱌셔야쟈챠캬탸퍄햐',
+  'ㅓ': '거너더러머버서어저처커터퍼허',
+  'ㅕ': '겨녀뎌려며벼셔여져쳐켜텨펴혀',
+};
+
+// 현재 선택된 모음
+let selectedVowel = 'ㅏ';
+
+// 동적 조합 생성
+function buildSyllables(vowelChar) {
+  const vowelStrokes = VOWEL_OFFSETS[vowelChar];
+  const names = SYLLABLE_NAMES[vowelChar];
+  return CONSONANTS.map((c, i) => ({
+    char: names[i],
+    strokes: [...c.strokes, ...vowelStrokes]
+  }));
+}
+
+let SYLLABLES = buildSyllables('ㅏ');
 
 const APP_CONFIG = {
   GUIDE_COLOR: '#ffffff',

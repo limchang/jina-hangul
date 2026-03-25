@@ -58,7 +58,7 @@ function setupModeToggle() {
     btnCombine.classList.add('active');
     btnBasic.classList.remove('active');
     currentMode = 'syllables';
-    currentDataList = SYLLABLES_A;
+    currentDataList = SYLLABLES;
     setupPanels();
     loadCharacter(0);
   };
