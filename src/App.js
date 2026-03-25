@@ -1,6 +1,7 @@
-// App.js — 단일 카드, 모드별 비율 변경
+// App.js — 기본 모드 / 붙이기 모드
 
 let engine;
+let appMode = 'basic'; // 'basic' or 'combine'
 let currentMode = 'consonants';
 let currentDataList = CONSONANTS;
 let currentCharIdx = 0;
@@ -10,7 +11,6 @@ let guideCanvas, traceCanvas, arrowCanvas, gCtx, tCtx, aCtx;
 let overlay, handlerIcon, targetIcon;
 let completedStrokes = [];
 
-// 현재 캔버스 크기 (정사각형: 500×500, 가로형: 1000×500)
 let cvW = 500, cvH = 500;
 
 function initApp() {
@@ -27,6 +27,7 @@ function initApp() {
   setupPanels();
   setupNav();
   setupInput();
+  setupModeToggle();
 
   window.addEventListener('resize', resize);
 
@@ -34,6 +35,33 @@ function initApp() {
     resize();
     loadCharacter(0);
   }, 50);
+}
+
+function setupModeToggle() {
+  const btnBasic = document.getElementById('mode-basic');
+  const btnCombine = document.getElementById('mode-combine');
+
+  btnBasic.onclick = () => {
+    if (appMode === 'basic') return;
+    appMode = 'basic';
+    btnBasic.classList.add('active');
+    btnCombine.classList.remove('active');
+    currentMode = 'consonants';
+    currentDataList = CONSONANTS;
+    setupPanels();
+    loadCharacter(0);
+  };
+
+  btnCombine.onclick = () => {
+    if (appMode === 'combine') return;
+    appMode = 'combine';
+    btnCombine.classList.add('active');
+    btnBasic.classList.remove('active');
+    currentMode = 'syllables';
+    currentDataList = SYLLABLES_A;
+    setupPanels();
+    loadCharacter(0);
+  };
 }
 
 function setCardMode(mode) {
@@ -93,22 +121,7 @@ function completeStroke() {
   currentStrokeIdx++;
   if (currentStrokeIdx >= charData.strokes.length) {
     showSuccessAnim();
-    setTimeout(() => {
-      if (currentMode === 'consonants') {
-        // 자음 완성 → 같은 글자의 음절 카드로
-        currentMode = 'syllables';
-        currentDataList = SYLLABLES_A;
-        loadCharacter(currentCharIdx);
-        updatePanelActive();
-      } else {
-        // 음절 완성 → 다음 글자 자음으로
-        currentMode = 'consonants';
-        currentDataList = CONSONANTS;
-        const nextIdx = (currentCharIdx + 1) % CONSONANTS.length;
-        loadCharacter(nextIdx);
-        updatePanelActive();
-      }
-    }, 800);
+    setTimeout(() => nextChar(), 800);
   } else {
     loadStroke(currentStrokeIdx);
   }

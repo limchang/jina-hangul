@@ -66,6 +66,22 @@ header {
   text-shadow: 0 2px 8px rgba(0,0,0,0.15); letter-spacing: 2px;
 }
 
+.mode-toggle {
+  display: flex; gap: 8px; margin-left: auto;
+  background: rgba(255,255,255,0.3); padding: 6px; border-radius: 30px;
+}
+.mode-btn {
+  padding: 8px 20px; border-radius: 24px; font-size: 1rem; font-weight: 700;
+  color: #8899a6; background: var(--btn-inactive); cursor: pointer;
+  border: 3px solid white; transition: all 0.2s;
+  box-shadow: 0 4px 0 var(--btn-inactive-shadow);
+}
+.mode-btn.active {
+  background: var(--btn-purple); color: white;
+  box-shadow: 0 4px 0 var(--btn-purple-shadow);
+}
+.mode-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--btn-purple-shadow); }
+
 /* ─── Main Layout ─── */
 .main-layout {
   flex: 1; display: flex; align-items: stretch;
@@ -145,10 +161,11 @@ main {
   aspect-ratio: 1 / 1;
 }
 
-/* 가로형 (음절 = 자음+ㅏ) */
+/* 가로형 (음절 = 자음+ㅏ): 높이는 정사각형과 동일, 가로만 1.7배 */
 .study-card.card-wide {
-  width: min(935px, calc(100vw - 540px));
-  aspect-ratio: 85 / 50;
+  height: min(550px, calc(100vh - 180px));
+  width: calc(min(550px, calc(100vh - 180px)) * 1.7);
+  max-width: calc(100vw - 540px);
 }
 
 .study-card::after {
