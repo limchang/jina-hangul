@@ -111,11 +111,13 @@ class TracingEngine {
     if (this.maxReachedIdx === 0) return;
 
     const ctx = this.ctx;
+    const isSyl = typeof currentMode !== 'undefined' && currentMode === 'syllables';
+    const tw = isSyl ? 48 : this.config.TRACE_STROKE_WIDTH;
 
     // Outer glow
     ctx.beginPath();
     ctx.strokeStyle = 'rgba(255, 235, 80, 0.3)';
-    ctx.lineWidth = this.config.TRACE_STROKE_WIDTH + 24;
+    ctx.lineWidth = tw + (isSyl ? 14 : 24);
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
     ctx.moveTo(this.pts[0].x, this.pts[0].y);
@@ -125,7 +127,7 @@ class TracingEngine {
     // Main trace
     ctx.beginPath();
     ctx.strokeStyle = this.config.TRACE_COLOR;
-    ctx.lineWidth = this.config.TRACE_STROKE_WIDTH;
+    ctx.lineWidth = tw;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
     ctx.moveTo(this.pts[0].x, this.pts[0].y);

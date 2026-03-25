@@ -4,9 +4,14 @@ function drawGuide(clear = true) {
   if (clear) gCtx.clearRect(0, 0, 500, 500);
   const charData = currentDataList[currentCharIdx];
 
+  // 음절은 획이 많으므로 가이드 두께를 줄임
+  const isSyllable = currentMode === 'syllables';
+  const guideW = isSyllable ? 48 : APP_CONFIG.GUIDE_STROKE_WIDTH;
+  const traceW = isSyllable ? 48 : APP_CONFIG.TRACE_STROKE_WIDTH;
+
   // Glow layer
   gCtx.strokeStyle = 'rgba(255,255,255,0.25)';
-  gCtx.lineWidth = APP_CONFIG.GUIDE_STROKE_WIDTH + 28;
+  gCtx.lineWidth = guideW + (isSyllable ? 18 : 28);
   gCtx.lineCap = 'round';
   gCtx.lineJoin = 'round';
   gCtx.setLineDash([]);
@@ -14,7 +19,7 @@ function drawGuide(clear = true) {
 
   // Main guide (solid white shape)
   gCtx.strokeStyle = APP_CONFIG.GUIDE_COLOR;
-  gCtx.lineWidth = APP_CONFIG.GUIDE_STROKE_WIDTH;
+  gCtx.lineWidth = guideW;
   gCtx.lineCap = 'round';
   gCtx.lineJoin = 'round';
   gCtx.setLineDash([]);
@@ -24,7 +29,7 @@ function drawGuide(clear = true) {
   completedStrokes.forEach(pts => {
     gCtx.beginPath();
     gCtx.strokeStyle = APP_CONFIG.TRACE_COLOR;
-    gCtx.lineWidth = APP_CONFIG.TRACE_STROKE_WIDTH;
+    gCtx.lineWidth = traceW;
     gCtx.lineCap = 'round';
     gCtx.lineJoin = 'round';
     gCtx.setLineDash([]);
