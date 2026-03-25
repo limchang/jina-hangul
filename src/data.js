@@ -81,22 +81,39 @@ function getConsonantXBounds(consonant) {
   return { minX, maxX };
 }
 
-// path 문자열 내 모든 x좌표를 offset만큼 이동
+// path를 토큰으로 분해 → x좌표만 offset → 재조립
 function offsetPathX(pathStr, offset) {
-  let result = pathStr;
-  // M x y, L x y
-  result = result.replace(/([ML])\s*([\d.]+)(\s+[\d.]+)/g, (_, cmd, x, rest) =>
-    `${cmd} ${parseFloat(x) + offset}${rest}`
-  );
-  // Q cx cy x y
-  result = result.replace(/Q\s*([\d.]+)(\s+[\d.]+)\s+([\d.]+)(\s+[\d.]+)/g, (_, cx, cyR, x, yR) =>
-    `Q ${parseFloat(cx) + offset}${cyR} ${parseFloat(x) + offset}${yR}`
-  );
-  // A rx ry rot large sweep x y
-  result = result.replace(/A\s+([\d.]+\s+[\d.]+\s+[\d.]+\s+[\d.]+\s+[\d.]+)\s+([\d.]+)(\s+[\d.]+)/g, (_, params, x, yR) =>
-    `A ${params} ${parseFloat(x) + offset}${yR}`
-  );
-  return result;
+  // 토큰 분리: 명령어(문자) 또는 숫자
+  const tokens = pathStr.match(/[A-Za-z]|[-+]?[\d.]+/g);
+  if (!tokens) return pathStr;
+
+  const result = [];
+  let i = 0;
+  while (i < tokens.length) {
+    const t = tokens[i];
+    if (t === 'M' || t === 'L') {
+      // M/L x y
+      result.push(t, String(parseFloat(tokens[i+1]) + offset), tokens[i+2]);
+      i += 3;
+    } else if (t === 'Q') {
+      // Q cx cy x y
+      result.push(t, String(parseFloat(tokens[i+1]) + offset), tokens[i+2],
+                     String(parseFloat(tokens[i+3]) + offset), tokens[i+4]);
+      i += 5;
+    } else if (t === 'A') {
+      // A rx ry rotation large-arc sweep x y
+      result.push(t, tokens[i+1], tokens[i+2], tokens[i+3], tokens[i+4], tokens[i+5],
+                     String(parseFloat(tokens[i+6]) + offset), tokens[i+7]);
+      i += 8;
+    } else if (t === 'Z') {
+      result.push(t);
+      i += 1;
+    } else {
+      result.push(t);
+      i += 1;
+    }
+  }
+  return result.join(' ');
 }
 
 // 동적 조합 생성 — 자음별 x범위 계산 → 여백 → ㅏ 배치 → 가운데 정렬
