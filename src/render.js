@@ -33,49 +33,20 @@ function drawGuide(clear = true) {
     gCtx.stroke();
   });
 
-  // Dashed direction guideline on top (orange dashes with dots)
-  charData.strokes.forEach((s, si) => {
-    const pts = samplePath(s.path, 80);
-    if (pts.length < 2) return;
-
-    // Draw dashed line
-    gCtx.strokeStyle = si === currentStrokeIdx ? 'rgba(255,160,30,0.9)' : 'rgba(255,160,30,0.35)';
-    gCtx.lineWidth = 5;
-    gCtx.lineCap = 'round';
-    gCtx.setLineDash([12, 14]);
-    gCtx.beginPath();
-    gCtx.moveTo(pts[0].x, pts[0].y);
-    for (let i = 1; i < pts.length; i++) gCtx.lineTo(pts[i].x, pts[i].y);
-    gCtx.stroke();
-    gCtx.setLineDash([]);
-
-    // Start dot (green) and end arrow (orange) for current stroke only
-    if (si === currentStrokeIdx) {
+  // 현재 획 시작점만 표시 (화살표 애니메이션이 경로를 안내)
+  if (currentStrokeIdx < charData.strokes.length) {
+    const pts = samplePath(charData.strokes[currentStrokeIdx].path, 80);
+    if (pts.length >= 2) {
+      // 시작점 초록 점
       gCtx.beginPath();
-      gCtx.arc(pts[0].x, pts[0].y, 10, 0, Math.PI * 2);
+      gCtx.arc(pts[0].x, pts[0].y, 12, 0, Math.PI * 2);
       gCtx.fillStyle = '#44ee88';
       gCtx.fill();
       gCtx.strokeStyle = '#fff';
       gCtx.lineWidth = 3;
       gCtx.stroke();
-
-      const ep = pts[pts.length - 1];
-      const bp = pts[pts.length - 6];
-      const angle = Math.atan2(ep.y - bp.y, ep.x - bp.x);
-      gCtx.save();
-      gCtx.translate(ep.x, ep.y);
-      gCtx.rotate(angle);
-      gCtx.beginPath();
-      gCtx.moveTo(13, 0);
-      gCtx.lineTo(-9, -8);
-      gCtx.lineTo(-5, 0);
-      gCtx.lineTo(-9, 8);
-      gCtx.closePath();
-      gCtx.fillStyle = 'rgba(255,140,20,0.9)';
-      gCtx.fill();
-      gCtx.restore();
     }
-  });
+  }
 }
 
 function renderTrace() {
