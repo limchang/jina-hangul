@@ -254,12 +254,43 @@ export default function FreeComposeMode() {
 
   const [panSmooth, setPanSmooth] = useState(false); // 부드러운 이동 중
 
+  // 오른쪽 우선, 그 다음 아래쪽으로 가장 가까운 미완성 글자 찾기
+  const findNextPiece = useCallback((donePiece, candidates) => {
+    if (candidates.length === 0) return null;
+    const ROW_THRESHOLD = 100; // 같은 행으로 판단하는 y 오차 범위
+    const cx = donePiece.x, cy = donePiece.y;
+
+    // 1) 오른쪽에 있는 글자 (같은 행: y 차이 < threshold, x > 현재)
+    const rightSame = candidates
+      .filter(p => Math.abs(p.y - cy) < ROW_THRESHOLD && p.x > cx)
+      .sort((a, b) => a.x - b.x);
+    if (rightSame.length > 0) return rightSame[0];
+
+    // 2) 아래쪽 행에 있는 글자 (y > 현재 + threshold)
+    const belowRows = candidates
+      .filter(p => p.y > cy + ROW_THRESHOLD)
+      .sort((a, b) => {
+        // y가 같은 행이면 x 오름차순, 아니면 y 오름차순
+        if (Math.abs(a.y - b.y) < ROW_THRESHOLD) return a.x - b.x;
+        return a.y - b.y;
+      });
+    if (belowRows.length > 0) return belowRows[0];
+
+    // 3) 같은 행의 왼쪽, 또는 위쪽 행 — 그냥 가장 가까운 거리
+    const rest = candidates.sort((a, b) => {
+      const da = Math.hypot(a.x - cx, a.y - cy);
+      const db = Math.hypot(b.x - cx, b.y - cy);
+      return da - db;
+    });
+    return rest[0];
+  }, []);
+
   const markDone = useCallback((id) => {
     setPieces(prev => {
       const updated = prev.map(p => p.id === id ? { ...p, done: true } : p);
-      // 다음 미완성 글자 찾기
-      const doneIdx = updated.findIndex(p => p.id === id);
-      const next = updated.find((p, i) => i > doneIdx && !p.done);
+      const donePiece = updated.find(p => p.id === id);
+      const candidates = updated.filter(p => !p.done);
+      const next = donePiece ? findNextPiece(donePiece, candidates) : null;
       if (next) {
         // 부드러운 화면 이동
         const screenCX = window.innerWidth / 2;
@@ -273,7 +304,7 @@ export default function FreeComposeMode() {
       }
       return updated;
     });
-  }, []);
+  }, [findNextPiece]);
 
   const selectPiece = useCallback((id) => {
     setSelectedId(id);
