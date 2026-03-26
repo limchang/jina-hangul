@@ -439,21 +439,25 @@ export default function FreeComposeMode() {
         ))}
       </div>
 
-      {/* 플로팅 리모컨 — 자음+모음 통합 (좌) */}
-      <div className="remote remote--left">
-        <div className="remote-label">글자</div>
-        <div className="remote-list">
-          {ALL_JAMO.map(j => (
-            <div key={j.char} className="remote-btn"
-              onTouchStart={(e) => startDragNew(j.char, 'jamo', e)}
-              onMouseDown={(e) => startDragNew(j.char, 'jamo', e)}
-            >{j.char}</div>
+      {/* 플로팅 리모컨 — 가로형, 자음/모음 2줄, 양쪽 핸들 */}
+      <DraggableRemote>
+        <div className="remote-row">
+          {CONSONANTS.map(c => (
+            <div key={c.char} className="remote-btn"
+              onTouchStart={(e) => startDragNew(c.char, 'jamo', e)}
+              onMouseDown={(e) => startDragNew(c.char, 'jamo', e)}
+            >{c.char}</div>
           ))}
-          <div className="remote-btn remote-btn--all"
-            onClick={() => placeAll(ALL_JAMO)}
-          >ALL</div>
         </div>
-      </div>
+        <div className="remote-row">
+          {VOWELS.map(v => (
+            <div key={v.char} className="remote-btn"
+              onTouchStart={(e) => startDragNew(v.char, 'jamo', e)}
+              onMouseDown={(e) => startDragNew(v.char, 'jamo', e)}
+            >{v.char}</div>
+          ))}
+        </div>
+      </DraggableRemote>
 
       {/* 상단 힌트 */}
       <div className="free-top-hint">
@@ -847,6 +851,54 @@ function TracePiece({ piece, selected, onDone, onDelete, onSelect, isOverTrash, 
 }
 
 // ── 휴지통 컴포넌트 — 롱프레스로 모두 지우기 ──
+// ── 드래그 이동 가능한 리모컨 래퍼 ──
+function DraggableRemote({ children }) {
+  const [pos, setPos] = useState({ x: window.innerWidth / 2, y: 10 });
+  const dragRef = useRef(null);
+
+  const onDown = (e) => {
+    e.preventDefault(); e.stopPropagation();
+    let cx, cy;
+    if (e.touches) { cx = e.touches[0].clientX; cy = e.touches[0].clientY; }
+    else { cx = e.clientX; cy = e.clientY; }
+    dragRef.current = { startX: cx, startY: cy, origX: pos.x, origY: pos.y };
+  };
+
+  useEffect(() => {
+    function onMove(e) {
+      if (!dragRef.current) return;
+      let cx, cy;
+      if (e.touches) { cx = e.touches[0].clientX; cy = e.touches[0].clientY; }
+      else { cx = e.clientX; cy = e.clientY; }
+      const d = dragRef.current;
+      setPos({ x: d.origX + (cx - d.startX), y: d.origY + (cy - d.startY) });
+    }
+    function onUp() { dragRef.current = null; }
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('touchmove', onMove, { passive: false });
+    window.addEventListener('mouseup', onUp);
+    window.addEventListener('touchend', onUp);
+    return () => {
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('touchmove', onMove);
+      window.removeEventListener('mouseup', onUp);
+      window.removeEventListener('touchend', onUp);
+    };
+  }, []);
+
+  const dots = '⠿'; // 6점 핸들
+
+  return (
+    <div className="remote" style={{ left: pos.x, top: pos.y, transform: 'translateX(-50%)' }}>
+      <div className="remote-handle" onMouseDown={onDown} onTouchStart={onDown}>{dots}</div>
+      <div className="remote-inner">
+        {children}
+      </div>
+      <div className="remote-handle" onMouseDown={onDown} onTouchStart={onDown}>{dots}</div>
+    </div>
+  );
+}
+
 function TrashZone({ trashHover, onClearAll }) {
   const [showSlide, setShowSlide] = useState(false);
   const longRef = useRef(null);

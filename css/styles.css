@@ -365,40 +365,50 @@ main {
   transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
-/* 플로팅 리모컨 */
+/* 플로팅 리모컨 — 가로형, 드래그 이동 가능 */
 .remote {
-  position: fixed; top: 50%; transform: translateY(-50%);
+  position: fixed;
   z-index: 9000;
   background: rgba(255,255,255,0.12);
   backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
   border: 1px solid rgba(255,255,255,0.25);
-  border-radius: 20px;
-  padding: 8px 6px;
-  display: flex; flex-direction: column; align-items: center; gap: 4px;
-  max-height: 70vh; overflow-y: auto;
-  scrollbar-width: none;
+  border-radius: 16px;
+  padding: 6px 8px;
+  display: flex; align-items: center; gap: 4px;
   box-shadow: 0 8px 32px rgba(0,0,0,0.08);
+  cursor: default;
 }
-.remote::-webkit-scrollbar { display: none; }
-.remote--left { left: 10px; }
-.remote--right { right: 10px; }
-.remote-label {
-  font-size: 0.7rem; font-weight: 800; color: rgba(255,255,255,0.7);
-  letter-spacing: 3px; padding: 2px 0 4px;
+.remote-handle {
+  cursor: grab; padding: 4px 3px;
+  color: rgba(255,255,255,0.35);
+  font-size: 1.1rem; line-height: 1;
+  user-select: none; flex-shrink: 0;
+  display: flex; align-items: center;
+}
+.remote-handle:active { cursor: grabbing; color: rgba(255,255,255,0.6); }
+.remote-inner {
+  display: flex; flex-direction: column; gap: 3px;
+}
+.remote-row {
+  display: flex; gap: 3px;
 }
 .remote-list {
-  display: grid; grid-template-columns: 1fr 1fr; gap: 4px;
+  display: flex; flex-wrap: wrap; gap: 3px;
+  max-width: calc(100vw - 40px);
+  overflow-x: auto; scrollbar-width: none;
 }
+.remote-list::-webkit-scrollbar { display: none; }
 .remote-btn {
-  width: 38px; height: 38px;
+  width: 34px; height: 34px;
   background: rgba(255,255,255,0.2);
   border: 1.5px solid rgba(255,255,255,0.3);
-  border-radius: 10px;
+  border-radius: 8px;
   display: flex; align-items: center; justify-content: center;
-  font-size: 1rem; font-weight: 800; color: white;
+  font-size: 0.9rem; font-weight: 800; color: white;
   cursor: grab; user-select: none;
   transition: all 0.12s;
   text-shadow: 0 1px 3px rgba(0,0,0,0.15);
+  flex-shrink: 0;
 }
 .remote-btn:hover {
   background: rgba(255,255,255,0.35);
@@ -410,9 +420,8 @@ main {
   background: rgba(255,255,255,0.4);
 }
 .remote-btn--all {
-  grid-column: span 2;
-  width: auto; height: 32px;
-  font-size: 0.75rem; letter-spacing: 1px;
+  width: auto; height: 30px; padding: 0 10px;
+  font-size: 0.65rem; letter-spacing: 1px;
   background: rgba(255,200,60,0.25);
   border-color: rgba(255,220,80,0.5);
   color: rgba(255,255,255,0.9);
@@ -479,17 +488,17 @@ main {
   0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.8; }
   50% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
 }
-/* 휴지통 */
+/* 휴지통 — 오른쪽 아래 */
 .trash-zone {
-  position: fixed; bottom: 60px; left: 50%; transform: translateX(-50%);
+  position: fixed; bottom: 20px; right: 20px;
   z-index: 9200;
-  width: 56px; height: 56px;
+  width: 50px; height: 50px;
   background: rgba(255,255,255,0.12);
   backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
   border: 1.5px solid rgba(255,255,255,0.25);
   border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
-  color: rgba(255,255,255,0.5);
+  color: rgba(255,255,255,0.4);
   transition: all 0.2s;
   box-shadow: 0 4px 16px rgba(0,0,0,0.06);
 }
@@ -497,8 +506,8 @@ main {
   background: rgba(255,80,80,0.3);
   border-color: rgba(255,80,80,0.6);
   color: rgba(255,255,255,0.9);
-  transform: translateX(-50%) scale(1.2);
-  box-shadow: 0 0 20px rgba(255,80,80,0.3);
+  transform: scale(1.3);
+  box-shadow: 0 0 24px rgba(255,80,80,0.4);
 }
 
 /* 롱프레스 해제 — 둥실둥실 */
@@ -578,10 +587,10 @@ main {
 
 /* ─── 낱말카드 트레이 ─── */
 .word-tray {
-  position: fixed; bottom: 12px; left: 50%; transform: translateX(-50%);
+  position: fixed; bottom: 8px; left: 10px;
   z-index: 9100;
   display: flex; gap: 8px; align-items: flex-end;
-  max-width: calc(100vw - 180px);
+  max-width: calc(100vw - 90px);
   overflow-x: auto; scrollbar-width: none;
   padding: 4px 8px;
 }
