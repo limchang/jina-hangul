@@ -590,9 +590,10 @@ main {
 /* ─── 카드존 — 하단 흩어진 카드들 ─── */
 .word-tray {
   position: fixed; bottom: 0; left: 0; right: 80px;
-  height: 100px;
+  height: 130px;
   z-index: 9100;
   pointer-events: none;
+  padding-top: 20px;
 }
 
 .word-card {
@@ -650,11 +651,16 @@ main {
 .word-drag-ghost {
   position: fixed; pointer-events: none; z-index: 99999;
   font-family: 'Noto Sans KR', sans-serif;
-  font-size: 2rem; font-weight: 900; color: white;
+  font-size: 1.5rem; font-weight: 900; color: white;
   text-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  transform: translate(-50%, -50%);
+  opacity: 0.6;
+  transition: opacity 0.15s, transform 0.15s;
+}
+.word-drag-ghost--escaped {
+  opacity: 1;
   transform: translate(-50%, -50%) scale(1.1);
-  filter: drop-shadow(0 8px 20px rgba(255,255,255,0.3));
-  letter-spacing: 4px;
+  filter: drop-shadow(0 8px 24px rgba(255,255,255,0.4));
 }
 
 /* 이름 추가 모달 */

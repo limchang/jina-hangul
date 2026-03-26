@@ -127,6 +127,8 @@ const WordCards = forwardRef(function WordCards({ onDeploy, isOverTrash, setTras
     setDragCard({ word, x, y });
   }, []);
 
+  const CARD_ZONE_H = 130; // 카드존 높이
+
   useEffect(() => {
     if (!dragCard) return;
     function onMove(e) {
@@ -152,14 +154,18 @@ const WordCards = forwardRef(function WordCards({ onDeploy, isOverTrash, setTras
       if (e.changedTouches) { x = e.changedTouches[0].clientX; y = e.changedTouches[0].clientY; }
       else { x = e.clientX; y = e.clientY; }
 
+      // 휴지통 위 → 카드 삭제
       if (d.moved && isOverTrash && isOverTrash(x, y)) {
         removeCard(d.idx);
         return;
       }
-      if (d.moved && y < window.innerHeight - 200) {
+      // 카드존 밖으로 나갔을 때만 배치 (카드존 안이면 원위치 복귀)
+      if (d.moved && y < window.innerHeight - CARD_ZONE_H) {
         const jamos = decomposeWord(d.word);
         if (jamos.length > 0) handleDeploy(jamos, d.word, x, y);
+        // 카드는 삭제하지 않음 — 재사용 가능
       }
+      // 카드존 안에서 놓으면 아무것도 안 함 (원위치 복귀)
     }
     window.addEventListener('touchmove', onMove, { passive: false });
     window.addEventListener('mousemove', onMove);
@@ -211,13 +217,19 @@ const WordCards = forwardRef(function WordCards({ onDeploy, isOverTrash, setTras
         </div>
       </div>
 
-      {dragCard && (
-        <div className="word-drag-ghost" style={{ left: dragCard.x, top: dragCard.y }}>
-          {previews[dragCard.word] ? (
-            <img src={previews[dragCard.word]} style={{ height: 60 }} draggable={false} />
-          ) : dragCard.word}
-        </div>
-      )}
+      {dragCard && (() => {
+        const escaped = dragCard.y < window.innerHeight - CARD_ZONE_H;
+        return (
+          <div
+            className={`word-drag-ghost ${escaped ? 'word-drag-ghost--escaped' : ''}`}
+            style={{ left: dragCard.x, top: dragCard.y }}
+          >
+            {previews[dragCard.word] ? (
+              <img src={previews[dragCard.word]} style={{ height: escaped ? 80 : 50 }} draggable={false} />
+            ) : <span>{dragCard.word}</span>}
+          </div>
+        );
+      })()}
     </>
   );
 });
