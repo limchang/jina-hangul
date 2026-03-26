@@ -393,13 +393,14 @@ main {
   display: flex; gap: 3px;
   justify-content: center;
 }
-/* 가로 넓은 액션 버튼 — 같은 높이, 가로로 길게 */
+/* 가로 넓은 액션 버튼 */
 .remote-btn--wide {
-  width: auto; height: 36px;
-  padding: 0 14px;
-  font-size: 0.7rem; letter-spacing: 1px;
+  width: auto; height: 40px;
+  padding: 0 24px;
+  font-size: 0.85rem; letter-spacing: 2px;
   white-space: nowrap;
   cursor: pointer;
+  flex: 1;
   background: rgba(255,200,60,0.2);
   border-color: rgba(255,220,80,0.5);
 }
@@ -662,7 +663,8 @@ main {
   transform: scale(1.12) !important;
 }
 .word-card-preview {
-  height: 50px;
+  max-height: 70px;
+  max-width: 80px;
   opacity: 0.9;
   pointer-events: none;
   border-radius: 6px;

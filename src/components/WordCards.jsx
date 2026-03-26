@@ -20,6 +20,7 @@ function getJamoSource(char) {
 }
 
 // 배치된 pieces로부터 미리보기 이미지 생성
+// 배치 미리보기 — 글자 크기 비율 그대로 유지, CSS에서 축소
 export function renderLayoutPreview(pieces) {
   if (!pieces || pieces.length === 0) return null;
   let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
@@ -30,13 +31,9 @@ export function renderLayoutPreview(pieces) {
     if (p.y - half < minY) minY = p.y - half;
     if (p.y + half > maxY) maxY = p.y + half;
   });
-  const PAD = 20;
-  const bw = maxX - minX + PAD * 2;
-  const bh = maxY - minY + PAD * 2;
-  const MAX_W = 300, MAX_H = 120;
-  const fitScale = Math.min(MAX_W / bw, MAX_H / bh, 1);
-  const W = Math.ceil(bw * fitScale);
-  const H = Math.ceil(bh * fitScale);
+  const PAD = 10;
+  const W = Math.ceil(maxX - minX + PAD * 2);
+  const H = Math.ceil(maxY - minY + PAD * 2);
 
   const canvas = document.createElement('canvas');
   canvas.width = W; canvas.height = H;
@@ -46,11 +43,8 @@ export function renderLayoutPreview(pieces) {
     const src = p.source || getJamoSource(p.char);
     if (!src) return;
     ctx.save();
-    const px = (p.x - minX + PAD) * fitScale;
-    const py = (p.y - minY + PAD) * fitScale;
-    ctx.translate(px, py);
-    const s = p.scale * fitScale;
-    ctx.scale(s, s);
+    ctx.translate(p.x - minX + PAD, p.y - minY + PAD);
+    ctx.scale(p.scale, p.scale);
     ctx.translate(-250, -250);
     ctx.strokeStyle = 'rgba(255,255,255,0.3)';
     ctx.lineWidth = APP_CONFIG.GUIDE_STROKE_WIDTH + 20;
