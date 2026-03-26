@@ -173,6 +173,21 @@ const WordCards = forwardRef(function WordCards({ onDeploy, isOverTrash, setTras
     };
   }, [!!dragCard]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // 카드 흩어진 위치/기울기 계산 (시드 기반)
+  function cardStyle(i, total) {
+    const seed = i * 137.5 + 42;
+    const spread = Math.min(window.innerWidth - 160, total * 90);
+    const baseX = (window.innerWidth - 80) / 2 - spread / 2;
+    const x = baseX + (i / Math.max(total - 1, 1)) * spread + Math.sin(seed) * 15;
+    const y = 15 + Math.cos(seed * 2.3) * 20;
+    const rot = Math.sin(seed * 1.7) * 8;
+    return {
+      left: x, bottom: y,
+      transform: `rotate(${rot}deg)`,
+      zIndex: i,
+    };
+  }
+
   return (
     <>
       <div className="word-tray">
@@ -180,6 +195,7 @@ const WordCards = forwardRef(function WordCards({ onDeploy, isOverTrash, setTras
           <div
             key={`${word}-${i}`}
             className="word-card"
+            style={cardStyle(i, cards.length)}
             onTouchStart={(e) => startDrag(word, i, e)}
             onMouseDown={(e) => startDrag(word, i, e)}
           >

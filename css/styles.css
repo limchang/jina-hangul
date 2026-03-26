@@ -391,6 +391,7 @@ main {
 }
 .remote-row {
   display: flex; gap: 3px;
+  justify-content: center;
 }
 .remote-list {
   display: flex; flex-wrap: wrap; gap: 3px;
@@ -586,69 +587,63 @@ main {
 }
 
 /* ─── 낱말카드 트레이 ─── */
+/* ─── 카드존 — 하단 흩어진 카드들 ─── */
 .word-tray {
-  position: fixed; bottom: 8px; left: 10px;
+  position: fixed; bottom: 0; left: 0; right: 80px;
+  height: 100px;
   z-index: 9100;
-  display: flex; gap: 8px; align-items: flex-end;
-  max-width: calc(100vw - 90px);
-  overflow-x: auto; scrollbar-width: none;
-  padding: 4px 8px;
+  pointer-events: none;
 }
-.word-tray::-webkit-scrollbar { display: none; }
 
 .word-card {
-  flex-shrink: 0;
-  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  position: absolute;
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
   padding: 8px 12px 6px;
-  background: rgba(255,255,255,0.15);
+  background: rgba(255,255,255,0.18);
   backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
   border: 1.5px solid rgba(255,255,255,0.3);
-  border-radius: 16px;
+  border-radius: 14px;
   cursor: grab;
   user-select: none;
-  transition: all 0.15s;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+  transition: transform 0.2s, box-shadow 0.2s, filter 0.2s;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
   min-width: 60px;
+  pointer-events: auto;
 }
 .word-card:hover {
-  background: rgba(255,255,255,0.25);
-  border-color: rgba(255,255,255,0.5);
-  transform: translateY(-6px);
-  box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+  transform: scale(1.08) !important;
+  box-shadow: 0 8px 28px rgba(0,0,0,0.15);
+  z-index: 10;
+  filter: brightness(1.1);
 }
-.word-card:active { cursor: grabbing; transform: scale(0.95); }
+.word-card:active { cursor: grabbing; }
 .word-card--add {
   display: flex; align-items: center; justify-content: center;
-  min-width: 44px; height: 60px; padding: 0; gap: 0;
+  min-width: 44px; height: 56px; padding: 0; gap: 0;
   background: rgba(255,200,60,0.2);
   border-color: rgba(255,220,80,0.5);
   border-style: dashed;
   cursor: pointer;
+  bottom: 20px; right: 10px;
+  position: absolute;
 }
 .word-card--add:hover {
   background: rgba(255,200,60,0.4);
+  transform: scale(1.1) !important;
 }
 .word-card-preview {
-  height: 52px;
+  height: 48px;
   opacity: 0.9;
   pointer-events: none;
-  border-radius: 8px;
+  border-radius: 6px;
 }
 .word-card-placeholder {
   font-family: 'Noto Sans KR', sans-serif;
-  font-size: 0.9rem; font-weight: 800;
+  font-size: 0.85rem; font-weight: 800;
   color: rgba(255,255,255,0.5);
   letter-spacing: 2px;
   white-space: nowrap;
-  padding: 6px 0;
-}
-.word-card-text {
-  font-family: 'Noto Sans KR', sans-serif;
-  font-size: 0.85rem; font-weight: 800;
-  color: white;
-  text-shadow: 0 1px 4px rgba(0,0,0,0.15);
-  letter-spacing: 3px;
-  white-space: nowrap;
+  padding: 4px 0;
 }
 
 /* 드래그 고스트 */
