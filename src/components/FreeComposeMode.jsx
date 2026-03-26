@@ -35,12 +35,16 @@ function getIconImageUrl(char) {
   if (ICON_MAP[char]) return ICON_MAP[char];
   return DEFAULT_ICON;
 }
-// 런타임 소스 오버라이드 (편집 결과 저장)
-const sourceOverrides = {};
+// 런타임 소스 오버라이드 — piece.id 단위 (새로 꺼내는 글자에는 영향 없음)
+const pieceOverrides = {};
 
-function getSource(char) {
-  if (sourceOverrides[char]) return sourceOverrides[char];
+function getOriginalSource(char) {
   return CONSONANTS.find(c => c.char === char) || VOWELS.find(v => v.char === char);
+}
+
+function getSource(char, pieceId) {
+  if (pieceId && pieceOverrides[pieceId]) return pieceOverrides[pieceId];
+  return getOriginalSource(char);
 }
 
 export default function FreeComposeMode() {
@@ -54,13 +58,12 @@ export default function FreeComposeMode() {
 
   useEffect(() => { initSvgHelper(); }, []);
 
-  // sourceOverrides 갱신 → 같은 char 모든 글자 리렌더
-  const updateSource = useCallback((char, newStrokes) => {
-    sourceOverrides[char] = { char, strokes: newStrokes };
-    setSourceVer(v => v + 1); // 모든 같은 char 글자가 리렌더됨
-    // 콘솔에 자동 내보내기
+  // pieceOverrides 갱신 — 해당 piece만 변경
+  const updateSource = useCallback((pieceId, char, newStrokes) => {
+    pieceOverrides[pieceId] = { char, strokes: newStrokes };
+    setSourceVer(v => v + 1);
     const strokesStr = newStrokes.map(s => `{path:'${s.path}'}`).join(', ');
-    console.log(`편집: { char:'${char}', strokes:[${strokesStr}] }`);
+    console.log(`편집 [#${pieceId}]: { char:'${char}', strokes:[${strokesStr}] }`);
   }, []);
 
   // 가이드 이미지 캐시
@@ -235,6 +238,7 @@ export default function FreeComposeMode() {
 
   const resetAll = useCallback(() => {
     setPieces([]); nextId = 1; setSelectedId(null); setPanOffset({ x: 0, y: 0 });
+    Object.keys(pieceOverrides).forEach(k => delete pieceOverrides[k]);
   }, []);
 
   const [trashHover, setTrashHover] = useState(false); // 휴지통 위에 있는지
@@ -320,11 +324,11 @@ export default function FreeComposeMode() {
             selected={piece.id === selectedId}
             sourceVer={sourceVer}
             onDone={() => markDone(piece.id)}
-            onDelete={() => setPieces(prev => prev.filter(p => p.id !== piece.id))}
+            onDelete={() => { delete pieceOverrides[piece.id]; setPieces(prev => prev.filter(p => p.id !== piece.id)); }}
             isOverTrash={isOverTrash}
             setTrashHover={setTrashHover}
             onSelect={() => selectPiece(piece.id)}
-            onSourceUpdate={(newStrokes) => updateSource(piece.char, newStrokes)}
+            onSourceUpdate={(newStrokes) => updateSource(piece.id, piece.char, newStrokes)}
           />
         ))}
       </div>
@@ -387,7 +391,7 @@ export default function FreeComposeMode() {
 
 // ── 개별 글자 따라쓰기 컴포넌트 ──
 function TracePiece({ piece, selected, sourceVer, onDone, onDelete, onSelect, isOverTrash, setTrashHover, onSourceUpdate }) {
-  const source = getSource(piece.char);
+  const source = getSource(piece.char, piece.id);
   const [editMode, setEditMode] = useState(false); // 롱프레스로 활성화되는 꼭지점 편집 모드
   const guideRef = useRef(null);
   const arrowRef = useRef(null);
@@ -441,7 +445,8 @@ function TracePiece({ piece, selected, sourceVer, onDone, onDelete, onSelect, is
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // 항상 최신 source를 getSource()로 가져와서 그리기
-  function drawGuideWith(src) {
+  // hideStartDot: 편집 모드일 때 시작점 초록 점 숨김
+  function drawGuideWith(src, hideStartDot) {
     const gCtx = guideRef.current?.getContext('2d');
     if (!gCtx || !src) return;
     const S = stateRef.current;
@@ -461,7 +466,7 @@ function TracePiece({ piece, selected, sourceVer, onDone, onDelete, onSelect, is
       for (const p of pts) gCtx.lineTo(p.x, p.y);
       gCtx.stroke();
     });
-    if (S.strokeIdx < src.strokes.length) {
+    if (!hideStartDot && S.strokeIdx < src.strokes.length) {
       const pts = samplePath(src.strokes[S.strokeIdx].path, 80);
       if (pts.length >= 2) {
         gCtx.beginPath(); gCtx.arc(pts[0].x, pts[0].y, 12, 0, Math.PI * 2);
@@ -471,7 +476,7 @@ function TracePiece({ piece, selected, sourceVer, onDone, onDelete, onSelect, is
     }
   }
 
-  function drawGuide() { drawGuideWith(getSource(piece.char)); }
+  function drawGuide() { drawGuideWith(getSource(piece.char, piece.id)); }
 
   function loadStrokeWith(idx, src) {
     stateRef.current.strokeIdx = idx;
@@ -484,11 +489,11 @@ function TracePiece({ piece, selected, sourceVer, onDone, onDelete, onSelect, is
     arrowAnimRef.current = createArrowAnim(engineRef.current.pts, arrowRef.current.getContext('2d'), SIZE, SIZE);
   }
 
-  function loadStroke(idx) { loadStrokeWith(idx, getSource(piece.char)); }
+  function loadStroke(idx) { loadStrokeWith(idx, getSource(piece.char, piece.id)); }
 
   // 최신 source로 전체 복원 (편집 후, sourceVer 변경 시)
   function redrawAll() {
-    const src = getSource(piece.char);
+    const src = getSource(piece.char, piece.id);
     if (!src) return;
     drawGuideWith(src);
     const S = stateRef.current;
@@ -697,20 +702,10 @@ function TracePiece({ piece, selected, sourceVer, onDone, onDelete, onSelect, is
 
   if (!source) return null;
 
-  // 편집 모드에서 꼭지점 변경 시 — 가이드를 최신 strokes로 즉시 다시 그림
+  // 편집 모드에서 꼭지점 변경 시 — 가이드를 최신 strokes로 즉시 다시 그림 (초록 점 숨김)
   const handleVertexUpdate = useCallback((newStrokes) => {
     if (onSourceUpdate) onSourceUpdate(newStrokes);
-    // 가이드 캔버스를 넘겨받은 newStrokes로 직접 다시 그리기
-    const gCtx = guideRef.current?.getContext('2d');
-    if (!gCtx) return;
-    gCtx.clearRect(0, 0, SIZE, SIZE);
-    gCtx.strokeStyle = 'rgba(255,255,255,0.25)';
-    gCtx.lineWidth = APP_CONFIG.GUIDE_STROKE_WIDTH + 28;
-    gCtx.lineCap = 'round'; gCtx.lineJoin = 'round'; gCtx.setLineDash([]);
-    newStrokes.forEach(s => gCtx.stroke(new Path2D(s.path)));
-    gCtx.strokeStyle = APP_CONFIG.GUIDE_COLOR;
-    gCtx.lineWidth = APP_CONFIG.GUIDE_STROKE_WIDTH;
-    newStrokes.forEach(s => gCtx.stroke(new Path2D(s.path)));
+    drawGuideWith({ strokes: newStrokes }, true);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
@@ -728,7 +723,7 @@ function TracePiece({ piece, selected, sourceVer, onDone, onDelete, onSelect, is
       <div ref={overlayRef} className="free-trace-layer free-trace-overlay" style={{ zIndex: 4, display: editMode ? 'none' : undefined }} />
       {editMode && (
         <VertexEditor
-          source={getSource(piece.char)}
+          source={getSource(piece.char, piece.id)}
           onUpdate={handleVertexUpdate}
         />
       )}
