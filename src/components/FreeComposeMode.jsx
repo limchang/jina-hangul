@@ -277,7 +277,12 @@ export default function FreeComposeMode() {
         ))}
       </div>
 
-      <DraggableRemote>
+      <DraggableRemote startY={window.innerHeight - 130}>
+        <div className="remote-actions">
+          <button className="remote-action-btn remote-action-btn--pink" onClick={() => placeAll(CONSONANTS)}>자음 공부</button>
+          <button className="remote-action-btn remote-action-btn--pink" onClick={() => placeAll(VOWELS)}>모음 공부</button>
+          <button className="remote-action-btn remote-action-btn--red" onClick={resetAll}>모두 지우기</button>
+        </div>
         <div className="remote-row">
           {CONSONANTS.map(c => (
             <div key={c.char} className="remote-btn" onTouchStart={(e) => startDragNew(c.char, 'jamo', e)} onMouseDown={(e) => startDragNew(c.char, 'jamo', e)}>{c.char}</div>
@@ -311,8 +316,8 @@ export default function FreeComposeMode() {
 }
 
 // ── 드래그 이동 가능한 리모컨 래퍼 ──
-function DraggableRemote({ children }) {
-  const [pos, setPos] = useState({ x: window.innerWidth / 2, y: 10 });
+function DraggableRemote({ children, startY = 10 }) {
+  const [pos, setPos] = useState({ x: window.innerWidth / 2, y: startY });
   const dragRef = useRef(null);
   const onDown = (e) => {
     e.preventDefault(); e.stopPropagation();

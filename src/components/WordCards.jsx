@@ -127,7 +127,7 @@ const WordCards = forwardRef(function WordCards({ onDeploy, isOverTrash, setTras
     setDragCard({ word, x, y });
   }, []);
 
-  const CARD_ZONE_H = 180; // 카드존 높이 (bottom 20px + tray 160px)
+  const CARD_ZONE_W = 130; // 카드존 너비 (사이드)
 
   useEffect(() => {
     if (!dragCard) return;
@@ -160,7 +160,7 @@ const WordCards = forwardRef(function WordCards({ onDeploy, isOverTrash, setTras
         return;
       }
       // 카드존 밖으로 나갔을 때만 배치 (카드존 안이면 원위치 복귀)
-      if (d.moved && y < window.innerHeight - CARD_ZONE_H) {
+      if (d.moved && x > CARD_ZONE_W && x < window.innerWidth - CARD_ZONE_W) {
         const jamos = decomposeWord(d.word);
         if (jamos.length > 0) handleDeploy(jamos, d.word, x, y);
         // 카드는 삭제하지 않음 — 재사용 가능
@@ -179,46 +179,57 @@ const WordCards = forwardRef(function WordCards({ onDeploy, isOverTrash, setTras
     };
   }, [!!dragCard]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // 카드 흩어진 위치/기울기 계산 (시드 기반)
-  function cardStyle(i, total) {
+  // 사이드 카드 세로 배치 위치
+  function sideCardStyle(i, total) {
     const seed = i * 137.5 + 42;
-    const spread = Math.min(window.innerWidth - 160, total * 90);
-    const baseX = (window.innerWidth - 80) / 2 - spread / 2;
-    const x = baseX + (i / Math.max(total - 1, 1)) * spread + Math.sin(seed) * 15;
-    const y = 25 + Math.cos(seed * 2.3) * 25;
-    const rot = Math.sin(seed * 1.7) * 8;
-    return {
-      left: x, bottom: y,
-      transform: `rotate(${rot}deg)`,
-      zIndex: i,
-    };
+    const spacing = 80;
+    const startY = 60;
+    const y = startY + i * spacing + Math.sin(seed) * 10;
+    const x = 10 + Math.cos(seed * 2.3) * 8;
+    const rot = Math.sin(seed * 1.7) * 6;
+    return { left: x, top: y, transform: `rotate(${rot}deg)`, zIndex: i };
   }
+
+  // 카드를 좌우로 나눠 배치
+  const leftCards = cards.filter((_, i) => i % 2 === 0);
+  const rightCards = cards.filter((_, i) => i % 2 === 1);
+  const leftIndices = cards.map((_, i) => i).filter(i => i % 2 === 0);
+  const rightIndices = cards.map((_, i) => i).filter(i => i % 2 === 1);
 
   return (
     <>
-      <div className="word-tray">
-        {cards.map((word, i) => (
-          <div
-            key={`${word}-${i}`}
-            className="word-card"
-            style={cardStyle(i, cards.length)}
-            onTouchStart={(e) => startDrag(word, i, e)}
-            onMouseDown={(e) => startDrag(word, i, e)}
-          >
-            {previews[word] ? (
-              <img className="word-card-preview" src={previews[word]} draggable={false} />
-            ) : (
-              <span className="word-card-placeholder">{word}</span>
-            )}
-          </div>
-        ))}
-        <div className="word-card word-card--add" onClick={onNewCard}>
-          <span style={{ fontSize: '1.5rem', color: 'rgba(255,255,255,0.7)' }}>+</span>
+      {/* 왼쪽 카드존 */}
+      <div className="word-tray word-tray--left">
+        {leftCards.map((word, li) => {
+          const origIdx = leftIndices[li];
+          return (
+            <div key={`${word}-${origIdx}`} className="word-card" style={sideCardStyle(li, leftCards.length)}
+              onTouchStart={(e) => startDrag(word, origIdx, e)} onMouseDown={(e) => startDrag(word, origIdx, e)}>
+              {previews[word] ? <img className="word-card-preview" src={previews[word]} draggable={false} />
+                : <span className="word-card-placeholder">{word}</span>}
+            </div>
+          );
+        })}
+      </div>
+      {/* 오른쪽 카드존 */}
+      <div className="word-tray word-tray--right">
+        {rightCards.map((word, ri) => {
+          const origIdx = rightIndices[ri];
+          return (
+            <div key={`${word}-${origIdx}`} className="word-card" style={sideCardStyle(ri, rightCards.length)}
+              onTouchStart={(e) => startDrag(word, origIdx, e)} onMouseDown={(e) => startDrag(word, origIdx, e)}>
+              {previews[word] ? <img className="word-card-preview" src={previews[word]} draggable={false} />
+                : <span className="word-card-placeholder">{word}</span>}
+            </div>
+          );
+        })}
+        <div className="word-card word-card--add" style={sideCardStyle(rightCards.length, rightCards.length + 1)} onClick={onNewCard}>
+          <span style={{ fontSize: '1.3rem', color: 'rgba(255,255,255,0.7)' }}>+</span>
         </div>
       </div>
 
       {dragCard && (() => {
-        const escaped = dragCard.y < window.innerHeight - CARD_ZONE_H;
+        const escaped = dragCard.x > CARD_ZONE_W && dragCard.x < window.innerWidth - CARD_ZONE_W;
         return (
           <div
             className={`word-drag-ghost ${escaped ? 'word-drag-ghost--escaped' : ''}`}
