@@ -3,7 +3,7 @@ import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { APP_CONFIG } from '../data.js';
 import { TracingEngine, samplePath } from '../TracingEngine.js';
 import { ParticleSystem } from '../particles.js';
-import { createArrowAnim } from '../arrow.js';
+
 import { playStart, playComplete, playCelebrate, playFail, playSlam, playFloat, playLand } from '../sound.js';
 import { ICON_MAP } from '../icon-map.js';
 import { getSource } from '../sourceOverrides.js';
@@ -20,14 +20,14 @@ export default function TracePiece({ piece, selected, onDone, onDelete, onSelect
   const source = getSource(piece.char, piece.id);
   const [editMode, setEditMode] = useState(false);
   const guideRef = useRef(null);
-  const arrowRef = useRef(null);
+
   const traceRef = useRef(null);
   const overlayRef = useRef(null);
   const engineRef = useRef(null);
   const particleRef = useRef(new ParticleSystem());
   const stateRef = useRef({ strokeIdx: 0, completed: [], inited: false });
   const particleAnimRef = useRef(null);
-  const arrowAnimRef = useRef(null);
+
   const wrapRef = useRef(null);
   const moveStartRef = useRef(null);
   const movedRef = useRef(false);
@@ -38,14 +38,6 @@ export default function TracePiece({ piece, selected, onDone, onDelete, onSelect
 
   useEffect(() => {
     if (!selected || piece.done) setEditMode(false);
-    // 선택 해제 시 화살표 애니메이션 정지 (성능)
-    if (!selected && arrowAnimRef.current) {
-      arrowAnimRef.current.stop(); arrowAnimRef.current = null;
-    }
-    // 선택 시 화살표 애니메이션 재시작
-    if (selected && !piece.done && !arrowAnimRef.current && engineRef.current?.pts && arrowRef.current) {
-      arrowAnimRef.current = createArrowAnim(engineRef.current.pts, arrowRef.current.getContext('2d'), SIZE, SIZE);
-    }
   }, [selected, piece.done]);
 
   const prevEditMode = useRef(false);
@@ -67,9 +59,9 @@ export default function TracePiece({ piece, selected, onDone, onDelete, onSelect
   useEffect(() => {
     if (!source || stateRef.current.inited) return;
     stateRef.current.inited = true;
-    const gCanvas = guideRef.current, aCanvas = arrowRef.current, tCanvas = traceRef.current;
-    gCanvas.width = aCanvas.width = tCanvas.width = SIZE;
-    gCanvas.height = aCanvas.height = tCanvas.height = SIZE;
+    const gCanvas = guideRef.current, tCanvas = traceRef.current;
+    gCanvas.width = tCanvas.width = SIZE;
+    gCanvas.height = tCanvas.height = SIZE;
     engineRef.current = new TracingEngine(tCanvas.getContext('2d'), APP_CONFIG);
     drawGuide();
     loadStroke(0);
@@ -113,8 +105,6 @@ export default function TracePiece({ piece, selected, onDone, onDelete, onSelect
     const isClosed = stroke.path.includes('A') || piece.char === 'ㅁ' || piece.char === 'ㅇ';
     engineRef.current.setStroke(stroke.path, isClosed);
     drawGuideWith(src); renderTrace(); setupIcons();
-    if (arrowAnimRef.current) arrowAnimRef.current.stop();
-    arrowAnimRef.current = createArrowAnim(engineRef.current.pts, arrowRef.current.getContext('2d'), SIZE, SIZE);
   }
 
   function loadStroke(idx) { loadStrokeWith(idx, getSource(piece.char, piece.id)); }
@@ -163,7 +153,6 @@ export default function TracePiece({ piece, selected, onDone, onDelete, onSelect
     const curSource = getSource(piece.char, piece.id);
     S.completed.push([...engineRef.current.pts]); S.strokeIdx++;
     if (S.strokeIdx >= curSource.strokes.length) {
-      if (arrowAnimRef.current) { arrowAnimRef.current.stop(); arrowAnimRef.current = null; }
       overlayRef.current.innerHTML = '';
       particleRef.current.celebrate(SIZE/2, SIZE/2); startPLoop();
       playCelebrate();
@@ -211,7 +200,6 @@ export default function TracePiece({ piece, selected, onDone, onDelete, onSelect
       if (engineRef.current && !piece.done) {
         if (engineRef.current.start(cPos.x, cPos.y)) {
           playStart();
-          if (arrowAnimRef.current) { arrowAnimRef.current.stop(); arrowAnimRef.current = null; }
           particleRef.current.burst(cPos.x, cPos.y, 6); startPLoop(); renderTrace(); updateIcons();
           const h = overlayRef.current?.querySelector('.character-handler');
           if (h) h.style.transform = 'translate(-50%,-50%) scale(1.15) rotate(5deg)';
@@ -274,8 +262,6 @@ export default function TracePiece({ piece, selected, onDone, onDelete, onSelect
           completeStroke();
         } else {
           playFail(); stopPLoop(); renderTrace(); updateIcons();
-          if (arrowAnimRef.current) arrowAnimRef.current.stop();
-          arrowAnimRef.current = createArrowAnim(engineRef.current.pts, arrowRef.current.getContext('2d'), SIZE, SIZE);
         }
         return;
       }
@@ -317,7 +303,6 @@ export default function TracePiece({ piece, selected, onDone, onDelete, onSelect
       style={{ left: localPos.x, top: localPos.y, width: pixelSize, height: pixelSize }}
     >
       <canvas ref={guideRef} className="free-trace-layer" />
-      <canvas ref={arrowRef} className="free-trace-layer" style={{ zIndex: 2, display: editMode ? 'none' : undefined }} />
       <canvas ref={traceRef} className="free-trace-layer" style={{ zIndex: 3, display: editMode ? 'none' : undefined }} />
       <div ref={overlayRef} className="free-trace-layer free-trace-overlay" style={{ zIndex: 4, display: editMode ? 'none' : undefined }} />
       {editMode && (
