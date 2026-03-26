@@ -32,13 +32,12 @@ function renderJamoImage(source) {
   const canvas = document.createElement('canvas');
   canvas.width = SIZE; canvas.height = SIZE;
   const ctx = canvas.getContext('2d');
-  ctx.strokeStyle = 'rgba(255,255,255,0.25)';
-  ctx.lineWidth = APP_CONFIG.GUIDE_STROKE_WIDTH + 28;
+  ctx.strokeStyle = 'rgba(255,200,0,0.55)';
+  ctx.lineWidth = 6;
   ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  ctx.setLineDash([18, 14]);
   source.strokes.forEach(s => ctx.stroke(new Path2D(s.path)));
-  ctx.strokeStyle = APP_CONFIG.GUIDE_COLOR;
-  ctx.lineWidth = APP_CONFIG.GUIDE_STROKE_WIDTH;
-  source.strokes.forEach(s => ctx.stroke(new Path2D(s.path)));
+  ctx.setLineDash([]);
   return canvas.toDataURL();
 }
 
@@ -47,12 +46,54 @@ export default function FreeComposeMode() {
   const [dragNew, setDragNew] = useState(null);
   const [selectedId, setSelectedId] = useState(null);
   const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [panLocked, setPanLocked] = useState(false);
   const [cardEditMode, setCardEditMode] = useState(false);
   const wordCardsRef = useRef(null);
   const dragNewRef = useRef(null);
   const panStart = useRef(null);
+  const pinchRef = useRef(null);
 
   useEffect(() => { initSvgHelper(); }, []);
+
+  // ── 휠 줌 ──
+  useEffect(() => {
+    function onWheel(e) {
+      if (e.target.closest('.remote') || e.target.closest('.word-tray')) return;
+      e.preventDefault();
+      const delta = e.deltaY > 0 ? 0.95 : 1.05;
+      setZoom(z => Math.min(3, Math.max(0.3, z * delta)));
+    }
+    window.addEventListener('wheel', onWheel, { passive: false });
+    return () => window.removeEventListener('wheel', onWheel);
+  }, []);
+
+  // ── 핀치 줌 ──
+  useEffect(() => {
+    function onTouchStart(e) {
+      if (e.touches.length === 2) {
+        const d = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+        pinchRef.current = { startDist: d, startZoom: zoom };
+      }
+    }
+    function onTouchMove(e) {
+      if (e.touches.length === 2 && pinchRef.current) {
+        e.preventDefault();
+        const d = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+        const scale = d / pinchRef.current.startDist;
+        setZoom(Math.min(3, Math.max(0.3, pinchRef.current.startZoom * scale)));
+      }
+    }
+    function onTouchEnd() { pinchRef.current = null; }
+    window.addEventListener('touchstart', onTouchStart, { passive: false });
+    window.addEventListener('touchmove', onTouchMove, { passive: false });
+    window.addEventListener('touchend', onTouchEnd);
+    return () => {
+      window.removeEventListener('touchstart', onTouchStart);
+      window.removeEventListener('touchmove', onTouchMove);
+      window.removeEventListener('touchend', onTouchEnd);
+    };
+  }, [zoom]);
 
   const updateSource = useCallback((pieceId, char, newStrokes) => {
     pieceOverrides[pieceId] = { char, strokes: newStrokes };
@@ -156,12 +197,18 @@ export default function FreeComposeMode() {
       const d = dragNewRef.current; if (!d) return;
       dragNewRef.current = null; setDragNew(null);
       if (e.type === 'mouseup' && d.wasTouch) return;
+      // 놓은 위치가 리모컨 위면 취소
+      let ex, ey;
+      if (e.changedTouches) { ex = e.changedTouches[0].clientX; ey = e.changedTouches[0].clientY; } else { ex = e.clientX; ey = e.clientY; }
+      const remoteEl = document.querySelector('.remote');
+      if (remoteEl) {
+        const r = remoteEl.getBoundingClientRect();
+        if (ex >= r.left && ex <= r.right && ey >= r.top && ey <= r.bottom) return; // 취소
+      }
       if (!dragMovedRef.current) {
         const pos = getNextPlacePos(); placeNewPiece(d.char, pos.x, pos.y);
       } else {
-        let x, y;
-        if (e.changedTouches) { x = e.changedTouches[0].clientX; y = e.changedTouches[0].clientY; } else { x = e.clientX; y = e.clientY; }
-        placeNewPiece(d.char, x - panOffset.x, y - panOffset.y, false);
+        placeNewPiece(d.char, ex - panOffset.x, ey - panOffset.y, false);
       }
     }
     window.addEventListener('touchmove', onMove, { passive: false });
@@ -173,8 +220,8 @@ export default function FreeComposeMode() {
 
   // ── 빈 공간 드래그 = 캔버스 패닝 ──
   const startPan = useCallback((e) => {
-    if (e.target.closest('.free-trace-wrap') || e.target.closest('.remote') || e.target.closest('.trash-zone') || e.target.closest('.word-tray') || e.target.closest('.word-card')) return;
-    if (dragNewRef.current) return;
+    if (e.target.closest('.free-trace-wrap') || e.target.closest('.remote') || e.target.closest('.trash-zone') || e.target.closest('.word-tray') || e.target.closest('.word-card') || e.target.closest('.canvas-lock')) return;
+    if (dragNewRef.current || panLocked) return;
     e.preventDefault();
     let x, y;
     if (e.touches) { x = e.touches[0].clientX; y = e.touches[0].clientY; } else { x = e.clientX; y = e.clientY; }
@@ -263,7 +310,7 @@ export default function FreeComposeMode() {
 
   return (
     <div className="free-fullscreen" onMouseDown={startPan} onTouchStart={startPan}>
-      <div className={`free-pan-layer ${panSmooth ? 'free-pan-layer--smooth' : ''}`} style={{ transform: `translate(${panOffset.x}px, ${panOffset.y}px)` }}>
+      <div className={`free-pan-layer ${panSmooth ? 'free-pan-layer--smooth' : ''}`} style={{ transform: `translate(${panOffset.x}px, ${panOffset.y}px) scale(${zoom})`, transformOrigin: '0 0' }}>
         {pieces.map(piece => (
           <TracePiece
             key={piece.id} piece={piece} selected={piece.id === selectedId}
@@ -300,6 +347,16 @@ export default function FreeComposeMode() {
       </div>
 
       {cardEditMode && <button className="card-edit-done-btn" onClick={finishCardEdit}>완료</button>}
+
+      {/* 캔버스 잠금 버튼 (좌하단) */}
+      <div className={`canvas-lock ${panLocked ? 'canvas-lock--on' : ''}`} onClick={() => setPanLocked(l => !l)}>
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          {panLocked
+            ? <><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></>
+            : <><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 019.9-1"/></>
+          }
+        </svg>
+      </div>
 
       <TrashZone trashHover={trashHover} onClearAll={resetAll} />
 

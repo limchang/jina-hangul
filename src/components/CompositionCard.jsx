@@ -271,16 +271,13 @@ function drawGuide(gCtx, data, S) {
   const guideW = APP_CONFIG.GUIDE_STROKE_WIDTH;
   const traceW = APP_CONFIG.TRACE_STROKE_WIDTH;
 
-  gCtx.strokeStyle = 'rgba(255,255,255,0.25)';
-  gCtx.lineWidth = guideW + 28;
+  gCtx.strokeStyle = 'rgba(255,200,0,0.55)';
+  gCtx.lineWidth = 6;
   gCtx.lineCap = 'round';
   gCtx.lineJoin = 'round';
+  gCtx.setLineDash([18, 14]);
+  data.strokes.forEach(s => { gCtx.stroke(new Path2D(s.path)); });
   gCtx.setLineDash([]);
-  data.strokes.forEach(s => { gCtx.stroke(new Path2D(s.path)); });
-
-  gCtx.strokeStyle = APP_CONFIG.GUIDE_COLOR;
-  gCtx.lineWidth = guideW;
-  data.strokes.forEach(s => { gCtx.stroke(new Path2D(s.path)); });
 
   S.completed.forEach(pts => {
     gCtx.beginPath();
