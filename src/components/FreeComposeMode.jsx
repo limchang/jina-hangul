@@ -52,16 +52,15 @@ export default function FreeComposeMode() {
   const [dragNew, setDragNew] = useState(null);
   const [selectedId, setSelectedId] = useState(null); // 선택된 글자 강조
   const [panOffset, setPanOffset] = useState({ x: 0, y: 0 }); // 캔버스 전체 이동
-  const [sourceVer, setSourceVer] = useState(0); // 소스 변경 시 모든 같은 char 글자 리렌더
+  // sourceVer 제거 — piece.id 단위 오버라이드이므로 다른 piece 리렌더 불필요
   const dragNewRef = useRef(null);
   const panStart = useRef(null);
 
   useEffect(() => { initSvgHelper(); }, []);
 
-  // pieceOverrides 갱신 — 해당 piece만 변경
+  // pieceOverrides 갱신 — 해당 piece만 변경 (다른 piece에 영향 없음)
   const updateSource = useCallback((pieceId, char, newStrokes) => {
     pieceOverrides[pieceId] = { char, strokes: newStrokes };
-    setSourceVer(v => v + 1);
     const strokesStr = newStrokes.map(s => `{path:'${s.path}'}`).join(', ');
     console.log(`편집 [#${pieceId}]: { char:'${char}', strokes:[${strokesStr}] }`);
   }, []);
@@ -331,7 +330,6 @@ export default function FreeComposeMode() {
             key={piece.id}
             piece={piece}
             selected={piece.id === selectedId}
-            sourceVer={sourceVer}
             onDone={() => markDone(piece.id)}
             onDelete={() => { delete pieceOverrides[piece.id]; setPieces(prev => prev.filter(p => p.id !== piece.id)); }}
             isOverTrash={isOverTrash}
@@ -399,7 +397,7 @@ export default function FreeComposeMode() {
 }
 
 // ── 개별 글자 따라쓰기 컴포넌트 ──
-function TracePiece({ piece, selected, sourceVer, onDone, onDelete, onSelect, isOverTrash, setTrashHover, onSourceUpdate }) {
+function TracePiece({ piece, selected, onDone, onDelete, onSelect, isOverTrash, setTrashHover, onSourceUpdate }) {
   const source = getSource(piece.char, piece.id);
   const [editMode, setEditMode] = useState(false); // 롱프레스로 활성화되는 꼭지점 편집 모드
   const guideRef = useRef(null);
@@ -423,16 +421,6 @@ function TracePiece({ piece, selected, sourceVer, onDone, onDelete, onSelect, is
     if (!selected) setEditMode(false);
   }, [selected]);
 
-  // sourceVer 바뀔 때: 자기 source가 실제로 변했을 때만 redraw
-  const prevSourceRef = useRef(null);
-  useEffect(() => {
-    if (!guideRef.current || !stateRef.current.inited) return;
-    const curSrc = getSource(piece.char, piece.id);
-    // source 참조가 바뀌었을 때만 (다른 piece 편집으로 sourceVer만 올라간 경우 무시)
-    if (curSrc === prevSourceRef.current) return;
-    prevSourceRef.current = curSrc;
-    if (!editMode) redrawAll();
-  }, [sourceVer]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // 편집 모드 해제 시 가이드+화살표+아이콘 복원 + 따라쓰기 리셋
   const prevEditMode = useRef(false);
@@ -442,7 +430,6 @@ function TracePiece({ piece, selected, sourceVer, onDone, onDelete, onSelect, is
       stateRef.current.completed = [];
       stateRef.current.strokeIdx = 0;
       const src = getSource(piece.char, piece.id);
-      prevSourceRef.current = src;
       if (src && engineRef.current) {
         loadStrokeWith(0, src);
       }
@@ -460,7 +447,6 @@ function TracePiece({ piece, selected, sourceVer, onDone, onDelete, onSelect, is
     gCanvas.width = aCanvas.width = tCanvas.width = SIZE;
     gCanvas.height = aCanvas.height = tCanvas.height = SIZE;
     engineRef.current = new TracingEngine(tCanvas.getContext('2d'), APP_CONFIG);
-    prevSourceRef.current = source;
     drawGuide();
     loadStroke(0);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
