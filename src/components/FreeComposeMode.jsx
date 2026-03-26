@@ -174,10 +174,16 @@ export default function FreeComposeMode() {
     const screenCX = window.innerWidth / 2;
     const screenCY = window.innerHeight / 2;
 
-    // 저장된 배치가 있으면 복원
+    // 저장된 배치가 있으면 복원 (char 포함 layout)
     const saved = loadWordLayout(word);
     let newPieces;
-    if (saved && saved.length === jamos.length) {
+    if (saved && saved.length > 0 && saved[0].char) {
+      // 카드 만들기로 저장된 배치 — char 포함
+      newPieces = saved.map(s => ({
+        id: nextId++, char: s.char, word, x: s.x, y: s.y, scale: s.scale, done: false,
+      }));
+    } else if (saved && saved.length === jamos.length) {
+      // 자모 분해로 저장된 배치
       newPieces = jamos.map((char, i) => ({
         id: nextId++, char, word, x: saved[i].x, y: saved[i].y, scale: saved[i].scale, done: false,
       }));
@@ -335,12 +341,15 @@ export default function FreeComposeMode() {
       ...p, source: getSource(p.char, p.id)
     }));
     const img = renderLayoutPreview(previewPieces);
-    // 배치 저장
-    saveWordLayout(cardName, pieces.map(p => ({ x: p.x, y: p.y, scale: p.scale })));
+    // 배치 저장 (char 포함 — 나중에 복원용)
+    saveWordLayout(cardName, pieces.map(p => ({ char: p.char, x: p.x, y: p.y, scale: p.scale })));
     // WordCards에 카드 추가 + 미리보기
     if (wordCardsRef.current) {
       wordCardsRef.current.addCardDirect(cardName, img);
     }
+    // 화면 클리어
+    setPieces([]); nextId = 1; setSelectedId(null); setPanOffset({ x: 0, y: 0 });
+    Object.keys(pieceOverrides).forEach(k => delete pieceOverrides[k]);
     setCardEditMode(false);
   }, [pieces]);
 
@@ -478,8 +487,8 @@ export default function FreeComposeMode() {
           : pieces.length === 0 ? '글자를 배치하거나, 아래 카드를 올려보세요' : '따라쓰기 · 빈곳=이동 · 꾹=편집'}
       </div>
 
-      {/* 낱말카드 (하단) — 카드 편집 모드에서는 숨김 */}
-      {!cardEditMode && (
+      {/* 낱말카드 (하단) — 편집 모드에서는 숨김 */}
+      <div style={{ display: cardEditMode ? 'none' : undefined }}>
         <WordCards
           ref={wordCardsRef}
           onDeploy={deployWord}
@@ -487,7 +496,7 @@ export default function FreeComposeMode() {
           setTrashHover={setTrashHover}
           onNewCard={startCardEdit}
         />
-      )}
+      </div>
 
       {/* 카드 편집 모드 — 완료 버튼 */}
       {cardEditMode && (
