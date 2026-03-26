@@ -281,8 +281,6 @@ export default function FreeComposeMode() {
         <div className="remote-row">
           <div className="remote-btn remote-btn--wide" onClick={() => placeAll(CONSONANTS)}>자음 공부</div>
           <div className="remote-btn remote-btn--wide" onClick={() => placeAll(VOWELS)}>모음 공부</div>
-          <div className="remote-btn remote-btn--wide remote-btn--danger" onClick={resetAll}>모두 지우기</div>
-          <div className="remote-btn remote-btn--wide" onClick={startCardEdit}>+ 카드</div>
         </div>
         <div className="remote-row">
           {CONSONANTS.map(c => (
