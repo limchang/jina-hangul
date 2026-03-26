@@ -110,7 +110,7 @@ function pointToSegDist(px, py, ax, ay, bx, by) {
   const lenSq = dx * dx + dy * dy;
   if (lenSq === 0) return Math.hypot(px - ax, py - ay);
   let t = ((px - ax) * dx + (py - ay) * dy) / lenSq;
-  t = Math.max(0.15, Math.min(0.85, t)); // 선분 끝 15% 제외 (꼭지점 근처는 단독 이동)
+  t = Math.max(0.05, Math.min(0.95, t)); // 선분 끝 5%만 제외
   return Math.hypot(px - (ax + t * dx), py - (ay + t * dy));
 }
 
@@ -144,6 +144,25 @@ function buildLinkedGroups(verts) {
   return groups;
 }
 
+// Arc stroke에서 원 정보 추출 (M x y A rx ry ... x2 y2 A rx ry ... x3 y3 Z)
+function extractArcInfo(stroke) {
+  const verts = parsePath(stroke.path);
+  const arcs = verts.filter(v => v.cmd === 'A');
+  const start = verts.find(v => v.cmd === 'M');
+  if (arcs.length < 2 || !start) return null;
+  // 중심 = 시작점과 첫 arc 끝점의 중간
+  const cx = (start.x + arcs[0].x) / 2;
+  const cy = (start.y + arcs[0].y) / 2;
+  return { cx, cy, rx: arcs[0].rx, ry: arcs[0].ry, startY: start.y, endY: arcs[0].y };
+}
+
+// rx/ry로 Arc stroke path 재생성
+function rebuildArcPath(cx, cy, rx, ry) {
+  const topY = cy - ry;
+  const botY = cy + ry;
+  return `M ${round(cx)} ${round(topY)} A ${round(rx)} ${round(ry)} 0 0 0 ${round(cx)} ${round(botY)} A ${round(rx)} ${round(ry)} 0 0 0 ${round(cx)} ${round(topY)} Z`;
+}
+
 const SIZE = 500;
 
 export default function VertexEditor({ source, onUpdate }) {
@@ -151,9 +170,10 @@ export default function VertexEditor({ source, onUpdate }) {
   const vertsRef = useRef([]);
   const edgesRef = useRef([]);
   const linkedRef = useRef({}); // 좌표 공유 그룹
+  const arcInfoRef = useRef(null); // Arc 원 정보 (ㅇㅎ 등)
   const dragRef = useRef(null);
-  // dragRef: { type: 'vertex', indices: [...], offsets: [{dx,dy},...] }
-  //       or { type: 'edge', pairs: [{idx, dx, dy},...] }
+  // dragRef: { pairs: [{idx, dx, dy},...] }
+  //       or { arcMode: 'left'|'right'|'top'|'bottom', arcStrokeIdx, startPos, origArc }
 
   // source 바뀌면 verts 재파싱
   useEffect(() => {
@@ -161,6 +181,15 @@ export default function VertexEditor({ source, onUpdate }) {
     vertsRef.current = extractVerts(source);
     edgesRef.current = buildEdges(vertsRef.current);
     linkedRef.current = buildLinkedGroups(vertsRef.current);
+    // Arc 정보 추출 (첫 번째 Arc stroke)
+    let arcInfo = null;
+    source.strokes.forEach((s, si) => {
+      if (!arcInfo && s.path.includes('A')) {
+        const info = extractArcInfo(s);
+        if (info) arcInfo = { ...info, strokeIdx: si };
+      }
+    });
+    arcInfoRef.current = arcInfo;
   }, [source]);
 
   function draw() {
@@ -169,12 +198,16 @@ export default function VertexEditor({ source, onUpdate }) {
     const ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, SIZE, SIZE);
     const d = dragRef.current;
-    if (!d || !d.pairs) return;
-    // 모든 움직이는 꼭지점에 글로우
-    d.pairs.forEach(p => {
-      const v = vertsRef.current[p.idx];
-      if (v) drawGlow(ctx, v.x, v.y);
-    });
+    if (!d) return;
+    if (d.pairs) {
+      d.pairs.forEach(p => {
+        const v = vertsRef.current[p.idx];
+        if (v) drawGlow(ctx, v.x, v.y);
+      });
+    }
+    if (d.arcMode && d.glowPos) {
+      drawGlow(ctx, d.glowPos.x, d.glowPos.y);
+    }
   }
 
   function drawGlow(ctx, x, y) {
@@ -223,6 +256,37 @@ export default function VertexEditor({ source, onUpdate }) {
       const verts = vertsRef.current;
       const edges = edgesRef.current;
 
+      // Arc 모드 체크 — 원 위를 터치했는지
+      const arc = arcInfoRef.current;
+      if (arc) {
+        const { cx, cy, rx, ry } = arc;
+        // 4방향 핸들: 좌(cx-rx, cy), 우(cx+rx, cy), 상(cx, cy-ry), 하(cx, cy+ry)
+        const handles = [
+          { mode: 'left',   x: cx - rx, y: cy },
+          { mode: 'right',  x: cx + rx, y: cy },
+          { mode: 'top',    x: cx,      y: cy - ry },
+          { mode: 'bottom', x: cx,      y: cy + ry },
+        ];
+        let bestH = null, bestHDist = Infinity;
+        handles.forEach(h => {
+          const d = Math.hypot(pos.x - h.x, pos.y - h.y);
+          if (d < bestHDist) { bestHDist = d; bestH = h; }
+        });
+        // 원 테두리 근처면 arc 모드
+        const distToEdge = Math.abs(Math.hypot(pos.x - cx, pos.y - cy) - ((rx + ry) / 2));
+        if (distToEdge < 60) {
+          dragRef.current = {
+            arcMode: bestH.mode,
+            arcStrokeIdx: arc.strokeIdx,
+            startPos: pos,
+            origArc: { cx, cy, rx, ry },
+            glowPos: { x: bestH.x, y: bestH.y },
+          };
+          draw();
+          return;
+        }
+      }
+
       // 가장 가까운 꼭지점 찾기
       let bestVertIdx = -1, bestVertDist = Infinity;
       verts.forEach((v, idx) => {
@@ -239,10 +303,9 @@ export default function VertexEditor({ source, onUpdate }) {
       });
 
       // 선분이 꼭지점보다 가까우면 선분 드래그 (양쪽 + 연결 그룹)
-      if (bestEdge && bestEdgeDist < bestVertDist * 0.9) {
+      if (bestEdge && bestEdgeDist < bestVertDist * 1.3) {
         dragRef.current = { pairs: collectPairs([bestEdge.i0, bestEdge.i1], pos) };
       } else if (bestVertIdx >= 0) {
-        // 꼭지점 + 연결 그룹
         dragRef.current = { pairs: collectPairs([bestVertIdx], pos) };
       }
       draw();
@@ -253,7 +316,50 @@ export default function VertexEditor({ source, onUpdate }) {
       e.preventDefault();
       e.stopPropagation();
       const pos = toCanvas(e);
-      const pairs = dragRef.current.pairs;
+      const d = dragRef.current;
+
+      // Arc 모드 — rx/ry 조절
+      if (d.arcMode) {
+        const o = d.origArc;
+        const dx = pos.x - d.startPos.x;
+        const dy = pos.y - d.startPos.y;
+        let newRx = o.rx, newRy = o.ry;
+
+        if (d.arcMode === 'left') {
+          newRx = Math.max(20, o.rx - dx); // 왼쪽 당기면 rx 증가, 오른쪽 당기면 감소
+        } else if (d.arcMode === 'right') {
+          newRx = Math.max(20, o.rx + dx);
+        } else if (d.arcMode === 'top') {
+          newRy = Math.max(20, o.ry - dy);
+        } else if (d.arcMode === 'bottom') {
+          newRy = Math.max(20, o.ry + dy);
+        }
+
+        // 글로우 위치 업데이트
+        if (d.arcMode === 'left') d.glowPos = { x: o.cx - newRx, y: o.cy };
+        else if (d.arcMode === 'right') d.glowPos = { x: o.cx + newRx, y: o.cy };
+        else if (d.arcMode === 'top') d.glowPos = { x: o.cx, y: o.cy - newRy };
+        else if (d.arcMode === 'bottom') d.glowPos = { x: o.cx, y: o.cy + newRy };
+
+        // Arc stroke path 재생성
+        const newPath = rebuildArcPath(o.cx, o.cy, newRx, newRy);
+        const newStrokes = source.strokes.map((s, si) =>
+          si === d.arcStrokeIdx ? { path: newPath } : s
+        );
+        // arcInfo 업데이트
+        arcInfoRef.current = { ...arcInfoRef.current, rx: newRx, ry: newRy };
+        // verts도 업데이트
+        vertsRef.current = extractVerts({ strokes: newStrokes });
+        edgesRef.current = buildEdges(vertsRef.current);
+
+        if (onUpdate) onUpdate(newStrokes);
+        draw();
+        return;
+      }
+
+      // 일반 꼭지점/선분 드래그
+      const pairs = d.pairs;
+      if (!pairs) return;
 
       vertsRef.current = vertsRef.current.map((v, i) => {
         const p = pairs.find(p => p.idx === i);

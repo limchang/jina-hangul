@@ -300,14 +300,14 @@ export default function FreeComposeMode() {
         const inView = nextScreenX > margin && nextScreenX < window.innerWidth - margin
                      && nextScreenY > margin && nextScreenY < window.innerHeight - margin;
         if (inView) {
-          setTimeout(() => setSelectedId(next.id), 300);
+          setTimeout(() => setSelectedId(next.id), 500);
         } else {
-          setPanSmooth(true);
           setTimeout(() => {
+            setPanSmooth(true);
             setPanOffset({ x: screenCX - next.x, y: screenCY - next.y });
             setSelectedId(next.id);
-          }, 300);
-          setTimeout(() => setPanSmooth(false), 900);
+          }, 500); // slamDown(0.3s) 완료 후 이동
+          setTimeout(() => setPanSmooth(false), 1100);
         }
       }
       return updated;
@@ -583,14 +583,15 @@ function TracePiece({ piece, selected, sourceVer, onDone, onDelete, onSelect, is
       return { x: (cx-rect.left)*(SIZE/rect.width), y: (cy-rect.top)*(SIZE/rect.height) };
     }
 
-    // 글자 모양 히트 테스트 — 획 위에 있는지 확인
+    // 글자 모양 히트 테스트 — samplePath로 거리 기반 체크 (isPointInStroke보다 안정적)
     function isOnGlyph(canvasPos) {
-      const gCtx = guideRef.current.getContext('2d');
-      const hitWidth = APP_CONFIG.GUIDE_STROKE_WIDTH + 80; // 넉넉한 히트 영역
-      for (const s of source.strokes) {
-        const p = new Path2D(s.path);
-        gCtx.lineWidth = hitWidth;
-        if (gCtx.isPointInStroke(p, canvasPos.x, canvasPos.y)) return true;
+      const hitDist = (APP_CONFIG.GUIDE_STROKE_WIDTH + 80) / 2;
+      const src = getSource(piece.char, piece.id);
+      for (const s of src.strokes) {
+        const pts = samplePath(s.path, 40);
+        for (const pt of pts) {
+          if (Math.hypot(canvasPos.x - pt.x, canvasPos.y - pt.y) < hitDist) return true;
+        }
       }
       return false;
     }
