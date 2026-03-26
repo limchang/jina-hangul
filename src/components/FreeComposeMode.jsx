@@ -291,19 +291,28 @@ export default function FreeComposeMode() {
       const candidates = updated.filter(p => !p.done);
       const next = donePiece ? findNextPiece(donePiece, candidates) : null;
       if (next) {
-        // 부드러운 화면 이동
         const screenCX = window.innerWidth / 2;
         const screenCY = window.innerHeight / 2;
-        setPanSmooth(true);
-        setTimeout(() => {
-          setPanOffset({ x: screenCX - next.x, y: screenCY - next.y });
-          setSelectedId(next.id);
-        }, 300); // 쾅 효과 후 이동
-        setTimeout(() => setPanSmooth(false), 900); // transition 끝나면 해제
+        // 다음 글자가 화면 안에 이미 보이면 선택만 (패닝 안 함)
+        const nextScreenX = next.x + panOffset.x;
+        const nextScreenY = next.y + panOffset.y;
+        const margin = 150;
+        const inView = nextScreenX > margin && nextScreenX < window.innerWidth - margin
+                     && nextScreenY > margin && nextScreenY < window.innerHeight - margin;
+        if (inView) {
+          setTimeout(() => setSelectedId(next.id), 300);
+        } else {
+          setPanSmooth(true);
+          setTimeout(() => {
+            setPanOffset({ x: screenCX - next.x, y: screenCY - next.y });
+            setSelectedId(next.id);
+          }, 300);
+          setTimeout(() => setPanSmooth(false), 900);
+        }
       }
       return updated;
     });
-  }, [findNextPiece]);
+  }, [findNextPiece, panOffset]);
 
   const selectPiece = useCallback((id) => {
     setSelectedId(id);

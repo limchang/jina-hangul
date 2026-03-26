@@ -1,8 +1,8 @@
 // VertexEditor.jsx — 꼭지점(vertex) 편집기
-// 점 표시 없이, 드래그하면 가장 가까운 꼭지점이 따라오는 방식
-// 글로우 효과로 편집 중임을 표시
+// 점 표시 없이, 드래그하면 가장 가까운 꼭지점 or 선분이 따라옴
+// 선분 가운데를 잡으면 양쪽 끝점이 평행 이동
 
-import React, { useRef, useEffect, useState, useCallback } from 'react';
+import React, { useRef, useEffect } from 'react';
 
 // ── SVG path string → vertex 배열 파싱 ──
 export function parsePath(pathStr) {
@@ -104,17 +104,43 @@ function vertsToStrokes(source, allVerts) {
   });
 }
 
+// ── 점에서 선분까지의 거리 + 최근접점 ──
+function pointToSegDist(px, py, ax, ay, bx, by) {
+  const dx = bx - ax, dy = by - ay;
+  const lenSq = dx * dx + dy * dy;
+  if (lenSq === 0) return Math.hypot(px - ax, py - ay);
+  let t = ((px - ax) * dx + (py - ay) * dy) / lenSq;
+  t = Math.max(0.15, Math.min(0.85, t)); // 선분 끝 15% 제외 (꼭지점 근처는 단독 이동)
+  return Math.hypot(px - (ax + t * dx), py - (ay + t * dy));
+}
+
+// 같은 stroke 내에서 인접한 vertex 쌍(선분) 목록 생성
+function buildEdges(verts) {
+  const edges = [];
+  for (let i = 0; i < verts.length - 1; i++) {
+    const a = verts[i], b = verts[i + 1];
+    if (a.strokeIdx !== b.strokeIdx) continue;
+    // Q_CP → Q_END는 곡선이지만 선분으로 근사
+    edges.push({ i0: i, i1: i + 1 });
+  }
+  return edges;
+}
+
 const SIZE = 500;
 
 export default function VertexEditor({ source, onUpdate }) {
   const canvasRef = useRef(null);
-  const vertsRef = useRef([]); // 현재 꼭지점 배열 (ref로 — 리렌더 없이 빠르게 갱신)
-  const dragRef = useRef(null); // { idx, offsetX, offsetY }
+  const vertsRef = useRef([]);
+  const edgesRef = useRef([]);
+  const dragRef = useRef(null);
+  // dragRef: { type: 'vertex', idx, offsetX, offsetY }
+  //       or { type: 'edge', i0, i1, off0x, off0y, off1x, off1y }
 
   // source 바뀌면 verts 재파싱
   useEffect(() => {
     if (!source) return;
     vertsRef.current = extractVerts(source);
+    edgesRef.current = buildEdges(vertsRef.current);
     draw();
   }, [source]);
 
@@ -123,24 +149,40 @@ export default function VertexEditor({ source, onUpdate }) {
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, SIZE, SIZE);
-    // 드래그 중인 꼭지점 근처 글로우만 표시
     const d = dragRef.current;
-    if (d && d.idx >= 0) {
+    if (!d) return;
+
+    if (d.type === 'vertex') {
       const v = vertsRef.current[d.idx];
-      if (v) {
-        const grad = ctx.createRadialGradient(v.x, v.y, 0, v.x, v.y, 60);
-        grad.addColorStop(0, 'rgba(255,100,150,0.5)');
-        grad.addColorStop(0.5, 'rgba(255,100,150,0.15)');
-        grad.addColorStop(1, 'rgba(255,100,150,0)');
+      if (v) drawGlow(ctx, v.x, v.y);
+    } else if (d.type === 'edge') {
+      const v0 = vertsRef.current[d.i0], v1 = vertsRef.current[d.i1];
+      if (v0 && v1) {
+        drawGlow(ctx, v0.x, v0.y);
+        drawGlow(ctx, v1.x, v1.y);
+        // 선분 글로우
         ctx.beginPath();
-        ctx.arc(v.x, v.y, 60, 0, Math.PI * 2);
-        ctx.fillStyle = grad;
-        ctx.fill();
+        ctx.moveTo(v0.x, v0.y);
+        ctx.lineTo(v1.x, v1.y);
+        ctx.strokeStyle = 'rgba(255,100,150,0.3)';
+        ctx.lineWidth = 20;
+        ctx.lineCap = 'round';
+        ctx.stroke();
       }
     }
   }
 
-  // 마우스/터치 핸들러
+  function drawGlow(ctx, x, y) {
+    const grad = ctx.createRadialGradient(x, y, 0, x, y, 50);
+    grad.addColorStop(0, 'rgba(255,100,150,0.45)');
+    grad.addColorStop(0.5, 'rgba(255,100,150,0.12)');
+    grad.addColorStop(1, 'rgba(255,100,150,0)');
+    ctx.beginPath();
+    ctx.arc(x, y, 50, 0, Math.PI * 2);
+    ctx.fillStyle = grad;
+    ctx.fill();
+  }
+
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -157,25 +199,41 @@ export default function VertexEditor({ source, onUpdate }) {
       };
     }
 
-    function findNearest(pos) {
-      let bestIdx = -1, bestDist = Infinity;
-      vertsRef.current.forEach((v, idx) => {
-        const d = Math.hypot(pos.x - v.x, pos.y - v.y);
-        if (d < bestDist) { bestDist = d; bestIdx = idx; }
-      });
-      return bestIdx;
-    }
-
     function onDown(e) {
       e.preventDefault();
       e.stopPropagation();
       const pos = toCanvas(e);
-      const idx = findNearest(pos);
-      if (idx >= 0) {
-        const v = vertsRef.current[idx];
-        dragRef.current = { idx, offsetX: v.x - pos.x, offsetY: v.y - pos.y };
-        draw();
+      const verts = vertsRef.current;
+      const edges = edgesRef.current;
+
+      // 가장 가까운 꼭지점 찾기
+      let bestVertIdx = -1, bestVertDist = Infinity;
+      verts.forEach((v, idx) => {
+        const d = Math.hypot(pos.x - v.x, pos.y - v.y);
+        if (d < bestVertDist) { bestVertDist = d; bestVertIdx = idx; }
+      });
+
+      // 가장 가까운 선분 찾기
+      let bestEdge = null, bestEdgeDist = Infinity;
+      edges.forEach(edge => {
+        const a = verts[edge.i0], b = verts[edge.i1];
+        const d = pointToSegDist(pos.x, pos.y, a.x, a.y, b.x, b.y);
+        if (d < bestEdgeDist) { bestEdgeDist = d; bestEdge = edge; }
+      });
+
+      // 선분이 꼭지점보다 가까우면 (또는 비슷하면) 선분 드래그
+      if (bestEdge && bestEdgeDist < bestVertDist * 0.9) {
+        const a = verts[bestEdge.i0], b = verts[bestEdge.i1];
+        dragRef.current = {
+          type: 'edge', i0: bestEdge.i0, i1: bestEdge.i1,
+          off0x: a.x - pos.x, off0y: a.y - pos.y,
+          off1x: b.x - pos.x, off1y: b.y - pos.y,
+        };
+      } else if (bestVertIdx >= 0) {
+        const v = verts[bestVertIdx];
+        dragRef.current = { type: 'vertex', idx: bestVertIdx, offsetX: v.x - pos.x, offsetY: v.y - pos.y };
       }
+      draw();
     }
 
     function onMove(e) {
@@ -184,21 +242,30 @@ export default function VertexEditor({ source, onUpdate }) {
       e.stopPropagation();
       const pos = toCanvas(e);
       const d = dragRef.current;
-      const newX = pos.x + d.offsetX;
-      const newY = pos.y + d.offsetY;
 
-      vertsRef.current = vertsRef.current.map((v, i) =>
-        i === d.idx ? { ...v, x: newX, y: newY } : v
-      );
+      if (d.type === 'vertex') {
+        const newX = pos.x + d.offsetX;
+        const newY = pos.y + d.offsetY;
+        vertsRef.current = vertsRef.current.map((v, i) =>
+          i === d.idx ? { ...v, x: newX, y: newY } : v
+        );
+      } else if (d.type === 'edge') {
+        const new0x = pos.x + d.off0x, new0y = pos.y + d.off0y;
+        const new1x = pos.x + d.off1x, new1y = pos.y + d.off1y;
+        vertsRef.current = vertsRef.current.map((v, i) => {
+          if (i === d.i0) return { ...v, x: new0x, y: new0y };
+          if (i === d.i1) return { ...v, x: new1x, y: new1y };
+          return v;
+        });
+      }
 
-      // 즉시 부모에 알림 (가이드 다시 그리기)
       if (onUpdate && source) {
         onUpdate(vertsToStrokes(source, vertsRef.current));
       }
       draw();
     }
 
-    function onUp(e) {
+    function onUp() {
       if (!dragRef.current) return;
       dragRef.current = null;
       draw();
