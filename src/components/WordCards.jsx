@@ -33,7 +33,7 @@ export function renderLayoutPreview(pieces) {
   const PAD = 20;
   const bw = maxX - minX + PAD * 2;
   const bh = maxY - minY + PAD * 2;
-  const MAX_W = 200, MAX_H = 80;
+  const MAX_W = 300, MAX_H = 120;
   const fitScale = Math.min(MAX_W / bw, MAX_H / bh, 1);
   const W = Math.ceil(bw * fitScale);
   const H = Math.ceil(bh * fitScale);
@@ -56,7 +56,7 @@ export function renderLayoutPreview(pieces) {
     ctx.lineWidth = APP_CONFIG.GUIDE_STROKE_WIDTH + 20;
     ctx.lineCap = 'round'; ctx.lineJoin = 'round';
     src.strokes.forEach(st => ctx.stroke(new Path2D(st.path)));
-    ctx.strokeStyle = p.done ? APP_CONFIG.TRACE_COLOR : 'rgba(255,255,255,0.8)';
+    ctx.strokeStyle = 'rgba(255,255,255,0.85)';
     ctx.lineWidth = APP_CONFIG.GUIDE_STROKE_WIDTH;
     src.strokes.forEach(st => ctx.stroke(new Path2D(st.path)));
     ctx.restore();
@@ -104,9 +104,8 @@ const WordCards = forwardRef(function WordCards({ onDeploy, isOverTrash, setTras
     savePreviews(np);
   }, [cards, previews]);
 
-  const handleDeploy = useCallback((jamos, word) => {
+  const handleDeploy = useCallback((jamos, word, dropX, dropY) => {
     if (onDeploy) {
-      // updatePreview 콜백을 전달
       const updatePreview = (w, img) => {
         setPreviews(prev => {
           const next = { ...prev, [w]: img };
@@ -114,7 +113,7 @@ const WordCards = forwardRef(function WordCards({ onDeploy, isOverTrash, setTras
           return next;
         });
       };
-      onDeploy(jamos, word, updatePreview);
+      onDeploy(jamos, word, updatePreview, dropX, dropY);
     }
   }, [onDeploy]);
 
@@ -159,7 +158,7 @@ const WordCards = forwardRef(function WordCards({ onDeploy, isOverTrash, setTras
       }
       if (d.moved && y < window.innerHeight - 200) {
         const jamos = decomposeWord(d.word);
-        if (jamos.length > 0) handleDeploy(jamos, d.word);
+        if (jamos.length > 0) handleDeploy(jamos, d.word, x, y);
       }
     }
     window.addEventListener('touchmove', onMove, { passive: false });

@@ -78,19 +78,6 @@ export default function FreeComposeMode() {
   const dragNewRef = useRef(null);
   const panStart = useRef(null);
 
-  // word별 배치 & 미리보기 자동 저장
-  const syncWordLayout = useCallback((word, allPieces) => {
-    if (!word) return;
-    const wordPieces = allPieces.filter(p => p.word === word);
-    if (wordPieces.length === 0) return;
-    saveWordLayout(word, wordPieces.map(p => ({ x: p.x, y: p.y, scale: p.scale })));
-    if (updatePreviewRef.current) {
-      const img = renderLayoutPreview(wordPieces.map(p => ({
-        ...p, source: getSource(p.char, p.id)
-      })));
-      if (img) updatePreviewRef.current(word, img);
-    }
-  }, []);
 
   useEffect(() => { initSvgHelper(); }, []);
 
@@ -169,32 +156,38 @@ export default function FreeComposeMode() {
     setPanOffset({ x: screenCX - firstPiece.x, y: screenCY - firstPiece.y });
   }, [pieces]);
 
-  // ── 낱말카드에서 자모 배치 (배치 기억 + 미리보기 생성) ──
-  const deployWord = useCallback((jamos, word, updatePreview) => {
+  // ── 낱말카드에서 자모 배치 (배치 기억 + 드롭 위치 기준) ──
+  const deployWord = useCallback((jamos, word, updatePreview, dropX, dropY) => {
     const screenCX = window.innerWidth / 2;
     const screenCY = window.innerHeight / 2;
+    // 드롭 위치를 캔버스 좌표로 변환
+    const cx = (dropX || screenCX) - panOffset.x;
+    const cy = (dropY || screenCY) - panOffset.y;
 
-    // 저장된 배치가 있으면 복원 (char 포함 layout)
+    // 저장된 배치가 있으면 복원 (드롭 위치 기준으로 오프셋)
     const saved = loadWordLayout(word);
     let newPieces;
     if (saved && saved.length > 0 && saved[0].char) {
-      // 카드 만들기로 저장된 배치 — char 포함
+      // 저장된 배치의 중심 계산
+      const avgX = saved.reduce((s, p) => s + p.x, 0) / saved.length;
+      const avgY = saved.reduce((s, p) => s + p.y, 0) / saved.length;
+      const offX = cx - avgX, offY = cy - avgY;
       newPieces = saved.map(s => ({
-        id: nextId++, char: s.char, word, x: s.x, y: s.y, scale: s.scale, done: false,
+        id: nextId++, char: s.char, word, x: s.x + offX, y: s.y + offY, scale: s.scale, done: false,
       }));
     } else if (saved && saved.length === jamos.length) {
-      // 자모 분해로 저장된 배치
+      const avgX = saved.reduce((s, p) => s + p.x, 0) / saved.length;
+      const avgY = saved.reduce((s, p) => s + p.y, 0) / saved.length;
+      const offX = cx - avgX, offY = cy - avgY;
       newPieces = jamos.map((char, i) => ({
-        id: nextId++, char, word, x: saved[i].x, y: saved[i].y, scale: saved[i].scale, done: false,
+        id: nextId++, char, word, x: saved[i].x + offX, y: saved[i].y + offY, scale: saved[i].scale, done: false,
       }));
     } else {
       const scale = pieces.length > 0 ? pieces[pieces.length - 1].scale : 0.5;
       const gap = 500 * scale * 0.8;
       const totalW = (jamos.length - 1) * gap;
-      const startX = screenCX - panOffset.x - totalW / 2;
-      const y = screenCY - panOffset.y;
       newPieces = jamos.map((char, i) => ({
-        id: nextId++, char, word, x: startX + i * gap, y, scale, done: false,
+        id: nextId++, char, word, x: cx - totalW / 2 + i * gap, y: cy, scale, done: false,
       }));
     }
 
@@ -203,15 +196,6 @@ export default function FreeComposeMode() {
     setSelectedId(firstPiece.id);
     setPanOffset({ x: screenCX - firstPiece.x, y: screenCY - firstPiece.y });
 
-    // 배치 저장
-    saveWordLayout(word, newPieces.map(p => ({ x: p.x, y: p.y, scale: p.scale })));
-    // updatePreview 콜백 저장
-    if (updatePreview) updatePreviewRef.current = updatePreview;
-    // 미리보기 생성
-    if (updatePreview) {
-      const previewImg = renderLayoutPreview(newPieces);
-      if (previewImg) updatePreview(word, previewImg);
-    }
   }, [pieces, panOffset]);
 
   // ── 패널에서 클릭 or 드래그 ──
@@ -338,7 +322,7 @@ export default function FreeComposeMode() {
     const cardName = pieces.map(p => p.char).join('');
     // 미리보기 생성
     const previewPieces = pieces.map(p => ({
-      ...p, source: getSource(p.char, p.id)
+      ...p, done: false, source: getSource(p.char, p.id)
     }));
     const img = renderLayoutPreview(previewPieces);
     // 배치 저장 (char 포함 — 나중에 복원용)
@@ -422,13 +406,9 @@ export default function FreeComposeMode() {
           setTimeout(() => setPanSmooth(false), 1100);
         }
       }
-      // 낱말 배치 & 미리보기 동기화
-      if (donePiece?.word) {
-        setTimeout(() => syncWordLayout(donePiece.word, updated), 600);
-      }
       return updated;
     });
-  }, [findNextPiece, panOffset, syncWordLayout]);
+  }, [findNextPiece, panOffset]);
 
   const selectPiece = useCallback((id) => {
     setSelectedId(id);
@@ -454,11 +434,7 @@ export default function FreeComposeMode() {
             onSelect={() => selectPiece(piece.id)}
             onSourceUpdate={(newStrokes) => updateSource(piece.id, piece.char, newStrokes)}
             onMoved={(newX, newY) => {
-              setPieces(prev => {
-                const updated = prev.map(p => p.id === piece.id ? { ...p, x: newX, y: newY } : p);
-                if (piece.word) syncWordLayout(piece.word, updated);
-                return updated;
-              });
+              setPieces(prev => prev.map(p => p.id === piece.id ? { ...p, x: newX, y: newY } : p));
             }}
           />
         ))}

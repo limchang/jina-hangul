@@ -620,10 +620,10 @@ main {
   background: rgba(255,200,60,0.4);
 }
 .word-card-preview {
-  height: 36px;
-  opacity: 0.85;
+  height: 52px;
+  opacity: 0.9;
   pointer-events: none;
-  border-radius: 6px;
+  border-radius: 8px;
 }
 .word-card-placeholder {
   font-family: 'Noto Sans KR', sans-serif;
