@@ -3,13 +3,9 @@
 
 import React, { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import { CONSONANTS, VOWELS, APP_CONFIG } from '../data.js';
-import { TracingEngine, initSvgHelper, samplePath } from '../TracingEngine.js';
-import { ParticleSystem } from '../particles.js';
-import { createArrowAnim } from '../arrow.js';
-import { playStart, playComplete, playCelebrate, playFail, playSlam, playFloat, playLand } from '../sound.js';
-import { ICON_MAP } from '../icon-map.js';
-import DragPanel from './DragPanel.jsx';
-import VertexEditor from './VertexEditor.jsx';
+import { initSvgHelper } from '../TracingEngine.js';
+import { getSource, pieceOverrides } from '../sourceOverrides.js';
+import TracePiece from './TracePiece.jsx';
 import WordCards, { renderLayoutPreview } from './WordCards.jsx';
 
 let nextId = 1;
@@ -30,9 +26,6 @@ function saveWordLayout(word, layout) {
   } catch {}
 }
 
-// 자음+모음 통합 배열
-const ALL_JAMO = [...CONSONANTS, ...VOWELS];
-
 // Canvas로 가이드 글자 이미지 생성
 function renderJamoImage(source) {
   const SIZE = 500;
@@ -49,46 +42,22 @@ function renderJamoImage(source) {
   return canvas.toDataURL();
 }
 
-const DEFAULT_ICON = 'icons/default/character/ChatGPT Image 2026년 3월 26일 오후 12_27_41.png';
-
-function getIconImageUrl(char) {
-  if (ICON_MAP[char]) return ICON_MAP[char];
-  return DEFAULT_ICON;
-}
-// 런타임 소스 오버라이드 — piece.id 단위 (새로 꺼내는 글자에는 영향 없음)
-const pieceOverrides = {};
-
-function getOriginalSource(char) {
-  return CONSONANTS.find(c => c.char === char) || VOWELS.find(v => v.char === char);
-}
-
-function getSource(char, pieceId) {
-  if (pieceId && pieceOverrides[pieceId]) return pieceOverrides[pieceId];
-  return getOriginalSource(char);
-}
-
 export default function FreeComposeMode() {
   const [pieces, setPieces] = useState([]);
   const [dragNew, setDragNew] = useState(null);
-  const [selectedId, setSelectedId] = useState(null); // 선택된 글자 강조
-  const [panOffset, setPanOffset] = useState({ x: 0, y: 0 }); // 캔버스 전체 이동
-  const [cardEditMode, setCardEditMode] = useState(false); // 카드 만들기 모드
-  const updatePreviewRef = useRef(null); // WordCards의 updatePreview 콜백
-  const wordCardsRef = useRef(null); // WordCards 인스턴스 접근용
+  const [selectedId, setSelectedId] = useState(null);
+  const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
+  const [cardEditMode, setCardEditMode] = useState(false);
+  const wordCardsRef = useRef(null);
   const dragNewRef = useRef(null);
   const panStart = useRef(null);
 
-
   useEffect(() => { initSvgHelper(); }, []);
 
-  // pieceOverrides 갱신 — 해당 piece만 변경 (다른 piece에 영향 없음)
   const updateSource = useCallback((pieceId, char, newStrokes) => {
     pieceOverrides[pieceId] = { char, strokes: newStrokes };
-    const strokesStr = newStrokes.map(s => `{path:'${s.path}'}`).join(', ');
-    console.log(`편집 [#${pieceId}]: { char:'${char}', strokes:[${strokesStr}] }`);
   }, []);
 
-  // 가이드 이미지 캐시
   const jamoImages = useMemo(() => {
     const map = {};
     CONSONANTS.forEach(c => { map[c.char] = renderJamoImage(c); });
@@ -96,20 +65,15 @@ export default function FreeComposeMode() {
     return map;
   }, []);
 
-  // 마지막 글자 옆에 새 글자 배치할 위치 계산
   const getNextPlacePos = useCallback(() => {
     const screenCX = window.innerWidth / 2;
     const screenCY = window.innerHeight / 2;
-    if (pieces.length === 0) {
-      return { x: screenCX - panOffset.x, y: screenCY - panOffset.y };
-    }
-    // 마지막 글자 오른쪽에 배치
+    if (pieces.length === 0) return { x: screenCX - panOffset.x, y: screenCY - panOffset.y };
     const last = pieces[pieces.length - 1];
-    const gap = 500 * last.scale * 0.8; // 글자 크기의 80% 간격
+    const gap = 500 * last.scale * 0.8;
     return { x: last.x + gap, y: last.y };
   }, [pieces, panOffset]);
 
-  // 새 글자 생성 + 캔버스를 새 글자 중심으로 이동
   const placeNewPiece = useCallback((char, x, y, focus = true) => {
     const newId = nextId++;
     const scale = pieces.length > 0 ? pieces[pieces.length - 1].scale : 0.5;
@@ -122,90 +86,55 @@ export default function FreeComposeMode() {
     }
   }, [pieces]);
 
-  // ALL — 글자 목록 전체를 한 줄로 배치, 포커스는 첫 글자
   const placeAll = useCallback((items) => {
     const scale = pieces.length > 0 ? pieces[pieces.length - 1].scale : 0.5;
     const gap = 500 * scale * 0.8;
     const screenCX = window.innerWidth / 2;
     const screenCY = window.innerHeight / 2;
-
-    // 시작 x: 기존 마지막 글자 오른쪽, 없으면 화면 중앙 기준
     let startX, startY;
-    if (pieces.length > 0) {
-      const last = pieces[pieces.length - 1];
-      startX = last.x + gap;
-      startY = last.y;
-    } else {
-      startX = screenCX;
-      startY = screenCY;
-    }
-
-    const newPieces = items.map((item, i) => ({
-      id: nextId++,
-      char: item.char,
-      x: startX + i * gap,
-      y: startY,
-      scale,
-      done: false,
-    }));
-
+    if (pieces.length > 0) { const last = pieces[pieces.length - 1]; startX = last.x + gap; startY = last.y; }
+    else { startX = screenCX; startY = screenCY; }
+    const newPieces = items.map((item, i) => ({ id: nextId++, char: item.char, x: startX + i * gap, y: startY, scale, done: false }));
     const firstPiece = newPieces[0];
     setPieces(prev => [...prev, ...newPieces]);
     setSelectedId(firstPiece.id);
-    // 캔버스 센터를 첫 글자로
     setPanOffset({ x: screenCX - firstPiece.x, y: screenCY - firstPiece.y });
   }, [pieces]);
 
-  // ── 낱말카드에서 자모 배치 (배치 기억 + 드롭 위치 기준) ──
+  // ── 낱말카드에서 자모 배치 ──
   const deployWord = useCallback((jamos, word, updatePreview, dropX, dropY) => {
     const screenCX = window.innerWidth / 2;
     const screenCY = window.innerHeight / 2;
-    // 드롭 위치를 캔버스 좌표로 변환
     const cx = (dropX || screenCX) - panOffset.x;
     const cy = (dropY || screenCY) - panOffset.y;
-
-    // 저장된 배치가 있으면 복원 (드롭 위치 기준으로 오프셋)
     const saved = loadWordLayout(word);
     let newPieces;
     if (saved && saved.length > 0 && saved[0].char) {
-      // 저장된 배치의 중심 계산
       const avgX = saved.reduce((s, p) => s + p.x, 0) / saved.length;
       const avgY = saved.reduce((s, p) => s + p.y, 0) / saved.length;
       const offX = cx - avgX, offY = cy - avgY;
-      newPieces = saved.map(s => ({
-        id: nextId++, char: s.char, word, x: s.x + offX, y: s.y + offY, scale: s.scale, done: false,
-      }));
+      newPieces = saved.map(s => ({ id: nextId++, char: s.char, word, x: s.x + offX, y: s.y + offY, scale: s.scale, done: false }));
     } else if (saved && saved.length === jamos.length) {
       const avgX = saved.reduce((s, p) => s + p.x, 0) / saved.length;
       const avgY = saved.reduce((s, p) => s + p.y, 0) / saved.length;
       const offX = cx - avgX, offY = cy - avgY;
-      newPieces = jamos.map((char, i) => ({
-        id: nextId++, char, word, x: saved[i].x + offX, y: saved[i].y + offY, scale: saved[i].scale, done: false,
-      }));
+      newPieces = jamos.map((char, i) => ({ id: nextId++, char, word, x: saved[i].x + offX, y: saved[i].y + offY, scale: saved[i].scale, done: false }));
     } else {
       const scale = pieces.length > 0 ? pieces[pieces.length - 1].scale : 0.5;
       const gap = 500 * scale * 0.8;
       const totalW = (jamos.length - 1) * gap;
-      newPieces = jamos.map((char, i) => ({
-        id: nextId++, char, word, x: cx - totalW / 2 + i * gap, y: cy, scale, done: false,
-      }));
+      newPieces = jamos.map((char, i) => ({ id: nextId++, char, word, x: cx - totalW / 2 + i * gap, y: cy, scale, done: false }));
     }
-
-    const firstPiece = newPieces[0];
     setPieces(prev => [...prev, ...newPieces]);
-    setSelectedId(firstPiece.id);
-    // 카메라 이동하지 않음 — 드롭한 위치에 그대로 표시
+    setSelectedId(newPieces[0].id);
   }, [pieces, panOffset]);
 
   // ── 패널에서 클릭 or 드래그 ──
   const dragMovedRef = useRef(false);
-
   const startDragNew = useCallback((char, type, e) => {
-    e.preventDefault();
-    e.stopPropagation();
+    e.preventDefault(); e.stopPropagation();
     let x, y;
-    if (e.touches) { x = e.touches[0].clientX; y = e.touches[0].clientY; }
-    else { x = e.clientX; y = e.clientY; }
+    if (e.touches) { x = e.touches[0].clientX; y = e.touches[0].clientY; } else { x = e.clientX; y = e.clientY; }
     const wasTouch = !!e.touches;
     dragNewRef.current = { char, type, x, y, startX: x, startY: y, wasTouch };
     dragMovedRef.current = false;
@@ -217,33 +146,21 @@ export default function FreeComposeMode() {
     function onMove(e) {
       e.preventDefault();
       let x, y;
-      if (e.touches) { x = e.touches[0].clientX; y = e.touches[0].clientY; }
-      else { x = e.clientX; y = e.clientY; }
+      if (e.touches) { x = e.touches[0].clientX; y = e.touches[0].clientY; } else { x = e.clientX; y = e.clientY; }
       const d = dragNewRef.current;
-      if (d && (Math.abs(x - d.startX) > 10 || Math.abs(y - d.startY) > 10)) {
-        dragMovedRef.current = true;
-      }
+      if (d && (Math.abs(x - d.startX) > 10 || Math.abs(y - d.startY) > 10)) dragMovedRef.current = true;
       dragNewRef.current = { ...dragNewRef.current, x, y };
       setDragNew({ ...dragNewRef.current });
     }
     function onEnd(e) {
-      const d = dragNewRef.current;
-      if (!d) return;
-      dragNewRef.current = null;
-      setDragNew(null);
-
-      // touch 이벤트 후 mouse 이벤트 중복 방지
+      const d = dragNewRef.current; if (!d) return;
+      dragNewRef.current = null; setDragNew(null);
       if (e.type === 'mouseup' && d.wasTouch) return;
-
       if (!dragMovedRef.current) {
-        // 클릭! → 마지막 글자 옆에 배치
-        const pos = getNextPlacePos();
-        placeNewPiece(d.char, pos.x, pos.y);
+        const pos = getNextPlacePos(); placeNewPiece(d.char, pos.x, pos.y);
       } else {
-        // 드래그 → 놓은 위치에 배치 (휴지통 위면 무시)
         let x, y;
-        if (e.changedTouches) { x = e.changedTouches[0].clientX; y = e.changedTouches[0].clientY; }
-        else { x = e.clientX; y = e.clientY; }
+        if (e.changedTouches) { x = e.changedTouches[0].clientX; y = e.changedTouches[0].clientY; } else { x = e.clientX; y = e.clientY; }
         placeNewPiece(d.char, x - panOffset.x, y - panOffset.y, false);
       }
     }
@@ -251,38 +168,26 @@ export default function FreeComposeMode() {
     window.addEventListener('mousemove', onMove);
     window.addEventListener('touchend', onEnd);
     window.addEventListener('mouseup', onEnd);
-    return () => {
-      window.removeEventListener('touchmove', onMove);
-      window.removeEventListener('mousemove', onMove);
-      window.removeEventListener('touchend', onEnd);
-      window.removeEventListener('mouseup', onEnd);
-    };
+    return () => { window.removeEventListener('touchmove', onMove); window.removeEventListener('mousemove', onMove); window.removeEventListener('touchend', onEnd); window.removeEventListener('mouseup', onEnd); };
   }, [!!dragNew]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── 빈 공간 드래그 = 캔버스 패닝 ──
   const startPan = useCallback((e) => {
-    // 리모컨/글자 위에서는 패닝 무시
-    if (e.target.closest('.free-trace-wrap')) return;
-    if (e.target.closest('.remote')) return;
-    if (e.target.closest('.free-bottom-bar')) return;
-    if (e.target.closest('.trash-zone')) return;
+    if (e.target.closest('.free-trace-wrap') || e.target.closest('.remote') || e.target.closest('.trash-zone') || e.target.closest('.word-tray') || e.target.closest('.word-card')) return;
     if (dragNewRef.current) return;
     e.preventDefault();
     let x, y;
-    if (e.touches) { x = e.touches[0].clientX; y = e.touches[0].clientY; }
-    else { x = e.clientX; y = e.clientY; }
+    if (e.touches) { x = e.touches[0].clientX; y = e.touches[0].clientY; } else { x = e.clientX; y = e.clientY; }
     panStart.current = { startX: x, startY: y, origX: panOffset.x, origY: panOffset.y };
-    setSelectedId(null); // 빈 곳 누르면 선택 해제
+    setSelectedId(null);
   }, [panOffset]);
 
   useEffect(() => {
     if (!panStart.current) return;
     function onMove(e) {
-      if (!panStart.current) return;
-      e.preventDefault();
+      if (!panStart.current) return; e.preventDefault();
       let x, y;
-      if (e.touches) { x = e.touches[0].clientX; y = e.touches[0].clientY; }
-      else { x = e.clientX; y = e.clientY; }
+      if (e.touches) { x = e.touches[0].clientX; y = e.touches[0].clientY; } else { x = e.clientX; y = e.clientY; }
       const ps = panStart.current;
       setPanOffset({ x: ps.origX + (x - ps.startX), y: ps.origY + (y - ps.startY) });
     }
@@ -291,12 +196,7 @@ export default function FreeComposeMode() {
     window.addEventListener('mousemove', onMove);
     window.addEventListener('touchend', onEnd);
     window.addEventListener('mouseup', onEnd);
-    return () => {
-      window.removeEventListener('touchmove', onMove);
-      window.removeEventListener('mousemove', onMove);
-      window.removeEventListener('touchend', onEnd);
-      window.removeEventListener('mouseup', onEnd);
-    };
+    return () => { window.removeEventListener('touchmove', onMove); window.removeEventListener('mousemove', onMove); window.removeEventListener('touchend', onEnd); window.removeEventListener('mouseup', onEnd); };
   });
 
   const resetAll = useCallback(() => {
@@ -304,79 +204,39 @@ export default function FreeComposeMode() {
     Object.keys(pieceOverrides).forEach(k => delete pieceOverrides[k]);
   }, []);
 
-  // 카드 만들기 시작 — 화면 클리어하고 편집 모드
   const startCardEdit = useCallback(() => {
-    setPieces([]); nextId = 1; setSelectedId(null); setPanOffset({ x: 0, y: 0 });
-    Object.keys(pieceOverrides).forEach(k => delete pieceOverrides[k]);
-    setCardEditMode(true);
-  }, []);
+    resetAll(); setCardEditMode(true);
+  }, [resetAll]);
 
-  // 카드 만들기 완료 — 현재 pieces를 카드로 저장
   const finishCardEdit = useCallback(() => {
-    if (pieces.length === 0) {
-      setCardEditMode(false);
-      return;
-    }
-    // 카드 이름 = 글자들을 이어붙인 것
+    if (pieces.length === 0) { setCardEditMode(false); return; }
     const cardName = pieces.map(p => p.char).join('');
-    // 미리보기 생성
-    const previewPieces = pieces.map(p => ({
-      ...p, done: false, source: getSource(p.char, p.id)
-    }));
+    const previewPieces = pieces.map(p => ({ ...p, done: false, source: getSource(p.char, p.id) }));
     const img = renderLayoutPreview(previewPieces);
-    // 배치 저장 (char 포함 — 나중에 복원용)
     saveWordLayout(cardName, pieces.map(p => ({ char: p.char, x: p.x, y: p.y, scale: p.scale })));
-    // WordCards에 카드 추가 + 미리보기
-    if (wordCardsRef.current) {
-      wordCardsRef.current.addCardDirect(cardName, img);
-    }
-    // 화면 클리어
+    if (wordCardsRef.current) wordCardsRef.current.addCardDirect(cardName, img);
     setPieces([]); nextId = 1; setSelectedId(null); setPanOffset({ x: 0, y: 0 });
     Object.keys(pieceOverrides).forEach(k => delete pieceOverrides[k]);
     setCardEditMode(false);
   }, [pieces]);
 
-  const [trashHover, setTrashHover] = useState(false); // 휴지통 위에 있는지
-
-  // 휴지통 hit test
+  const [trashHover, setTrashHover] = useState(false);
   const isOverTrash = useCallback((cx, cy) => {
-    const trashEl = document.getElementById('trash-zone');
-    if (!trashEl) return false;
-    const rect = trashEl.getBoundingClientRect();
-    return cx >= rect.left && cx <= rect.right && cy >= rect.top && cy <= rect.bottom;
+    const el = document.getElementById('trash-zone'); if (!el) return false;
+    const r = el.getBoundingClientRect();
+    return cx >= r.left && cx <= r.right && cy >= r.top && cy <= r.bottom;
   }, []);
 
-  const [panSmooth, setPanSmooth] = useState(false); // 부드러운 이동 중
+  const [panSmooth, setPanSmooth] = useState(false);
 
-  // 오른쪽 우선, 그 다음 아래쪽으로 가장 가까운 미완성 글자 찾기
   const findNextPiece = useCallback((donePiece, candidates) => {
     if (candidates.length === 0) return null;
-    const ROW_THRESHOLD = 100; // 같은 행으로 판단하는 y 오차 범위
-    const cx = donePiece.x, cy = donePiece.y;
-
-    // 1) 오른쪽에 있는 글자 (같은 행: y 차이 < threshold, x > 현재)
-    const rightSame = candidates
-      .filter(p => Math.abs(p.y - cy) < ROW_THRESHOLD && p.x > cx)
-      .sort((a, b) => a.x - b.x);
-    if (rightSame.length > 0) return rightSame[0];
-
-    // 2) 아래쪽 행에 있는 글자 (y > 현재 + threshold)
-    const belowRows = candidates
-      .filter(p => p.y > cy + ROW_THRESHOLD)
-      .sort((a, b) => {
-        // y가 같은 행이면 x 오름차순, 아니면 y 오름차순
-        if (Math.abs(a.y - b.y) < ROW_THRESHOLD) return a.x - b.x;
-        return a.y - b.y;
-      });
-    if (belowRows.length > 0) return belowRows[0];
-
-    // 3) 같은 행의 왼쪽, 또는 위쪽 행 — 그냥 가장 가까운 거리
-    const rest = candidates.sort((a, b) => {
-      const da = Math.hypot(a.x - cx, a.y - cy);
-      const db = Math.hypot(b.x - cx, b.y - cy);
-      return da - db;
-    });
-    return rest[0];
+    const T = 100, cx = donePiece.x, cy = donePiece.y;
+    const right = candidates.filter(p => Math.abs(p.y - cy) < T && p.x > cx).sort((a, b) => a.x - b.x);
+    if (right.length > 0) return right[0];
+    const below = candidates.filter(p => p.y > cy + T).sort((a, b) => Math.abs(a.y - b.y) < T ? a.x - b.x : a.y - b.y);
+    if (below.length > 0) return below[0];
+    return candidates.sort((a, b) => Math.hypot(a.x - cx, a.y - cy) - Math.hypot(b.x - cx, b.y - cy))[0];
   }, []);
 
   const markDone = useCallback((id) => {
@@ -386,22 +246,12 @@ export default function FreeComposeMode() {
       const candidates = updated.filter(p => !p.done);
       const next = donePiece ? findNextPiece(donePiece, candidates) : null;
       if (next) {
-        const screenCX = window.innerWidth / 2;
-        const screenCY = window.innerHeight / 2;
-        // 다음 글자가 화면 안에 이미 보이면 선택만 (패닝 안 함)
-        const nextScreenX = next.x + panOffset.x;
-        const nextScreenY = next.y + panOffset.y;
-        const margin = 150;
-        const inView = nextScreenX > margin && nextScreenX < window.innerWidth - margin
-                     && nextScreenY > margin && nextScreenY < window.innerHeight - margin;
-        if (inView) {
-          setTimeout(() => setSelectedId(next.id), 500);
-        } else {
-          setTimeout(() => {
-            setPanSmooth(true);
-            setPanOffset({ x: screenCX - next.x, y: screenCY - next.y });
-            setSelectedId(next.id);
-          }, 500); // slamDown(0.3s) 완료 후 이동
+        const screenCX = window.innerWidth / 2, screenCY = window.innerHeight / 2;
+        const nsx = next.x + panOffset.x, nsy = next.y + panOffset.y;
+        const inView = nsx > 150 && nsx < window.innerWidth - 150 && nsy > 150 && nsy < window.innerHeight - 150;
+        if (inView) { setTimeout(() => setSelectedId(next.id), 500); }
+        else {
+          setTimeout(() => { setPanSmooth(true); setPanOffset({ x: screenCX - next.x, y: screenCY - next.y }); setSelectedId(next.id); }, 500);
           setTimeout(() => setPanSmooth(false), 1100);
         }
       }
@@ -409,541 +259,111 @@ export default function FreeComposeMode() {
     });
   }, [findNextPiece, panOffset]);
 
-  const selectPiece = useCallback((id) => {
-    setSelectedId(id);
-  }, []);
+  const selectPiece = useCallback((id) => setSelectedId(id), []);
 
   return (
-    <div
-      className="free-fullscreen"
-      onMouseDown={startPan}
-      onTouchStart={startPan}
-    >
-      {/* 패닝되는 레이어 — 전체 화면 */}
+    <div className="free-fullscreen" onMouseDown={startPan} onTouchStart={startPan}>
       <div className={`free-pan-layer ${panSmooth ? 'free-pan-layer--smooth' : ''}`} style={{ transform: `translate(${panOffset.x}px, ${panOffset.y}px)` }}>
         {pieces.map(piece => (
           <TracePiece
-            key={piece.id}
-            piece={piece}
-            selected={piece.id === selectedId}
+            key={piece.id} piece={piece} selected={piece.id === selectedId}
             onDone={() => markDone(piece.id)}
             onDelete={() => { delete pieceOverrides[piece.id]; setPieces(prev => prev.filter(p => p.id !== piece.id)); }}
-            isOverTrash={isOverTrash}
-            setTrashHover={setTrashHover}
+            isOverTrash={isOverTrash} setTrashHover={setTrashHover}
             onSelect={() => selectPiece(piece.id)}
-            onSourceUpdate={(newStrokes) => updateSource(piece.id, piece.char, newStrokes)}
-            onMoved={(newX, newY) => {
-              setPieces(prev => prev.map(p => p.id === piece.id ? { ...p, x: newX, y: newY } : p));
-            }}
+            onSourceUpdate={(ns) => updateSource(piece.id, piece.char, ns)}
+            onMoved={(nx, ny) => setPieces(prev => prev.map(p => p.id === piece.id ? { ...p, x: nx, y: ny } : p))}
           />
         ))}
       </div>
 
-      {/* 플로팅 리모컨 — 가로형, 자음/모음 2줄, 양쪽 핸들 */}
       <DraggableRemote>
         <div className="remote-row">
           {CONSONANTS.map(c => (
-            <div key={c.char} className="remote-btn"
-              onTouchStart={(e) => startDragNew(c.char, 'jamo', e)}
-              onMouseDown={(e) => startDragNew(c.char, 'jamo', e)}
-            >{c.char}</div>
+            <div key={c.char} className="remote-btn" onTouchStart={(e) => startDragNew(c.char, 'jamo', e)} onMouseDown={(e) => startDragNew(c.char, 'jamo', e)}>{c.char}</div>
           ))}
         </div>
         <div className="remote-row">
           {VOWELS.map(v => (
-            <div key={v.char} className="remote-btn"
-              onTouchStart={(e) => startDragNew(v.char, 'jamo', e)}
-              onMouseDown={(e) => startDragNew(v.char, 'jamo', e)}
-            >{v.char}</div>
+            <div key={v.char} className="remote-btn" onTouchStart={(e) => startDragNew(v.char, 'jamo', e)} onMouseDown={(e) => startDragNew(v.char, 'jamo', e)}>{v.char}</div>
           ))}
         </div>
       </DraggableRemote>
 
-      {/* 상단 힌트 */}
       <div className="free-top-hint">
-        {cardEditMode
-          ? '카드 만들기 · 글자를 배치하고 완료를 누르세요'
+        {cardEditMode ? '카드 만들기 · 글자를 배치하고 완료를 누르세요'
           : pieces.length === 0 ? '글자를 배치하거나, 아래 카드를 올려보세요' : '따라쓰기 · 빈곳=이동 · 꾹=편집'}
       </div>
 
-      {/* 낱말카드 (하단) — 편집 모드에서는 숨김 */}
       <div style={{ display: cardEditMode ? 'none' : undefined }}>
-        <WordCards
-          ref={wordCardsRef}
-          onDeploy={deployWord}
-          isOverTrash={isOverTrash}
-          setTrashHover={setTrashHover}
-          onNewCard={startCardEdit}
-        />
+        <WordCards ref={wordCardsRef} onDeploy={deployWord} isOverTrash={isOverTrash} setTrashHover={setTrashHover} onNewCard={startCardEdit} />
       </div>
 
-      {/* 카드 편집 모드 — 완료 버튼 */}
-      {cardEditMode && (
-        <button className="card-edit-done-btn" onClick={finishCardEdit}>
-          완료
-        </button>
-      )}
+      {cardEditMode && <button className="card-edit-done-btn" onClick={finishCardEdit}>완료</button>}
 
-      {/* 휴지통 — 드래그 삭제 + 롱프레스 모두 지우기 */}
-      <TrashZone
-        trashHover={trashHover}
-        onClearAll={resetAll}
-      />
+      <TrashZone trashHover={trashHover} onClearAll={resetAll} />
 
-      {/* 드래그 고스트 */}
       {dragNew && jamoImages[dragNew.char] && (
-        <img
-          className="drag-ghost-img"
-          src={jamoImages[dragNew.char]}
-          style={{ left: dragNew.x, top: dragNew.y }}
-          draggable={false}
-        />
+        <img className="drag-ghost-img" src={jamoImages[dragNew.char]} style={{ left: dragNew.x, top: dragNew.y }} draggable={false} />
       )}
     </div>
   );
 }
 
-// ── 개별 글자 따라쓰기 컴포넌트 ──
-function TracePiece({ piece, selected, onDone, onDelete, onSelect, isOverTrash, setTrashHover, onSourceUpdate, onMoved }) {
-  const source = getSource(piece.char, piece.id);
-  const [editMode, setEditMode] = useState(false); // 롱프레스로 활성화되는 꼭지점 편집 모드
-  const guideRef = useRef(null);
-  const arrowRef = useRef(null);
-  const traceRef = useRef(null);
-  const overlayRef = useRef(null);
-  const engineRef = useRef(null);
-  const particleRef = useRef(new ParticleSystem());
-  const stateRef = useRef({ strokeIdx: 0, completed: [], inited: false });
-  const particleAnimRef = useRef(null);
-  const arrowAnimRef = useRef(null); // 독립 화살표 애니메이션 인스턴스
-  const wrapRef = useRef(null);
-  const moveStartRef = useRef(null);
-  const movedRef = useRef(false);
-  const longPressRef = useRef(null);
-  const [unlocked, setUnlocked] = useState(false); // 완성 글자 롱프레스 해제
-  const [justDone, setJustDone] = useState(false); // slamDown 애니메이션 중
-  const [localPos, setLocalPos] = useState({ x: piece.x, y: piece.y });
-
-  // 선택 해제 or 완료되면 편집 모드 끄기
-  useEffect(() => {
-    if (!selected || piece.done) setEditMode(false);
-  }, [selected, piece.done]);
-
-
-  // 편집 모드 해제 시 가이드+화살표+아이콘 복원 + 따라쓰기 리셋
-  const prevEditMode = useRef(false);
-  useEffect(() => {
-    if (prevEditMode.current && !editMode && stateRef.current.inited) {
-      // 편집 끝 → 따라쓰기 진행 리셋 + 최신 source로 복원
-      stateRef.current.completed = [];
-      stateRef.current.strokeIdx = 0;
-      const src = getSource(piece.char, piece.id);
-      if (src && engineRef.current) {
-        loadStrokeWith(0, src);
-      }
-    }
-    prevEditMode.current = editMode;
-  }, [editMode]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const SIZE = 500;
-  const pixelSize = SIZE * piece.scale;
-
-  useEffect(() => {
-    if (!source || stateRef.current.inited) return;
-    stateRef.current.inited = true;
-    const gCanvas = guideRef.current, aCanvas = arrowRef.current, tCanvas = traceRef.current;
-    gCanvas.width = aCanvas.width = tCanvas.width = SIZE;
-    gCanvas.height = aCanvas.height = tCanvas.height = SIZE;
-    engineRef.current = new TracingEngine(tCanvas.getContext('2d'), APP_CONFIG);
-    drawGuide();
-    loadStroke(0);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // 항상 최신 source를 getSource()로 가져와서 그리기
-  // hideStartDot: 편집 모드일 때 시작점 초록 점 숨김
-  function drawGuideWith(src, hideStartDot) {
-    const gCtx = guideRef.current?.getContext('2d');
-    if (!gCtx || !src) return;
-    const S = stateRef.current;
-    gCtx.clearRect(0, 0, SIZE, SIZE);
-    gCtx.strokeStyle = 'rgba(255,255,255,0.25)';
-    gCtx.lineWidth = APP_CONFIG.GUIDE_STROKE_WIDTH + 28;
-    gCtx.lineCap = 'round'; gCtx.lineJoin = 'round'; gCtx.setLineDash([]);
-    src.strokes.forEach(s => gCtx.stroke(new Path2D(s.path)));
-    gCtx.strokeStyle = APP_CONFIG.GUIDE_COLOR;
-    gCtx.lineWidth = APP_CONFIG.GUIDE_STROKE_WIDTH;
-    src.strokes.forEach(s => gCtx.stroke(new Path2D(s.path)));
-    S.completed.forEach(pts => {
-      gCtx.beginPath(); gCtx.strokeStyle = APP_CONFIG.TRACE_COLOR;
-      gCtx.lineWidth = APP_CONFIG.TRACE_STROKE_WIDTH;
-      gCtx.lineCap = 'round'; gCtx.lineJoin = 'round';
-      gCtx.moveTo(pts[0].x, pts[0].y);
-      for (const p of pts) gCtx.lineTo(p.x, p.y);
-      gCtx.stroke();
-    });
-    if (!hideStartDot && S.strokeIdx < src.strokes.length) {
-      const pts = samplePath(src.strokes[S.strokeIdx].path, 80);
-      if (pts.length >= 2) {
-        gCtx.beginPath(); gCtx.arc(pts[0].x, pts[0].y, 12, 0, Math.PI * 2);
-        gCtx.fillStyle = '#44ee88'; gCtx.fill();
-        gCtx.strokeStyle = '#fff'; gCtx.lineWidth = 3; gCtx.stroke();
-      }
-    }
-  }
-
-  function drawGuide() { drawGuideWith(getSource(piece.char, piece.id)); }
-
-  function loadStrokeWith(idx, src) {
-    stateRef.current.strokeIdx = idx;
-    const stroke = src.strokes[idx];
-    if (!stroke) return;
-    const isClosed = stroke.path.includes('A') || piece.char === 'ㅁ' || piece.char === 'ㅇ';
-    engineRef.current.setStroke(stroke.path, isClosed);
-    drawGuideWith(src); renderTrace(); setupIcons();
-    if (arrowAnimRef.current) arrowAnimRef.current.stop();
-    arrowAnimRef.current = createArrowAnim(engineRef.current.pts, arrowRef.current.getContext('2d'), SIZE, SIZE);
-  }
-
-  function loadStroke(idx) { loadStrokeWith(idx, getSource(piece.char, piece.id)); }
-
-  // 최신 source로 전체 복원 (편집 후, sourceVer 변경 시)
-  function redrawAll() {
-    const src = getSource(piece.char, piece.id);
-    if (!src) return;
-    drawGuideWith(src);
-    const S = stateRef.current;
-    if (S.strokeIdx < src.strokes.length && engineRef.current) {
-      loadStrokeWith(S.strokeIdx, src);
-    }
-  }
-
-  function renderTrace() {
-    const tCtx = traceRef.current.getContext('2d');
-    tCtx.clearRect(0, 0, SIZE, SIZE);
-    engineRef.current.draw();
-    particleRef.current.draw(tCtx);
-  }
-
-  function setupIcons() {
-    const ol = overlayRef.current; if (!ol) return;
-    const targetSvg = `<svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="16" fill="none" stroke="rgba(255,235,80,0.8)" stroke-width="3"/><circle cx="20" cy="20" r="6" fill="rgba(255,235,80,0.9)"/></svg>`;
-    ol.innerHTML = `<div class="target-icon free-target">${targetSvg}</div><img class="character-handler" src="${getIconImageUrl(piece.char)}" onerror="this.src='${DEFAULT_ICON}'">`;
-    updateIcons();
-  }
-  function updateIcons() {
-    const ol = overlayRef.current; if (!ol || !engineRef.current?.pts) return;
-    const handler = ol.querySelector('.character-handler');
-    const target = ol.querySelector('.target-icon');
-    if (!handler || !target) return;
-    const hp = engineRef.current.getHandlerPos(), tp = engineRef.current.getTargetPos();
-    handler.style.left = `${(hp.x/SIZE)*100}%`; handler.style.top = `${(hp.y/SIZE)*100}%`;
-    target.style.left = `${(tp.x/SIZE)*100}%`; target.style.top = `${(tp.y/SIZE)*100}%`;
-  }
-
-  function startPLoop() {
-    function loop() { particleRef.current.update(); renderTrace(); particleAnimRef.current = requestAnimationFrame(loop); }
-    if (!particleAnimRef.current) particleAnimRef.current = requestAnimationFrame(loop);
-  }
-  function stopPLoop() { if (particleAnimRef.current) { cancelAnimationFrame(particleAnimRef.current); particleAnimRef.current = null; } }
-
-  function completeStroke() {
-    const S = stateRef.current;
-    const curSource = getSource(piece.char, piece.id);
-    S.completed.push([...engineRef.current.pts]); S.strokeIdx++;
-    if (S.strokeIdx >= curSource.strokes.length) {
-      if (arrowAnimRef.current) { arrowAnimRef.current.stop(); arrowAnimRef.current = null; }
-      overlayRef.current.innerHTML = '';
-      particleRef.current.celebrate(SIZE/2, SIZE/2); startPLoop();
-      playCelebrate();
-      // 쾅! 박히기
-      setJustDone(true);
-      setTimeout(() => {
-        onDone();
-        playSlam();
-      }, 150);
-      setTimeout(() => setJustDone(false), 600);
-      // 파티클은 넉넉히 돌고 나서 정리
-      setTimeout(() => stopPLoop(), 2000);
-    } else { loadStroke(S.strokeIdx); }
-  }
-
-  // 터치/마우스 — 시작점 근처=따라쓰기, 그 외=이동
-  useEffect(() => {
-    const wrap = wrapRef.current; if (!wrap) return;
-
-    function getPos(e) {
-      let cx, cy;
-      if (e.touches?.length > 0) { cx = e.touches[0].clientX; cy = e.touches[0].clientY; }
-      else if (e.changedTouches) { cx = e.changedTouches[0].clientX; cy = e.changedTouches[0].clientY; }
-      else { cx = e.clientX; cy = e.clientY; }
-      const rect = traceRef.current.getBoundingClientRect();
-      return { x: (cx-rect.left)*(SIZE/rect.width), y: (cy-rect.top)*(SIZE/rect.height) };
-    }
-
-    // 글자 모양 히트 테스트 — samplePath로 거리 기반 체크 (isPointInStroke보다 안정적)
-    function isOnGlyph(canvasPos) {
-      const hitDist = (APP_CONFIG.GUIDE_STROKE_WIDTH + 80) / 2;
-      const src = getSource(piece.char, piece.id);
-      for (const s of src.strokes) {
-        const pts = samplePath(s.path, 40);
-        for (const pt of pts) {
-          if (Math.hypot(canvasPos.x - pt.x, canvasPos.y - pt.y) < hitDist) return true;
-        }
-      }
-      return false;
-    }
-
-    function onDown(e) {
-      if (e.touches?.length > 1) return;
-      // 편집 모드에서는 VertexEditor가 이벤트 처리 — 여기선 무시
-      if (editMode) return;
-      e.stopPropagation();
-
-      const cPos = getPos(e);
-
-      // 글자 위가 아니면 무시 (빈 공간 → 캔버스 패닝으로 전달)
-      if (!isOnGlyph(cPos)) return;
-
-      e.preventDefault();
-      onSelect();
-      movedRef.current = false;
-
-      // 따라쓰기 시도
-      if (engineRef.current && !piece.done) {
-        if (engineRef.current.start(cPos.x, cPos.y)) {
-          playStart();
-          if (arrowAnimRef.current) { arrowAnimRef.current.stop(); arrowAnimRef.current = null; }
-          particleRef.current.burst(cPos.x, cPos.y, 6); startPLoop(); renderTrace(); updateIcons();
-          const h = overlayRef.current?.querySelector('.character-handler');
-          if (h) h.style.transform = 'translate(-50%,-50%) scale(1.15) rotate(5deg)';
-          return;
-        }
-      }
-
-      // 롱프레스 → 꼭지점 편집 모드 (미완성/완료 모두)
-      {
-        let cx, cy;
-        if (e.touches) { cx = e.touches[0].clientX; cy = e.touches[0].clientY; }
-        else { cx = e.clientX; cy = e.clientY; }
-        longPressRef.current = setTimeout(() => {
-          playFloat();
-          longPressRef.current = null;
-          setEditMode(true);
-        }, 500);
-        // 완료된 글자: 짧은 터치 = 이동 해제
-        if (piece.done) {
-          moveStartRef.current = { startX: cx, startY: cy, origX: localPos.x, origY: localPos.y };
-          return;
-        }
-        // 미완성 글자: 짧은 터치 = 이동
-        moveStartRef.current = { startX: cx, startY: cy, origX: localPos.x, origY: localPos.y };
-      }
-    }
-
-    function onMove(e) {
-      // 롱프레스 대기 중 움직이면 취소
-      if (longPressRef.current) {
-        clearTimeout(longPressRef.current);
-        longPressRef.current = null;
-      }
-
-      if (engineRef.current?.isTracing) {
-        e.preventDefault(); e.stopPropagation();
-        const cPos = getPos(e);
-        engineRef.current.move(cPos.x, cPos.y);
-        particleRef.current.emit(cPos.x, cPos.y); renderTrace(); updateIcons();
-        return;
-      }
-      if (!moveStartRef.current) return;
-      e.preventDefault(); e.stopPropagation();
-      let cx, cy;
-      if (e.touches) { cx = e.touches[0].clientX; cy = e.touches[0].clientY; }
-      else { cx = e.clientX; cy = e.clientY; }
-      movedRef.current = true;
-      const ms = moveStartRef.current;
-      setLocalPos({ x: ms.origX + (cx-ms.startX), y: ms.origY + (cy-ms.startY) });
-      setTrashHover(isOverTrash(cx, cy));
-    }
-
-    function onUp(e) {
-      if (e.touches?.length > 0) return;
-      // 롱프레스 타이머 정리
-      if (longPressRef.current) { clearTimeout(longPressRef.current); longPressRef.current = null; }
-      setTrashHover(false);
-      if (unlocked) playLand();
-      setUnlocked(false);
-
-      // 이동 중이었고 휴지통 위에 놓으면 삭제
-      if (moveStartRef.current && movedRef.current) {
-        let cx, cy;
-        if (e.changedTouches) { cx = e.changedTouches[0].clientX; cy = e.changedTouches[0].clientY; }
-        else { cx = e.clientX; cy = e.clientY; }
-        if (isOverTrash(cx, cy)) {
-          moveStartRef.current = null;
-          onDelete();
-          return;
-        }
-      }
-
-      if (engineRef.current?.isTracing) {
-        const h = overlayRef.current?.querySelector('.character-handler');
-        if (h) h.style.transform = 'translate(-50%,-50%)';
-        if (engineRef.current.end()) {
-          playComplete(); particleRef.current.burst(engineRef.current.getTargetPos().x, engineRef.current.getTargetPos().y, 15);
-          completeStroke();
-        } else {
-          playFail(); stopPLoop(); renderTrace(); updateIcons();
-          if (arrowAnimRef.current) arrowAnimRef.current.stop();
-    arrowAnimRef.current = createArrowAnim(engineRef.current.pts, arrowRef.current.getContext('2d'), SIZE, SIZE);
-        }
-        return;
-      }
-      // 이동 완료 → 부모에 알림 (배치 기억)
-      if (moveStartRef.current && movedRef.current && onMoved) {
-        onMoved(localPos.x, localPos.y);
-      }
-      moveStartRef.current = null;
-    }
-
-    wrap.addEventListener('mousedown', onDown);
-    wrap.addEventListener('mousemove', onMove);
-    window.addEventListener('mouseup', onUp);
-    wrap.addEventListener('touchstart', onDown, { passive: false });
-    wrap.addEventListener('touchmove', onMove, { passive: false });
-    wrap.addEventListener('touchend', onUp, { passive: false });
-    window.addEventListener('touchend', onUp, { passive: false });
-    return () => {
-      wrap.removeEventListener('mousedown', onDown);
-      wrap.removeEventListener('mousemove', onMove);
-      window.removeEventListener('mouseup', onUp);
-      wrap.removeEventListener('touchstart', onDown);
-      wrap.removeEventListener('touchmove', onMove);
-      wrap.removeEventListener('touchend', onUp);
-      window.removeEventListener('touchend', onUp);
-    };
-  }, [localPos, piece.done, editMode]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  if (!source) return null;
-
-  // 편집 모드에서 꼭지점 변경 시 — 가이드를 최신 strokes로 즉시 다시 그림 (초록 점 숨김)
-  const handleVertexUpdate = useCallback((newStrokes) => {
-    if (onSourceUpdate) onSourceUpdate(newStrokes);
-    drawGuideWith({ strokes: newStrokes }, true);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  return (
-    <div
-      ref={wrapRef}
-      className={`free-trace-wrap ${justDone ? 'free-trace-wrap--slam' : piece.done ? 'free-trace-wrap--done' : ''} ${selected ? 'free-trace-wrap--selected' : ''} ${unlocked ? 'free-trace-wrap--unlocked' : ''} ${editMode ? 'free-trace-wrap--editing' : ''}`}
-      style={{
-        left: localPos.x, top: localPos.y,
-        width: pixelSize, height: pixelSize,
-      }}
-    >
-      <canvas ref={guideRef} className="free-trace-layer" />
-      <canvas ref={arrowRef} className="free-trace-layer" style={{ zIndex: 2, display: editMode ? 'none' : undefined }} />
-      <canvas ref={traceRef} className="free-trace-layer" style={{ zIndex: 3, display: editMode ? 'none' : undefined }} />
-      <div ref={overlayRef} className="free-trace-layer free-trace-overlay" style={{ zIndex: 4, display: editMode ? 'none' : undefined }} />
-      {editMode && (
-        <VertexEditor
-          source={getSource(piece.char, piece.id)}
-          onUpdate={handleVertexUpdate}
-        />
-      )}
-    </div>
-  );
-}
-
-// ── 휴지통 컴포넌트 — 롱프레스로 모두 지우기 ──
 // ── 드래그 이동 가능한 리모컨 래퍼 ──
 function DraggableRemote({ children }) {
   const [pos, setPos] = useState({ x: window.innerWidth / 2, y: 10 });
   const dragRef = useRef(null);
-
   const onDown = (e) => {
     e.preventDefault(); e.stopPropagation();
     let cx, cy;
-    if (e.touches) { cx = e.touches[0].clientX; cy = e.touches[0].clientY; }
-    else { cx = e.clientX; cy = e.clientY; }
+    if (e.touches) { cx = e.touches[0].clientX; cy = e.touches[0].clientY; } else { cx = e.clientX; cy = e.clientY; }
     dragRef.current = { startX: cx, startY: cy, origX: pos.x, origY: pos.y };
   };
-
   useEffect(() => {
     function onMove(e) {
       if (!dragRef.current) return;
       let cx, cy;
-      if (e.touches) { cx = e.touches[0].clientX; cy = e.touches[0].clientY; }
-      else { cx = e.clientX; cy = e.clientY; }
+      if (e.touches) { cx = e.touches[0].clientX; cy = e.touches[0].clientY; } else { cx = e.clientX; cy = e.clientY; }
       const d = dragRef.current;
       setPos({ x: d.origX + (cx - d.startX), y: d.origY + (cy - d.startY) });
     }
     function onUp() { dragRef.current = null; }
-    window.addEventListener('mousemove', onMove);
-    window.addEventListener('touchmove', onMove, { passive: false });
-    window.addEventListener('mouseup', onUp);
-    window.addEventListener('touchend', onUp);
-    return () => {
-      window.removeEventListener('mousemove', onMove);
-      window.removeEventListener('touchmove', onMove);
-      window.removeEventListener('mouseup', onUp);
-      window.removeEventListener('touchend', onUp);
-    };
+    window.addEventListener('mousemove', onMove); window.addEventListener('touchmove', onMove, { passive: false });
+    window.addEventListener('mouseup', onUp); window.addEventListener('touchend', onUp);
+    return () => { window.removeEventListener('mousemove', onMove); window.removeEventListener('touchmove', onMove); window.removeEventListener('mouseup', onUp); window.removeEventListener('touchend', onUp); };
   }, []);
-
-  const dots = '⠿'; // 6점 핸들
-
   return (
     <div className="remote" style={{ left: pos.x, top: pos.y, transform: 'translateX(-50%)' }}>
-      <div className="remote-handle" onMouseDown={onDown} onTouchStart={onDown}>{dots}</div>
-      <div className="remote-inner">
-        {children}
-      </div>
-      <div className="remote-handle" onMouseDown={onDown} onTouchStart={onDown}>{dots}</div>
+      <div className="remote-handle" onMouseDown={onDown} onTouchStart={onDown}>⠿</div>
+      <div className="remote-inner">{children}</div>
+      <div className="remote-handle" onMouseDown={onDown} onTouchStart={onDown}>⠿</div>
     </div>
   );
 }
 
+// ── 휴지통 ──
 function TrashZone({ trashHover, onClearAll }) {
   const [showSlide, setShowSlide] = useState(false);
   const longRef = useRef(null);
-
-  const onDown = (e) => {
-    e.stopPropagation();
-    longRef.current = setTimeout(() => {
-      setShowSlide(true);
-      longRef.current = null;
-    }, 600);
-  };
-  const onUp = () => {
-    if (longRef.current) { clearTimeout(longRef.current); longRef.current = null; }
-  };
-
-  const handleSlideConfirm = () => {
-    onClearAll();
-    setShowSlide(false);
-  };
-
+  const onDown = (e) => { e.stopPropagation(); longRef.current = setTimeout(() => { setShowSlide(true); longRef.current = null; }, 600); };
+  const onUp = () => { if (longRef.current) { clearTimeout(longRef.current); longRef.current = null; } };
   return (
     <>
-      <div
-        id="trash-zone"
-        className={`trash-zone ${trashHover ? 'trash-zone--hover' : ''}`}
-        onMouseDown={onDown} onMouseUp={onUp} onMouseLeave={onUp}
-        onTouchStart={onDown} onTouchEnd={onUp}
-      >
-        <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <div id="trash-zone" className={`trash-zone ${trashHover ? 'trash-zone--hover' : ''}`}
+        onMouseDown={onDown} onMouseUp={onUp} onMouseLeave={onUp} onTouchStart={onDown} onTouchEnd={onUp}>
+        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <polyline points="3 6 5 6 21 6"></polyline>
           <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
         </svg>
       </div>
-
       {showSlide && (
         <div className="clear-all-overlay" onClick={() => setShowSlide(false)}>
           <div className="clear-all-card" onClick={(e) => e.stopPropagation()}>
             <p>모두 지울까요?</p>
             <div className="clear-all-actions">
               <div className="clear-all-btn clear-all-btn--cancel" onClick={() => setShowSlide(false)}>취소</div>
-              <div className="clear-all-btn clear-all-btn--confirm" onClick={handleSlideConfirm}>모두 지우기</div>
+              <div className="clear-all-btn clear-all-btn--confirm" onClick={() => { onClearAll(); setShowSlide(false); }}>모두 지우기</div>
             </div>
           </div>
         </div>
