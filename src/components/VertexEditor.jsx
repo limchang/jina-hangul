@@ -156,11 +156,39 @@ function extractArcInfo(stroke) {
   return { cx, cy, rx: arcs[0].rx, ry: arcs[0].ry, startY: start.y, endY: arcs[0].y };
 }
 
-// rx/ry로 Arc stroke path 재생성
-function rebuildArcPath(cx, cy, rx, ry) {
-  const topY = cy - ry;
-  const botY = cy + ry;
-  return `M ${round(cx)} ${round(topY)} A ${round(rx)} ${round(ry)} 0 0 0 ${round(cx)} ${round(botY)} A ${round(rx)} ${round(ry)} 0 0 0 ${round(cx)} ${round(topY)} Z`;
+// cx,cy,rx,ry로 라운드 사각형 path 생성
+// origRx/origRy: 원래 반지름 — 원래 크기 대비 변형 비율로 곡률 결정
+function rebuildArcPath(cx, cy, rx, ry, origRx, origRy) {
+  // 원래 크기 대비 얼마나 변형되었는지 (1=원형, >1 또는 <1=변형)
+  const ratioX = origRx > 0 ? rx / origRx : 1;
+  const ratioY = origRy > 0 ? ry / origRy : 1;
+  // 변형이 크면 직선 부분이 생김 (라운드 사각형화)
+  // 곡률 반지름 = 원래 반지름의 비율 (최소한 원래의 70%, 최대 rx/ry)
+  const cornerRx = Math.min(rx, origRx * Math.min(1, 1 / Math.max(ratioX, 0.5)) * 0.85);
+  const cornerRy = Math.min(ry, origRy * Math.min(1, 1 / Math.max(ratioY, 0.5)) * 0.85);
+
+  // 변형이 거의 없으면 원래 Arc path 유지
+  if (Math.abs(ratioX - 1) < 0.08 && Math.abs(ratioY - 1) < 0.08) {
+    const topY = cy - ry, botY = cy + ry;
+    return `M ${round(cx)} ${round(topY)} A ${round(rx)} ${round(ry)} 0 0 0 ${round(cx)} ${round(botY)} A ${round(rx)} ${round(ry)} 0 0 0 ${round(cx)} ${round(topY)} Z`;
+  }
+
+  // 라운드 사각형: 상단 중앙 → 시계 방향
+  const l = cx - rx, r = cx + rx, t = cy - ry, b = cy + ry;
+  const crx = Math.min(cornerRx, rx * 0.9);
+  const cry = Math.min(cornerRy, ry * 0.9);
+  return [
+    `M ${round(cx)} ${round(t)}`,           // 상단 중앙
+    `L ${round(r - crx)} ${round(t)}`,      // 상단 우측 직선
+    `Q ${round(r)} ${round(t)} ${round(r)} ${round(t + cry)}`, // 우상 모서리
+    `L ${round(r)} ${round(b - cry)}`,      // 우측 직선
+    `Q ${round(r)} ${round(b)} ${round(r - crx)} ${round(b)}`, // 우하 모서리
+    `L ${round(l + crx)} ${round(b)}`,      // 하단 직선
+    `Q ${round(l)} ${round(b)} ${round(l)} ${round(b - cry)}`, // 좌하 모서리
+    `L ${round(l)} ${round(t + cry)}`,      // 좌측 직선
+    `Q ${round(l)} ${round(t)} ${round(l + crx)} ${round(t)}`, // 좌상 모서리
+    'Z'
+  ].join(' ');
 }
 
 const SIZE = 500;
@@ -373,8 +401,8 @@ export default function VertexEditor({ source, onUpdate }) {
         else if (d.arcMode === 'top') d.glowPos = { x: o.cx, y: o.cy - newRy };
         else if (d.arcMode === 'bottom') d.glowPos = { x: o.cx, y: o.cy + newRy };
 
-        // Arc stroke path 재생성
-        const newPath = rebuildArcPath(o.cx, o.cy, newRx, newRy);
+        // Arc stroke path 재생성 (원래 rx/ry 대비 변형 → 라운드 사각형화)
+        const newPath = rebuildArcPath(o.cx, o.cy, newRx, newRy, o.rx, o.ry);
         const newStrokes = source.strokes.map((s, si) =>
           si === d.arcStrokeIdx ? { path: newPath } : s
         );
