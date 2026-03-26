@@ -1,0 +1,39 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(where sox:*)",
+      "Bash(npm install:*)",
+      "Bash(claude mcp:*)",
+      "Bash(npx:*)",
+      "WebSearch",
+      "mcp__playwright__browser_navigate",
+      "mcp__playwright__browser_snapshot",
+      "mcp__playwright__browser_click",
+      "mcp__playwright__browser_evaluate",
+      "Bash(echo \"exit: $?\")",
+      "mcp__firecrawl__firecrawl_search",
+      "mcp__firecrawl__firecrawl_scrape",
+      "Bash(PYTHONIOENCODING=utf-8 python3 -c \"\nimport json, re, sys\nwith open\\(r'C:\\\\Users\\\\Administrator\\\\.claude\\\\projects\\\\D-------------\\\\87ec968b-eef7-406b-8e10-d6a89d5fd12b.jsonl', 'r', encoding='utf-8'\\) as f:\n    content = f.read\\(\\)\n\nrestaurants = ['독천골', '88포장마차', '부촌', '남도랑', '본전회수산', '해촌', '송학낙지회관', '백성식당', '원조갯내음', '용당반점']\nfor r in restaurants:\n    idx = content.find\\(r\\)\n    while idx != -1:\n        snippet = content[max\\(0,idx-200\\):idx+1500]\n        if 'review_keywords' in snippet:\n            counts = re.findall\\(r'\\\\\"count\\\\\":\\\\s*\\(\\\\d+\\)', snippet\\)\n            keywords = re.findall\\(r'\\\\\"keyword\\\\\":\\\\s*\\\\\"\\([^\\\\\"]+\\)\\\\\"', snippet\\)\n            if counts and keywords:\n                pairs = list\\(zip\\(keywords, counts\\)\\)[:5]\n                result = r + ': '\n                for k, c in pairs:\n                    result += k + '\\(' + c + '\\) '\n                sys.stdout.buffer.write\\(\\(result + '\\\\n'\\).encode\\('utf-8'\\)\\)\n                break\n        idx = content.find\\(r, idx+1\\)\n\")",
+      "Bash(python3:*)",
+      "Bash(pip install:*)",
+      "Bash(pip3 install:*)",
+      "Bash(browser-use --help)",
+      "Bash(browser-use doctor:*)",
+      "Bash(echo $ANTHROPIC_API_KEY)",
+      "Bash(echo $OPENAI_API_KEY)",
+      "WebFetch(domain:r.jina.ai)",
+      "Bash(python:*)",
+      "Bash(claude-monitor:*)",
+      "Bash(gcloud --version)",
+      "Bash(pip show:*)",
+      "Bash(npm search:*)",
+      "WebFetch(domain:www.npmjs.com)",
+      "mcp__playwright__browser_wait_for",
+      "Read(//c/Users/Administrator/Downloads/**)",
+      "Bash(ls -lt /c/Users/Administrator/Downloads/*.json)",
+      "Bash(dir C:UsersAdministratorDownloads*.json)",
+      "Read(//d//**)",
+      "Read(//d/바탕화면/진아글자공부/$USERPROFILE/Downloads/**)"
+    ]
+  }
+}

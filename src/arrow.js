@@ -1,24 +1,5 @@
 // arrow.js — 획순 안내 애니메이션 (ES Module)
-
-let arrowAnimId = null;
-let arrowT = 0;
-
-export function startArrowAnim(pts, aCtx, cvW, cvH) {
-  if (arrowAnimId) cancelAnimationFrame(arrowAnimId);
-  if (!pts || pts.length < 2) return;
-  arrowT = 0;
-  let lastTime = null;
-
-  function step(ts) {
-    if (!lastTime) lastTime = ts;
-    const dt = ts - lastTime;
-    lastTime = ts;
-    arrowT = (arrowT + dt / 2500) % 1;
-    drawArrowFrame(aCtx, pts, arrowT, cvW, cvH);
-    arrowAnimId = requestAnimationFrame(step);
-  }
-  arrowAnimId = requestAnimationFrame(step);
-}
+// 인스턴스별 독립 애니메이션 지원
 
 export function drawArrowFrame(ctx, pts, t, cvW, cvH) {
   const total = pts.length - 1;
@@ -98,7 +79,60 @@ export function drawArrowFrame(ctx, pts, t, cvW, cvH) {
   ctx.restore();
 }
 
+// 인스턴스별 애니메이션 — handle 객체를 반환
+export function startArrowAnim(pts, aCtx, cvW, cvH) {
+  // 이전 호환: 글로벌 싱글턴도 유지
+  if (_globalAnimId) cancelAnimationFrame(_globalAnimId);
+  if (!pts || pts.length < 2) return { id: null };
+  let t = 0;
+  let lastTime = null;
+  let animId = null;
+
+  function step(ts) {
+    if (!lastTime) lastTime = ts;
+    const dt = ts - lastTime;
+    lastTime = ts;
+    t = (t + dt / 2500) % 1;
+    drawArrowFrame(aCtx, pts, t, cvW, cvH);
+    animId = requestAnimationFrame(step);
+    _globalAnimId = animId;
+  }
+  animId = requestAnimationFrame(step);
+  _globalAnimId = animId;
+  return { get id() { return animId; }, stop() { if (animId) { cancelAnimationFrame(animId); animId = null; } } };
+}
+
+let _globalAnimId = null;
+
 export function stopArrowAnim(aCtx, cvW, cvH) {
-  if (arrowAnimId) { cancelAnimationFrame(arrowAnimId); arrowAnimId = null; }
+  if (_globalAnimId) { cancelAnimationFrame(_globalAnimId); _globalAnimId = null; }
   if (aCtx) aCtx.clearRect(0, 0, cvW, cvH);
+}
+
+// 독립 인스턴스용 — 글로벌 상태를 건드리지 않음
+export function createArrowAnim(pts, aCtx, cvW, cvH) {
+  if (!pts || pts.length < 2) return { stop() {} };
+  let t = 0;
+  let lastTime = null;
+  let animId = null;
+  let running = true;
+
+  function step(ts) {
+    if (!running) return;
+    if (!lastTime) lastTime = ts;
+    const dt = ts - lastTime;
+    lastTime = ts;
+    t = (t + dt / 2500) % 1;
+    drawArrowFrame(aCtx, pts, t, cvW, cvH);
+    animId = requestAnimationFrame(step);
+  }
+  animId = requestAnimationFrame(step);
+
+  return {
+    stop() {
+      running = false;
+      if (animId) { cancelAnimationFrame(animId); animId = null; }
+      if (aCtx) aCtx.clearRect(0, 0, cvW, cvH);
+    }
+  };
 }
