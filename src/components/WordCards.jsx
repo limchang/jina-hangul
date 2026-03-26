@@ -6,11 +6,43 @@ import { decomposeWord } from '../utils/jamo.js';
 const STORAGE_KEY = 'jina-word-cards';
 const PREVIEW_KEY = 'jina-word-previews';
 
-// 기본 카드 — 삭제 불가
-const DEFAULT_CARDS = [
-  { name: '자음 공부', type: 'consonants' },
-  { name: '모음 공부', type: 'vowels' },
-];
+// 기본 카드용 미리보기 — 가이드 스트로크로 ㄱㄴㄷ / ㅏㅑ 렌더링
+function renderDefaultCardPreview(items) {
+  const CELL = 80;
+  const PAD = 10;
+  const W = items.length * CELL + PAD * 2;
+  const H = CELL + PAD * 2;
+  const canvas = document.createElement('canvas');
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext('2d');
+  items.forEach((item, i) => {
+    ctx.save();
+    ctx.translate(PAD + i * CELL + CELL / 2, PAD + CELL / 2);
+    const s = CELL / 500;
+    ctx.scale(s, s);
+    ctx.translate(-250, -250);
+    ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+    ctx.lineWidth = APP_CONFIG.GUIDE_STROKE_WIDTH + 20;
+    ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    item.strokes.forEach(st => ctx.stroke(new Path2D(st.path)));
+    ctx.strokeStyle = 'rgba(255,255,255,0.9)';
+    ctx.lineWidth = APP_CONFIG.GUIDE_STROKE_WIDTH;
+    item.strokes.forEach(st => ctx.stroke(new Path2D(st.path)));
+    ctx.restore();
+  });
+  return canvas.toDataURL();
+}
+
+let _defaultPreviews = null;
+function getDefaultPreviews() {
+  if (!_defaultPreviews) {
+    _defaultPreviews = {
+      consonants: renderDefaultCardPreview(CONSONANTS),
+      vowels: renderDefaultCardPreview(VOWELS),
+    };
+  }
+  return _defaultPreviews;
+}
 
 function loadCards() {
   try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); } catch { return []; }
@@ -216,7 +248,7 @@ const WordCards = forwardRef(function WordCards({ onDeploy, isOverTrash, setTras
         <div className="word-card word-card--default" style={sideCardStyle(0, leftCards.length + 1)}
           onTouchStart={(e) => startDrag('자음 공부', -1, e, { type: 'consonants', isDefault: true })}
           onMouseDown={(e) => startDrag('자음 공부', -1, e, { type: 'consonants', isDefault: true })}>
-          <span className="word-card-label">자음 공부</span>
+          <img className="word-card-preview" src={getDefaultPreviews().consonants} draggable={false} />
         </div>
         {leftCards.map((word, li) => {
           const origIdx = leftIndices[li];
@@ -234,7 +266,7 @@ const WordCards = forwardRef(function WordCards({ onDeploy, isOverTrash, setTras
         <div className="word-card word-card--default" style={sideCardStyle(0, rightCards.length + 2)}
           onTouchStart={(e) => startDrag('모음 공부', -1, e, { type: 'vowels', isDefault: true })}
           onMouseDown={(e) => startDrag('모음 공부', -1, e, { type: 'vowels', isDefault: true })}>
-          <span className="word-card-label">모음 공부</span>
+          <img className="word-card-preview" src={getDefaultPreviews().vowels} draggable={false} />
         </div>
         {rightCards.map((word, ri) => {
           const origIdx = rightIndices[ri];
