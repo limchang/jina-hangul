@@ -72,9 +72,23 @@ export default function FreeComposeMode() {
   const [dragNew, setDragNew] = useState(null);
   const [selectedId, setSelectedId] = useState(null); // 선택된 글자 강조
   const [panOffset, setPanOffset] = useState({ x: 0, y: 0 }); // 캔버스 전체 이동
-  // sourceVer 제거 — piece.id 단위 오버라이드이므로 다른 piece 리렌더 불필요
+  const updatePreviewRef = useRef(null); // WordCards의 updatePreview 콜백
   const dragNewRef = useRef(null);
   const panStart = useRef(null);
+
+  // word별 배치 & 미리보기 자동 저장
+  const syncWordLayout = useCallback((word, allPieces) => {
+    if (!word) return;
+    const wordPieces = allPieces.filter(p => p.word === word);
+    if (wordPieces.length === 0) return;
+    saveWordLayout(word, wordPieces.map(p => ({ x: p.x, y: p.y, scale: p.scale })));
+    if (updatePreviewRef.current) {
+      const img = renderLayoutPreview(wordPieces.map(p => ({
+        ...p, source: getSource(p.char, p.id)
+      })));
+      if (img) updatePreviewRef.current(word, img);
+    }
+  }, []);
 
   useEffect(() => { initSvgHelper(); }, []);
 
@@ -163,17 +177,16 @@ export default function FreeComposeMode() {
     let newPieces;
     if (saved && saved.length === jamos.length) {
       newPieces = jamos.map((char, i) => ({
-        id: nextId++, char, x: saved[i].x, y: saved[i].y, scale: saved[i].scale, done: false,
+        id: nextId++, char, word, x: saved[i].x, y: saved[i].y, scale: saved[i].scale, done: false,
       }));
     } else {
-      // 새로 배치 — 화면 중앙에 가로로
       const scale = pieces.length > 0 ? pieces[pieces.length - 1].scale : 0.5;
       const gap = 500 * scale * 0.8;
       const totalW = (jamos.length - 1) * gap;
       const startX = screenCX - panOffset.x - totalW / 2;
       const y = screenCY - panOffset.y;
       newPieces = jamos.map((char, i) => ({
-        id: nextId++, char, x: startX + i * gap, y, scale, done: false,
+        id: nextId++, char, word, x: startX + i * gap, y, scale, done: false,
       }));
     }
 
@@ -184,6 +197,8 @@ export default function FreeComposeMode() {
 
     // 배치 저장
     saveWordLayout(word, newPieces.map(p => ({ x: p.x, y: p.y, scale: p.scale })));
+    // updatePreview 콜백 저장
+    if (updatePreview) updatePreviewRef.current = updatePreview;
     // 미리보기 생성
     if (updatePreview) {
       const previewImg = renderLayoutPreview(newPieces);
@@ -367,9 +382,13 @@ export default function FreeComposeMode() {
           setTimeout(() => setPanSmooth(false), 1100);
         }
       }
+      // 낱말 배치 & 미리보기 동기화
+      if (donePiece?.word) {
+        setTimeout(() => syncWordLayout(donePiece.word, updated), 600);
+      }
       return updated;
     });
-  }, [findNextPiece, panOffset]);
+  }, [findNextPiece, panOffset, syncWordLayout]);
 
   const selectPiece = useCallback((id) => {
     setSelectedId(id);
@@ -394,6 +413,13 @@ export default function FreeComposeMode() {
             setTrashHover={setTrashHover}
             onSelect={() => selectPiece(piece.id)}
             onSourceUpdate={(newStrokes) => updateSource(piece.id, piece.char, newStrokes)}
+            onMoved={(newX, newY) => {
+              setPieces(prev => {
+                const updated = prev.map(p => p.id === piece.id ? { ...p, x: newX, y: newY } : p);
+                if (piece.word) syncWordLayout(piece.word, updated);
+                return updated;
+              });
+            }}
           />
         ))}
       </div>
@@ -442,7 +468,7 @@ export default function FreeComposeMode() {
 }
 
 // ── 개별 글자 따라쓰기 컴포넌트 ──
-function TracePiece({ piece, selected, onDone, onDelete, onSelect, isOverTrash, setTrashHover, onSourceUpdate }) {
+function TracePiece({ piece, selected, onDone, onDelete, onSelect, isOverTrash, setTrashHover, onSourceUpdate, onMoved }) {
   const source = getSource(piece.char, piece.id);
   const [editMode, setEditMode] = useState(false); // 롱프레스로 활성화되는 꼭지점 편집 모드
   const guideRef = useRef(null);
@@ -731,6 +757,10 @@ function TracePiece({ piece, selected, onDone, onDelete, onSelect, isOverTrash, 
     arrowAnimRef.current = createArrowAnim(engineRef.current.pts, arrowRef.current.getContext('2d'), SIZE, SIZE);
         }
         return;
+      }
+      // 이동 완료 → 부모에 알림 (배치 기억)
+      if (moveStartRef.current && movedRef.current && onMoved) {
+        onMoved(localPos.x, localPos.y);
       }
       moveStartRef.current = null;
     }
