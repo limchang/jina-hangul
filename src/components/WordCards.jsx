@@ -69,7 +69,7 @@ export function renderLayoutPreview(pieces) {
   return canvas.toDataURL();
 }
 
-export default function WordCards({ onDeploy }) {
+export default function WordCards({ onDeploy, isOverTrash, setTrashHover }) {
   const [cards, setCards] = useState(loadCards);
   const [showAdd, setShowAdd] = useState(false);
   const [inputVal, setInputVal] = useState('');
@@ -113,13 +113,13 @@ export default function WordCards({ onDeploy }) {
     if (onDeploy) onDeploy(jamos, word, updatePreview);
   }, [onDeploy, updatePreview]);
 
-  const startDrag = useCallback((word, e) => {
+  const startDrag = useCallback((word, idx, e) => {
     e.preventDefault();
     e.stopPropagation();
     let x, y;
     if (e.touches) { x = e.touches[0].clientX; y = e.touches[0].clientY; }
     else { x = e.clientX; y = e.clientY; }
-    dragRef.current = { word, startX: x, startY: y, moved: false };
+    dragRef.current = { word, idx, startX: x, startY: y, moved: false };
     setDragCard({ word, x, y });
   }, []);
 
@@ -135,15 +135,25 @@ export default function WordCards({ onDeploy }) {
         if (dx > 10 || dy > 10) dragRef.current.moved = true;
       }
       setDragCard(prev => prev ? { ...prev, x, y } : null);
+      if (setTrashHover && isOverTrash) setTrashHover(isOverTrash(x, y));
     }
     function onEnd(e) {
       if (!dragRef.current) return;
       const d = dragRef.current;
       dragRef.current = null;
       setDragCard(null);
-      let y;
-      if (e.changedTouches) y = e.changedTouches[0].clientY;
-      else y = e.clientY;
+      if (setTrashHover) setTrashHover(false);
+
+      let x, y;
+      if (e.changedTouches) { x = e.changedTouches[0].clientX; y = e.changedTouches[0].clientY; }
+      else { x = e.clientX; y = e.clientY; }
+
+      // 휴지통 위에 놓으면 카드 삭제
+      if (d.moved && isOverTrash && isOverTrash(x, y)) {
+        removeCard(d.idx);
+        return;
+      }
+      // 위쪽으로 올리면 배치
       if (d.moved && y < window.innerHeight - 200) {
         const jamos = decomposeWord(d.word);
         if (jamos.length > 0) handleDeploy(jamos, d.word);
@@ -168,8 +178,8 @@ export default function WordCards({ onDeploy }) {
           <div
             key={`${word}-${i}`}
             className="word-card"
-            onTouchStart={(e) => startDrag(word, e)}
-            onMouseDown={(e) => startDrag(word, e)}
+            onTouchStart={(e) => startDrag(word, i, e)}
+            onMouseDown={(e) => startDrag(word, i, e)}
             onContextMenu={(e) => { e.preventDefault(); removeCard(i); }}
           >
             {previews[word] ? (

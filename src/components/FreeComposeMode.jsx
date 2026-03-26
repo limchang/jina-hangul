@@ -446,7 +446,7 @@ export default function FreeComposeMode() {
       </div>
 
       {/* 낱말카드 (하단) */}
-      <WordCards onDeploy={deployWord} />
+      <WordCards onDeploy={deployWord} isOverTrash={isOverTrash} setTrashHover={setTrashHover} />
 
       {/* 휴지통 — 드래그 삭제 + 롱프레스 모두 지우기 */}
       <TrashZone
