@@ -9,6 +9,7 @@ import { createArrowAnim } from '../arrow.js';
 import { playStart, playComplete, playCelebrate, playFail, playSlam, playFloat, playLand } from '../sound.js';
 import { ICON_MAP } from '../icon-map.js';
 import DragPanel from './DragPanel.jsx';
+import VertexEditor from './VertexEditor.jsx';
 
 let nextId = 1;
 
@@ -34,7 +35,11 @@ function getIconImageUrl(char) {
   if (ICON_MAP[char]) return ICON_MAP[char];
   return DEFAULT_ICON;
 }
+// 런타임 소스 오버라이드 (편집 결과 저장)
+const sourceOverrides = {};
+
 function getSource(char) {
+  if (sourceOverrides[char]) return sourceOverrides[char];
   return CONSONANTS.find(c => c.char === char) || VOWELS.find(v => v.char === char);
 }
 
@@ -43,10 +48,25 @@ export default function FreeComposeMode() {
   const [dragNew, setDragNew] = useState(null);
   const [selectedId, setSelectedId] = useState(null); // 선택된 글자 강조
   const [panOffset, setPanOffset] = useState({ x: 0, y: 0 }); // 캔버스 전체 이동
+  const [editMode, setEditMode] = useState(false); // 꼭지점 편집 모드
   const dragNewRef = useRef(null);
   const panStart = useRef(null);
 
   useEffect(() => { initSvgHelper(); }, []);
+
+  // 편집 결과를 콘솔에 내보내기
+  const exportEdits = useCallback(() => {
+    if (Object.keys(sourceOverrides).length === 0) {
+      console.log('변경된 글자가 없습니다.');
+      return;
+    }
+    console.log('=== 편집된 글자 데이터 ===');
+    Object.entries(sourceOverrides).forEach(([char, src]) => {
+      const strokesStr = src.strokes.map(s => `{path:'${s.path}'}`).join(', ');
+      console.log(`  { char:'${char}', strokes:[${strokesStr}] },`);
+    });
+    console.log('=========================');
+  }, []);
 
   // 가이드 이미지 캐시
   const jamoImages = useMemo(() => {
@@ -272,11 +292,15 @@ export default function FreeComposeMode() {
             key={piece.id}
             piece={piece}
             selected={piece.id === selectedId}
+            editMode={editMode && piece.id === selectedId}
             onDone={() => markDone(piece.id)}
             onDelete={() => setPieces(prev => prev.filter(p => p.id !== piece.id))}
             isOverTrash={isOverTrash}
             setTrashHover={setTrashHover}
             onSelect={() => selectPiece(piece.id)}
+            onSourceUpdate={(newStrokes) => {
+              sourceOverrides[piece.char] = { char: piece.char, strokes: newStrokes };
+            }}
           />
         ))}
       </div>
@@ -313,9 +337,26 @@ export default function FreeComposeMode() {
         </div>
       </div>
 
-      {/* 상단 힌트 */}
-      <div className="free-top-hint">
-        {pieces.length === 0 ? '자음/모음을 끌어서 배치하세요' : '따라쓰기 · 빈곳 드래그=이동 · 더블탭=삭제'}
+      {/* 상단 힌트 + 편집 버튼 */}
+      <div className="free-top-bar">
+        <div className="free-top-hint" style={{ position: 'static', transform: 'none' }}>
+          {editMode
+            ? '꼭지점 편집 모드 · 점을 드래그하세요'
+            : pieces.length === 0 ? '자음/모음을 끌어서 배치하세요' : '따라쓰기 · 빈곳 드래그=이동 · 더블탭=삭제'}
+        </div>
+        <div className="edit-toolbar">
+          <button
+            className={`edit-btn ${editMode ? 'edit-btn--active' : ''}`}
+            onClick={() => setEditMode(m => !m)}
+          >
+            {editMode ? '편집 끝' : '꼭지점 편집'}
+          </button>
+          {editMode && (
+            <button className="edit-btn edit-btn--export" onClick={exportEdits}>
+              내보내기
+            </button>
+          )}
+        </div>
       </div>
 
       {/* 휴지통 — 드래그 삭제 + 롱프레스 모두 지우기 */}
@@ -338,7 +379,8 @@ export default function FreeComposeMode() {
 }
 
 // ── 개별 글자 따라쓰기 컴포넌트 ──
-function TracePiece({ piece, selected, onDone, onDelete, onSelect, isOverTrash, setTrashHover }) {
+function TracePiece({ piece, selected, editMode, onDone, onDelete, onSelect, isOverTrash, setTrashHover, onSourceUpdate }) {
+  const [sourceVer, setSourceVer] = useState(0); // 편집 시 리렌더 트리거
   const source = getSource(piece.char);
   const guideRef = useRef(null);
   const arrowRef = useRef(null);
@@ -610,19 +652,42 @@ function TracePiece({ piece, selected, onDone, onDelete, onSelect, isOverTrash, 
 
   if (!source) return null;
 
+  // 편집 모드에서 꼭지점 변경 시 — 가이드를 최신 strokes로 즉시 다시 그림
+  const handleVertexUpdate = useCallback((newStrokes) => {
+    if (onSourceUpdate) onSourceUpdate(newStrokes);
+    // 가이드 캔버스를 넘겨받은 newStrokes로 직접 다시 그리기
+    const gCtx = guideRef.current?.getContext('2d');
+    if (!gCtx) return;
+    gCtx.clearRect(0, 0, SIZE, SIZE);
+    gCtx.strokeStyle = 'rgba(255,255,255,0.25)';
+    gCtx.lineWidth = APP_CONFIG.GUIDE_STROKE_WIDTH + 28;
+    gCtx.lineCap = 'round'; gCtx.lineJoin = 'round'; gCtx.setLineDash([]);
+    newStrokes.forEach(s => gCtx.stroke(new Path2D(s.path)));
+    gCtx.strokeStyle = APP_CONFIG.GUIDE_COLOR;
+    gCtx.lineWidth = APP_CONFIG.GUIDE_STROKE_WIDTH;
+    newStrokes.forEach(s => gCtx.stroke(new Path2D(s.path)));
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   return (
     <div
       ref={wrapRef}
-      className={`free-trace-wrap ${piece.done ? 'free-trace-wrap--done' : ''} ${selected ? 'free-trace-wrap--selected' : ''} ${unlocked ? 'free-trace-wrap--unlocked' : ''}`}
+      className={`free-trace-wrap ${piece.done ? 'free-trace-wrap--done' : ''} ${selected ? 'free-trace-wrap--selected' : ''} ${unlocked ? 'free-trace-wrap--unlocked' : ''} ${editMode ? 'free-trace-wrap--editing' : ''}`}
       style={{
         left: localPos.x, top: localPos.y,
         width: pixelSize, height: pixelSize,
       }}
     >
       <canvas ref={guideRef} className="free-trace-layer" />
-      <canvas ref={arrowRef} className="free-trace-layer" style={{ zIndex: 2 }} />
-      <canvas ref={traceRef} className="free-trace-layer" style={{ zIndex: 3 }} />
-      <div ref={overlayRef} className="free-trace-layer free-trace-overlay" style={{ zIndex: 4 }} />
+      {!editMode && <canvas ref={arrowRef} className="free-trace-layer" style={{ zIndex: 2 }} />}
+      {!editMode && <canvas ref={traceRef} className="free-trace-layer" style={{ zIndex: 3 }} />}
+      {!editMode && <div ref={overlayRef} className="free-trace-layer free-trace-overlay" style={{ zIndex: 4 }} />}
+      {editMode && (
+        <VertexEditor
+          source={source}
+          scale={piece.scale}
+          onUpdate={handleVertexUpdate}
+        />
+      )}
     </div>
   );
 }
