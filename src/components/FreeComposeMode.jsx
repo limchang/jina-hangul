@@ -521,12 +521,13 @@ function TracePiece({ piece, selected, onDone, onDelete, onSelect, isOverTrash, 
   const movedRef = useRef(false);
   const longPressRef = useRef(null);
   const [unlocked, setUnlocked] = useState(false); // 완성 글자 롱프레스 해제
+  const [justDone, setJustDone] = useState(false); // slamDown 애니메이션 중
   const [localPos, setLocalPos] = useState({ x: piece.x, y: piece.y });
 
-  // 선택 해제되면 편집 모드 끄기
+  // 선택 해제 or 완료되면 편집 모드 끄기
   useEffect(() => {
-    if (!selected) setEditMode(false);
-  }, [selected]);
+    if (!selected || piece.done) setEditMode(false);
+  }, [selected, piece.done]);
 
 
   // 편집 모드 해제 시 가이드+화살표+아이콘 복원 + 따라쓰기 리셋
@@ -653,11 +654,13 @@ function TracePiece({ piece, selected, onDone, onDelete, onSelect, isOverTrash, 
       overlayRef.current.innerHTML = '';
       particleRef.current.celebrate(SIZE/2, SIZE/2); startPLoop();
       playCelebrate();
-      // 쾅! 박히기 — onDone 먼저, 파티클은 계속
+      // 쾅! 박히기
+      setJustDone(true);
       setTimeout(() => {
         onDone();
         playSlam();
       }, 150);
+      setTimeout(() => setJustDone(false), 600);
       // 파티클은 넉넉히 돌고 나서 정리
       setTimeout(() => stopPLoop(), 2000);
     } else { loadStroke(S.strokeIdx); }
@@ -830,7 +833,7 @@ function TracePiece({ piece, selected, onDone, onDelete, onSelect, isOverTrash, 
   return (
     <div
       ref={wrapRef}
-      className={`free-trace-wrap ${piece.done ? 'free-trace-wrap--done' : ''} ${selected ? 'free-trace-wrap--selected' : ''} ${unlocked ? 'free-trace-wrap--unlocked' : ''} ${editMode ? 'free-trace-wrap--editing' : ''}`}
+      className={`free-trace-wrap ${justDone ? 'free-trace-wrap--slam' : piece.done ? 'free-trace-wrap--done' : ''} ${selected ? 'free-trace-wrap--selected' : ''} ${unlocked ? 'free-trace-wrap--unlocked' : ''} ${editMode ? 'free-trace-wrap--editing' : ''}`}
       style={{
         left: localPos.x, top: localPos.y,
         width: pixelSize, height: pixelSize,
