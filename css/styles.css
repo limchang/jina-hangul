@@ -393,37 +393,27 @@ main {
   display: flex; gap: 3px;
   justify-content: center;
 }
-.remote-actions {
-  display: flex; gap: 4px; justify-content: center;
-  padding-bottom: 2px;
-}
-.remote-action-btn {
-  padding: 3px 10px;
-  font-family: 'Fredoka', 'Noto Sans KR', sans-serif;
-  font-size: 0.6rem; font-weight: 700;
-  color: rgba(255,255,255,0.8);
-  background: rgba(255,255,255,0.12);
-  border: 1px solid rgba(255,255,255,0.25);
-  border-radius: 10px;
+/* 액션 버튼 — 글자 버튼과 동일 사이즈, 텍스트만 다름 */
+.remote-btn--action {
+  font-size: 0.55rem; line-height: 1.2;
+  text-align: center; letter-spacing: 0.5px;
   cursor: pointer;
-  transition: all 0.12s;
-  white-space: nowrap;
+  background: rgba(255,200,60,0.2);
+  border-color: rgba(255,220,80,0.5);
 }
-.remote-action-btn:hover {
-  background: rgba(255,255,255,0.25);
-  border-color: rgba(255,255,255,0.4);
+.remote-btn--action:hover {
+  background: rgba(255,200,60,0.4);
+  border-color: rgba(255,220,80,0.7);
 }
-.remote-action-btn:active { transform: scale(0.95); }
-.remote-action-btn--pink {
-  background: rgba(255,110,180,0.2);
-  border-color: rgba(255,110,180,0.4);
-}
-.remote-action-btn--pink:hover { background: rgba(255,110,180,0.35); }
-.remote-action-btn--red {
+.remote-btn--danger {
   background: rgba(255,80,80,0.15);
   border-color: rgba(255,80,80,0.35);
+  font-size: 0.5rem;
 }
-.remote-action-btn--red:hover { background: rgba(255,80,80,0.3); }
+.remote-btn--danger:hover {
+  background: rgba(255,80,80,0.3);
+  border-color: rgba(255,80,80,0.5);
+}
 .remote-list {
   display: flex; flex-wrap: wrap; gap: 3px;
   max-width: calc(100vw - 40px);
