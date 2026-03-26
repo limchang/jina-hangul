@@ -136,12 +136,11 @@ export default function VertexEditor({ source, onUpdate }) {
   // dragRef: { type: 'vertex', idx, offsetX, offsetY }
   //       or { type: 'edge', i0, i1, off0x, off0y, off1x, off1y }
 
-  // source 바뀌면 verts 재파싱
+  // source 바뀌면 verts 재파싱 (글로우는 그리지 않음 — 드래그 중일 때만 draw)
   useEffect(() => {
     if (!source) return;
     vertsRef.current = extractVerts(source);
     edgesRef.current = buildEdges(vertsRef.current);
-    draw();
   }, [source]);
 
   function draw() {
@@ -268,7 +267,9 @@ export default function VertexEditor({ source, onUpdate }) {
     function onUp() {
       if (!dragRef.current) return;
       dragRef.current = null;
-      draw();
+      // 즉시 캔버스 클리어 (글로우 잔상 제거)
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, SIZE, SIZE);
     }
 
     canvas.addEventListener('mousedown', onDown);
