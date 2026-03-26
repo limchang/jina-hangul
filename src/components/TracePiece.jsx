@@ -38,6 +38,14 @@ export default function TracePiece({ piece, selected, onDone, onDelete, onSelect
 
   useEffect(() => {
     if (!selected || piece.done) setEditMode(false);
+    // 선택 해제 시 화살표 애니메이션 정지 (성능)
+    if (!selected && arrowAnimRef.current) {
+      arrowAnimRef.current.stop(); arrowAnimRef.current = null;
+    }
+    // 선택 시 화살표 애니메이션 재시작
+    if (selected && !piece.done && !arrowAnimRef.current && engineRef.current?.pts && arrowRef.current) {
+      arrowAnimRef.current = createArrowAnim(engineRef.current.pts, arrowRef.current.getContext('2d'), SIZE, SIZE);
+    }
   }, [selected, piece.done]);
 
   const prevEditMode = useRef(false);

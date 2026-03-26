@@ -1,5 +1,5 @@
 // arrow.js — 획순 안내 애니메이션 (ES Module)
-// 인스턴스별 독립 애니메이션 지원
+// 인스턴스별 독립 애니메이션 지원 — 경량화 버전
 
 export function drawArrowFrame(ctx, pts, t, cvW, cvH) {
   const total = pts.length - 1;
@@ -9,33 +9,21 @@ export function drawArrowFrame(ctx, pts, t, cvW, cvH) {
   const trailLen = Math.floor(total * 0.35);
   const trailStart = Math.max(0, headIdx - trailLen);
 
+  // 단일 path로 트레일 그리기 (세그먼트별 개별 stroke 제거)
   if (headIdx > trailStart) {
-    for (let seg = trailStart; seg < headIdx; seg++) {
-      const progress = (seg - trailStart) / (headIdx - trailStart);
-      const alpha = progress * 0.6;
-      const width = 8 + progress * 16;
-
-      ctx.beginPath();
-      ctx.moveTo(pts[seg].x, pts[seg].y);
-      ctx.lineTo(pts[seg + 1].x, pts[seg + 1].y);
-      ctx.strokeStyle = `rgba(255, 220, 80, ${alpha})`;
-      ctx.lineWidth = width;
-      ctx.lineCap = 'round';
-      ctx.stroke();
-    }
-
     ctx.beginPath();
     ctx.moveTo(pts[trailStart].x, pts[trailStart].y);
     for (let i = trailStart + 1; i <= headIdx; i++) {
       ctx.lineTo(pts[i].x, pts[i].y);
     }
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
-    ctx.lineWidth = 3;
+    ctx.strokeStyle = 'rgba(255, 220, 80, 0.45)';
+    ctx.lineWidth = 10;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
     ctx.stroke();
   }
 
+  // 화살표 머리 위치
   const fi = Math.min(t * total, total - 0.01);
   const i = Math.floor(fi);
   const frac = fi - i;
@@ -47,22 +35,10 @@ export function drawArrowFrame(ctx, pts, t, cvW, cvH) {
   const dy = py - pts[bi].y;
   const angle = Math.atan2(dy, dx);
 
-  ctx.save();
-  ctx.translate(px, py);
-  const glow = ctx.createRadialGradient(0, 0, 0, 0, 0, 30);
-  glow.addColorStop(0, 'rgba(255,240,100,0.5)');
-  glow.addColorStop(1, 'rgba(255,220,50,0)');
-  ctx.beginPath();
-  ctx.arc(0, 0, 30, 0, Math.PI * 2);
-  ctx.fillStyle = glow;
-  ctx.fill();
-  ctx.restore();
-
+  // 화살표 (shadow/glow 제거)
   ctx.save();
   ctx.translate(px, py);
   ctx.rotate(angle);
-  ctx.shadowColor = 'rgba(0,0,0,0.2)';
-  ctx.shadowBlur = 6;
 
   const R = 20, r = 12;
   ctx.beginPath();
@@ -81,7 +57,6 @@ export function drawArrowFrame(ctx, pts, t, cvW, cvH) {
 
 // 인스턴스별 애니메이션 — handle 객체를 반환
 export function startArrowAnim(pts, aCtx, cvW, cvH) {
-  // 이전 호환: 글로벌 싱글턴도 유지
   if (_globalAnimId) cancelAnimationFrame(_globalAnimId);
   if (!pts || pts.length < 2) return { id: null };
   let t = 0;
