@@ -72,7 +72,9 @@ export default function FreeComposeMode() {
   const [dragNew, setDragNew] = useState(null);
   const [selectedId, setSelectedId] = useState(null); // 선택된 글자 강조
   const [panOffset, setPanOffset] = useState({ x: 0, y: 0 }); // 캔버스 전체 이동
+  const [cardEditMode, setCardEditMode] = useState(false); // 카드 만들기 모드
   const updatePreviewRef = useRef(null); // WordCards의 updatePreview 콜백
+  const wordCardsRef = useRef(null); // WordCards 인스턴스 접근용
   const dragNewRef = useRef(null);
   const panStart = useRef(null);
 
@@ -313,6 +315,35 @@ export default function FreeComposeMode() {
     Object.keys(pieceOverrides).forEach(k => delete pieceOverrides[k]);
   }, []);
 
+  // 카드 만들기 시작 — 화면 클리어하고 편집 모드
+  const startCardEdit = useCallback(() => {
+    setPieces([]); nextId = 1; setSelectedId(null); setPanOffset({ x: 0, y: 0 });
+    Object.keys(pieceOverrides).forEach(k => delete pieceOverrides[k]);
+    setCardEditMode(true);
+  }, []);
+
+  // 카드 만들기 완료 — 현재 pieces를 카드로 저장
+  const finishCardEdit = useCallback(() => {
+    if (pieces.length === 0) {
+      setCardEditMode(false);
+      return;
+    }
+    // 카드 이름 = 글자들을 이어붙인 것
+    const cardName = pieces.map(p => p.char).join('');
+    // 미리보기 생성
+    const previewPieces = pieces.map(p => ({
+      ...p, source: getSource(p.char, p.id)
+    }));
+    const img = renderLayoutPreview(previewPieces);
+    // 배치 저장
+    saveWordLayout(cardName, pieces.map(p => ({ x: p.x, y: p.y, scale: p.scale })));
+    // WordCards에 카드 추가 + 미리보기
+    if (wordCardsRef.current) {
+      wordCardsRef.current.addCardDirect(cardName, img);
+    }
+    setCardEditMode(false);
+  }, [pieces]);
+
   const [trashHover, setTrashHover] = useState(false); // 휴지통 위에 있는지
 
   // 휴지통 hit test
@@ -442,11 +473,28 @@ export default function FreeComposeMode() {
 
       {/* 상단 힌트 */}
       <div className="free-top-hint">
-        {pieces.length === 0 ? '글자를 끌어서 배치하거나, 아래 낱말카드를 올려보세요' : '따라쓰기 · 빈곳=이동 · 꾹=편집'}
+        {cardEditMode
+          ? '카드 만들기 · 글자를 배치하고 완료를 누르세요'
+          : pieces.length === 0 ? '글자를 배치하거나, 아래 카드를 올려보세요' : '따라쓰기 · 빈곳=이동 · 꾹=편집'}
       </div>
 
-      {/* 낱말카드 (하단) */}
-      <WordCards onDeploy={deployWord} isOverTrash={isOverTrash} setTrashHover={setTrashHover} />
+      {/* 낱말카드 (하단) — 카드 편집 모드에서는 숨김 */}
+      {!cardEditMode && (
+        <WordCards
+          ref={wordCardsRef}
+          onDeploy={deployWord}
+          isOverTrash={isOverTrash}
+          setTrashHover={setTrashHover}
+          onNewCard={startCardEdit}
+        />
+      )}
+
+      {/* 카드 편집 모드 — 완료 버튼 */}
+      {cardEditMode && (
+        <button className="card-edit-done-btn" onClick={finishCardEdit}>
+          완료
+        </button>
+      )}
 
       {/* 휴지통 — 드래그 삭제 + 롱프레스 모두 지우기 */}
       <TrashZone

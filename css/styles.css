@@ -442,6 +442,7 @@ main {
   pointer-events: auto;
   cursor: grab;
   transition: filter 0.2s, transform 0.2s;
+  overflow: visible;
 }
 .free-trace-wrap:active { cursor: grabbing; }
 .free-trace-wrap--selected {
@@ -702,3 +703,29 @@ main {
 }
 .word-modal-btn--confirm:hover { background: rgba(255,110,180,0.6); }
 .word-modal-btn:active { transform: scale(0.95); }
+
+/* 카드 편집 모드 — 완료 버튼 */
+.card-edit-done-btn {
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+  z-index: 9200;
+  font-family: 'Fredoka', 'Noto Sans KR', sans-serif;
+  font-size: 1.1rem; font-weight: 800;
+  padding: 12px 36px; border-radius: 24px;
+  background: rgba(255,110,180,0.5);
+  backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+  border: 2px solid rgba(255,255,255,0.5);
+  color: white; cursor: pointer;
+  letter-spacing: 3px;
+  box-shadow: 0 8px 24px rgba(255,110,180,0.3);
+  transition: all 0.15s;
+  animation: cardEditPulse 2s ease-in-out infinite;
+}
+.card-edit-done-btn:hover {
+  background: rgba(255,110,180,0.7);
+  transform: translateX(-50%) scale(1.05);
+}
+.card-edit-done-btn:active { transform: translateX(-50%) scale(0.95); }
+@keyframes cardEditPulse {
+  0%, 100% { box-shadow: 0 8px 24px rgba(255,110,180,0.3); }
+  50% { box-shadow: 0 8px 32px rgba(255,110,180,0.5); }
+}
