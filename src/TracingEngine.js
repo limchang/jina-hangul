@@ -1,17 +1,23 @@
+// TracingEngine.js — 획 추적 인식 엔진 (ES Module)
+
 const svgNS = "http://www.w3.org/2000/svg";
-const tempSvg = document.createElementNS(svgNS, "svg");
-tempSvg.style.position = 'absolute';
-tempSvg.style.width = '0';
-tempSvg.style.height = '0';
-tempSvg.style.visibility = 'hidden';
-const tempPath = document.createElementNS(svgNS, "path");
-tempSvg.appendChild(tempPath);
+let tempSvg = null;
+let tempPath = null;
 
-window.addEventListener('DOMContentLoaded', () => {
+export function initSvgHelper() {
+  if (tempSvg) return;
+  tempSvg = document.createElementNS(svgNS, "svg");
+  tempSvg.style.position = 'absolute';
+  tempSvg.style.width = '0';
+  tempSvg.style.height = '0';
+  tempSvg.style.visibility = 'hidden';
+  tempPath = document.createElementNS(svgNS, "path");
+  tempSvg.appendChild(tempPath);
   document.body.appendChild(tempSvg);
-});
+}
 
-function samplePath(pathStr, samples = 120) {
+export function samplePath(pathStr, samples = 120) {
+  if (!tempPath) initSvgHelper();
   tempPath.setAttribute("d", pathStr);
   const len = tempPath.getTotalLength();
   const pts = [];
@@ -22,7 +28,7 @@ function samplePath(pathStr, samples = 120) {
   return pts;
 }
 
-class TracingEngine {
+export class TracingEngine {
   constructor(ctx, config) {
     this.ctx = ctx;
     this.config = config;
@@ -44,12 +50,8 @@ class TracingEngine {
 
   start(x, y) {
     if (!this.pts || this.pts.length === 0) return false;
-    
-    // Check distance to the first point
     const startPt = this.pts[0];
     const dist = Math.hypot(x - startPt.x, y - startPt.y);
-    
-    // Allow a generous start radius for kids
     if (dist < 80) {
       this.isTracing = true;
       this.maxReachedIdx = 0;
@@ -60,15 +62,11 @@ class TracingEngine {
 
   move(x, y) {
     if (!this.isTracing) return;
-
-    // Always track raw pointer for visual effect
     this.pointerX = x;
     this.pointerY = y;
 
     let bestDist = Infinity;
     let bestIdx = this.maxReachedIdx;
-
-    // Search ahead generously
     const searchLimit = Math.min(this.pts.length, this.maxReachedIdx + 50);
     for (let i = this.maxReachedIdx; i < searchLimit; i++) {
       const d = Math.hypot(x - this.pts[i].x, y - this.pts[i].y);
@@ -82,8 +80,6 @@ class TracingEngine {
       this.maxReachedIdx = Math.max(this.maxReachedIdx, bestIdx);
       this.offPathCount = 0;
     } else {
-      // 경로에서 벗어나도 터치 중에는 드래그를 유지함
-      // offPathCount만 증가시키고 트레이싱을 끊지 않음
       this.offPathCount = (this.offPathCount || 0) + 1;
     }
   }
@@ -91,29 +87,17 @@ class TracingEngine {
   end() {
     this.isTracing = false;
     if (!this.pts || this.pts.length === 0) return false;
-
     const percent = this.maxReachedIdx / (this.pts.length - 1);
-    
-    // ㅁ is closed loop essentially (square), ㅇ is perfect closed loop
-    // Ensure they drew almost all of it to prevent short-circuiting at the start point
-    if (this.isClosedLoop) {
-      if (percent > 0.85) return true;
-    } else {
-      if (percent > 0.85) return true;
-    }
-    
-    // Did not complete -> reset
+    if (percent > 0.85) return true;
     this.maxReachedIdx = 0;
     return false;
   }
 
   draw() {
     if (this.maxReachedIdx === 0) return;
-
     const ctx = this.ctx;
     const tw = this.config.TRACE_STROKE_WIDTH;
 
-    // Outer glow
     ctx.beginPath();
     ctx.strokeStyle = 'rgba(255, 235, 80, 0.3)';
     ctx.lineWidth = tw + 24;
@@ -123,7 +107,6 @@ class TracingEngine {
     for (let i = 1; i <= this.maxReachedIdx; i++) ctx.lineTo(this.pts[i].x, this.pts[i].y);
     ctx.stroke();
 
-    // Main trace
     ctx.beginPath();
     ctx.strokeStyle = this.config.TRACE_COLOR;
     ctx.lineWidth = tw;
@@ -133,7 +116,6 @@ class TracingEngine {
     for (let i = 1; i <= this.maxReachedIdx; i++) ctx.lineTo(this.pts[i].x, this.pts[i].y);
     ctx.stroke();
 
-    // 손가락 글로우
     if (this.isTracing && this.pointerX !== undefined) {
       const px = this.pointerX, py = this.pointerY;
       const grad = ctx.createRadialGradient(px, py, 2, px, py, 40);

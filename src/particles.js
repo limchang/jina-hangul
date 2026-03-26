@@ -1,6 +1,5 @@
-// particles.js — 반짝임 + 종이 컨페티 파티클
+// particles.js — 반짝임 + 종이 컨페티 파티클 (ES Module)
 
-// 반짝임(스파클) — 드래그 중 사용
 const SPARKLE_COLOR = '#fff8b0';
 
 class Sparkle {
@@ -35,7 +34,6 @@ class Sparkle {
     ctx.translate(this.x, this.y);
     ctx.rotate(this.rotation);
     ctx.globalAlpha = a * 0.9;
-    // 4갈래 반짝임 ✦
     ctx.beginPath();
     for (let i = 0; i < 4; i++) {
       const a1 = (i * 90) * Math.PI / 180;
@@ -50,7 +48,6 @@ class Sparkle {
   }
 }
 
-// 종이 컨페티 — 완성 시 사용
 const CONFETTI_COLORS = [
   '#FF6B8A', '#FF9A5C', '#FFD93D', '#6BCB77',
   '#4D96FF', '#9B72FF', '#FF6EB4', '#45D0E8'
@@ -72,7 +69,6 @@ class Confetti {
     this.rotation = Math.random() * Math.PI * 2;
     this.rotSpeed = (Math.random() - 0.5) * 0.3;
     this.gravity = 0.08 + Math.random() * 0.04;
-    // 3D 펄럭임 시뮬레이션
     this.flipPhase = Math.random() * Math.PI * 2;
     this.flipSpeed = 3 + Math.random() * 4;
   }
@@ -82,7 +78,6 @@ class Confetti {
     this.y += this.vy;
     this.vy += this.gravity;
     this.vx *= 0.99;
-    // 좌우 흔들림
     this.vx += Math.sin(this.flipPhase) * 0.1;
     this.life -= this.decay;
     this.rotation += this.rotSpeed;
@@ -92,16 +87,13 @@ class Confetti {
   draw(ctx) {
     if (this.life <= 0) return;
     const a = this.life;
-    // 3D 펄럭임: scaleX가 sin으로 변함
     const scaleX = Math.cos(this.flipPhase);
-
     ctx.save();
     ctx.translate(this.x, this.y);
     ctx.rotate(this.rotation);
     ctx.scale(scaleX, 1);
     ctx.globalAlpha = Math.min(a * 1.5, 1);
     ctx.fillStyle = this.color;
-    // 둥근 모서리 사각형
     const r = 1.5;
     ctx.beginPath();
     ctx.moveTo(-this.w / 2 + r, -this.h / 2);
@@ -119,13 +111,12 @@ class Confetti {
   }
 }
 
-class ParticleSystem {
+export class ParticleSystem {
   constructor() {
     this.particles = [];
     this.frameCount = 0;
   }
 
-  // 드래그 중 — 반짝임
   emit(x, y) {
     this.frameCount++;
     if (this.frameCount % 3 === 0) {
@@ -133,7 +124,6 @@ class ParticleSystem {
     }
   }
 
-  // 획 완성 — 반짝임 + 작은 컨페티
   burst(x, y, count = 10) {
     for (let i = 0; i < count; i++) {
       this.particles.push(new Confetti(x, y));
@@ -146,7 +136,6 @@ class ParticleSystem {
     }
   }
 
-  // 글자 완성 — 컨페티 폭발
   celebrate(cx, cy) {
     for (let i = 0; i < 30; i++) {
       this.particles.push(new Confetti(cx + (Math.random() - 0.5) * 60, cy + (Math.random() - 0.5) * 30));
@@ -170,26 +159,5 @@ class ParticleSystem {
 
   clear() {
     this.particles = [];
-  }
-}
-
-const particleSystem = new ParticleSystem();
-let particleAnimId = null;
-
-function startParticleLoop() {
-  function loop() {
-    particleSystem.update();
-    renderTrace();
-    particleAnimId = requestAnimationFrame(loop);
-  }
-  if (!particleAnimId) {
-    particleAnimId = requestAnimationFrame(loop);
-  }
-}
-
-function stopParticleLoop() {
-  if (particleAnimId) {
-    cancelAnimationFrame(particleAnimId);
-    particleAnimId = null;
   }
 }

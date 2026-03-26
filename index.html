@@ -6,64 +6,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>진아의 프리미엄 한글 공부 - 따라쓰기</title>
   <meta name="description" content="진아를 위한 프리미엄 한글 따라쓰기 앱입니다.">
-  <link rel="stylesheet" href="css/styles.css?v=10">
 </head>
 
 <body>
-  <div id="bg-layer"></div>
-
-  <div id="app-container">
-    <header>
-      <div class="btn-home" onclick="location.reload()" title="홈으로">
-        <svg viewBox="0 0 100 100">
-          <path d="M25 50 L50 25 L75 50 V75 H60 V55 H40 V75 H25 Z" fill="white" />
-        </svg>
-      </div>
-      <h1 class="app-title">진아의 한글 공부</h1>
-      <div class="mode-toggle">
-        <div class="mode-btn active" id="mode-basic">기본</div>
-        <div class="mode-btn" id="mode-combine">붙이기</div>
-      </div>
-    </header>
-
-    <div class="main-layout">
-      <!-- 왼쪽: 자음 패널 -->
-      <aside class="side-panel left-panel" id="panel-cons">
-        <div class="panel-label">자 음</div>
-        <div class="panel-list" id="cons-list"></div>
-      </aside>
-
-      <!-- 가운데: 카드 + 화살표 -->
-      <main>
-        <div class="nav-arrow left" title="이전">&#10094;</div>
-
-        <div class="study-card" id="study-card">
-          <canvas id="guide-canvas"></canvas>
-          <canvas id="arrow-canvas"></canvas>
-          <canvas id="trace-canvas"></canvas>
-          <div id="overlay-icons"></div>
-        </div>
-
-        <div class="nav-arrow right" title="다음">&#10095;</div>
-      </main>
-
-      <!-- 오른쪽: 모음 패널 -->
-      <aside class="side-panel right-panel" id="panel-vow">
-        <div class="panel-label">모 음</div>
-        <div class="panel-list" id="vow-list"></div>
-      </aside>
-    </div>
-  </div>
-
-  <script src="src/icon-map.js?v=2"></script>
-  <script src="src/data.js?v=20"></script>
-  <script src="src/TracingEngine.js?v=12"></script>
-  <script src="src/particles.js?v=3"></script>
-  <script src="src/arrow.js?v=5"></script>
-  <script src="src/render.js?v=6"></script>
-  <script src="src/input.js?v=6"></script>
-  <script src="src/ui.js?v=6"></script>
-  <script src="src/App.js?v=15"></script>
+  <div id="root"></div>
+  <script type="module" src="/src/main.jsx"></script>
 </body>
 
 </html>

@@ -175,6 +175,14 @@ main {
   max-height: calc(100vh - 180px);
 }
 
+/* 큰 정사각형 (가로형 모음 + 받침): 700×700 */
+.study-card.card-large {
+  width: calc(min(550px, calc(100vh - 180px)) * 1.27);
+  height: calc(min(550px, calc(100vh - 180px)) * 1.27);
+  max-width: calc(100vw - 540px);
+  max-height: calc(100vh - 180px);
+}
+
 .study-card::after {
   content: ''; position: absolute; inset: 0; border-radius: 31px;
   background:

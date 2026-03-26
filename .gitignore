@@ -1,13 +1,3 @@
-# 인증키 / 시크릿
-*.json.key
-gen-lang-client-*.json
-
-# 로그
-.playwright-mcp/
-
-# Claude
-.claude/
-
-# 기타
-__pycache__/
-*.pyc
+node_modules/
+dist/
+_backup_vanilla/
