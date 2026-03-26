@@ -8,14 +8,15 @@ const PREVIEW_KEY = 'jina-word-previews';
 
 // 기본 카드용 미리보기 — 가이드 스트로크로 ㄱㄴㄷ / ㅏㅑ 렌더링
 function renderDefaultCardPreview(items) {
+  const show = items.slice(0, 3); // ㄱㄴㄷ / ㅏㅑㅓ 만 표시
   const CELL = 50;
   const PAD = 6;
-  const W = items.length * CELL + PAD * 2;
+  const W = show.length * CELL + PAD * 2;
   const H = CELL + PAD * 2;
   const canvas = document.createElement('canvas');
   canvas.width = W; canvas.height = H;
   const ctx = canvas.getContext('2d');
-  items.forEach((item, i) => {
+  show.forEach((item, i) => {
     ctx.save();
     ctx.translate(PAD + i * CELL + CELL / 2, PAD + CELL / 2);
     const s = CELL / 500;
