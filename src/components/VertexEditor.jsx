@@ -110,7 +110,7 @@ function pointToSegDist(px, py, ax, ay, bx, by) {
   const lenSq = dx * dx + dy * dy;
   if (lenSq === 0) return Math.hypot(px - ax, py - ay);
   let t = ((px - ax) * dx + (py - ay) * dy) / lenSq;
-  t = Math.max(0.05, Math.min(0.95, t)); // 선분 끝 5%만 제외
+  t = Math.max(0.2, Math.min(0.8, t)); // 선분 끝 20% 제외 (꼭지점 근처는 점 단위 이동)
   return Math.hypot(px - (ax + t * dx), py - (ay + t * dy));
 }
 
@@ -172,6 +172,7 @@ export default function VertexEditor({ source, onUpdate }) {
   const linkedRef = useRef({}); // 좌표 공유 그룹
   const arcInfoRef = useRef(null); // Arc 원 정보 (ㅇㅎ 등)
   const dragRef = useRef(null);
+  const hoverRef = useRef(null); // 호버 미리보기: { type: 'vertex'|'edge'|'arc', indices, glowPos }
   // dragRef: { pairs: [{idx, dx, dy},...] }
   //       or { arcMode: 'left'|'right'|'top'|'bottom', arcStrokeIdx, startPos, origArc }
 
@@ -197,23 +198,38 @@ export default function VertexEditor({ source, onUpdate }) {
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, SIZE, SIZE);
+
     const d = dragRef.current;
-    if (!d) return;
-    if (d.pairs) {
-      d.pairs.forEach(p => {
-        const v = vertsRef.current[p.idx];
-        if (v) drawGlow(ctx, v.x, v.y);
-      });
-    }
-    if (d.arcMode && d.glowPos) {
-      drawGlow(ctx, d.glowPos.x, d.glowPos.y);
+    if (d) {
+      // 드래그 중 — 강한 글로우
+      if (d.pairs) {
+        d.pairs.forEach(p => {
+          const v = vertsRef.current[p.idx];
+          if (v) drawGlow(ctx, v.x, v.y, 0.45);
+        });
+      }
+      if (d.arcMode && d.glowPos) {
+        drawGlow(ctx, d.glowPos.x, d.glowPos.y, 0.45);
+      }
+    } else if (hoverRef.current) {
+      // 호버 미리보기 — 약한 글로우
+      const h = hoverRef.current;
+      if (h.indices) {
+        h.indices.forEach(idx => {
+          const v = vertsRef.current[idx];
+          if (v) drawGlow(ctx, v.x, v.y, 0.2);
+        });
+      }
+      if (h.glowPos) {
+        drawGlow(ctx, h.glowPos.x, h.glowPos.y, 0.2);
+      }
     }
   }
 
-  function drawGlow(ctx, x, y) {
+  function drawGlow(ctx, x, y, alpha = 0.45) {
     const grad = ctx.createRadialGradient(x, y, 0, x, y, 50);
-    grad.addColorStop(0, 'rgba(255,100,150,0.45)');
-    grad.addColorStop(0.5, 'rgba(255,100,150,0.12)');
+    grad.addColorStop(0, `rgba(255,100,150,${alpha})`);
+    grad.addColorStop(0.5, `rgba(255,100,150,${alpha * 0.27})`);
     grad.addColorStop(1, 'rgba(255,100,150,0)');
     ctx.beginPath();
     ctx.arc(x, y, 50, 0, Math.PI * 2);
@@ -237,6 +253,53 @@ export default function VertexEditor({ source, onUpdate }) {
       };
     }
 
+    // pos에서 가장 가까운 대상 판별 → { type, indices } 반환
+    function findTarget(pos) {
+      const verts = vertsRef.current;
+      const edges = edgesRef.current;
+      const arc = arcInfoRef.current;
+
+      // Arc 체크
+      if (arc) {
+        const { cx, cy, rx, ry } = arc;
+        const distToEdge = Math.abs(Math.hypot(pos.x - cx, pos.y - cy) - ((rx + ry) / 2));
+        if (distToEdge < 60) {
+          const handles = [
+            { mode: 'left',   x: cx - rx, y: cy },
+            { mode: 'right',  x: cx + rx, y: cy },
+            { mode: 'top',    x: cx,      y: cy - ry },
+            { mode: 'bottom', x: cx,      y: cy + ry },
+          ];
+          let bestH = handles[0], bestD = Infinity;
+          handles.forEach(h => { const d = Math.hypot(pos.x - h.x, pos.y - h.y); if (d < bestD) { bestD = d; bestH = h; } });
+          return { type: 'arc', arcMode: bestH.mode, glowPos: { x: bestH.x, y: bestH.y } };
+        }
+      }
+
+      // 가장 가까운 꼭지점
+      let bestVertIdx = -1, bestVertDist = Infinity;
+      verts.forEach((v, idx) => { const d = Math.hypot(pos.x - v.x, pos.y - v.y); if (d < bestVertDist) { bestVertDist = d; bestVertIdx = idx; } });
+
+      // 가장 가까운 선분
+      let bestEdge = null, bestEdgeDist = Infinity;
+      edges.forEach(edge => {
+        const a = verts[edge.i0], b = verts[edge.i1];
+        const d = pointToSegDist(pos.x, pos.y, a.x, a.y, b.x, b.y);
+        if (d < bestEdgeDist) { bestEdgeDist = d; bestEdge = edge; }
+      });
+
+      if (bestEdge && bestEdgeDist < bestVertDist * 0.7) {
+        const linked = new Set();
+        [bestEdge.i0, bestEdge.i1].forEach(i => (linkedRef.current[i] || [i]).forEach(li => linked.add(li)));
+        return { type: 'edge', indices: [...linked] };
+      }
+      if (bestVertIdx >= 0) {
+        const linked = linkedRef.current[bestVertIdx] || [bestVertIdx];
+        return { type: 'vertex', indices: [...linked] };
+      }
+      return null;
+    }
+
     // 꼭지점 idx에 연결된 모든 인덱스를 모아서 pairs 생성
     function collectPairs(indices, pos) {
       const seen = new Set();
@@ -253,69 +316,38 @@ export default function VertexEditor({ source, onUpdate }) {
       e.preventDefault();
       e.stopPropagation();
       const pos = toCanvas(e);
-      const verts = vertsRef.current;
-      const edges = edgesRef.current;
+      hoverRef.current = null;
+      const target = findTarget(pos);
+      if (!target) return;
 
-      // Arc 모드 체크 — 원 위를 터치했는지
-      const arc = arcInfoRef.current;
-      if (arc) {
-        const { cx, cy, rx, ry } = arc;
-        // 4방향 핸들: 좌(cx-rx, cy), 우(cx+rx, cy), 상(cx, cy-ry), 하(cx, cy+ry)
-        const handles = [
-          { mode: 'left',   x: cx - rx, y: cy },
-          { mode: 'right',  x: cx + rx, y: cy },
-          { mode: 'top',    x: cx,      y: cy - ry },
-          { mode: 'bottom', x: cx,      y: cy + ry },
-        ];
-        let bestH = null, bestHDist = Infinity;
-        handles.forEach(h => {
-          const d = Math.hypot(pos.x - h.x, pos.y - h.y);
-          if (d < bestHDist) { bestHDist = d; bestH = h; }
-        });
-        // 원 테두리 근처면 arc 모드
-        const distToEdge = Math.abs(Math.hypot(pos.x - cx, pos.y - cy) - ((rx + ry) / 2));
-        if (distToEdge < 60) {
-          dragRef.current = {
-            arcMode: bestH.mode,
-            arcStrokeIdx: arc.strokeIdx,
-            startPos: pos,
-            origArc: { cx, cy, rx, ry },
-            glowPos: { x: bestH.x, y: bestH.y },
-          };
-          draw();
-          return;
-        }
-      }
-
-      // 가장 가까운 꼭지점 찾기
-      let bestVertIdx = -1, bestVertDist = Infinity;
-      verts.forEach((v, idx) => {
-        const d = Math.hypot(pos.x - v.x, pos.y - v.y);
-        if (d < bestVertDist) { bestVertDist = d; bestVertIdx = idx; }
-      });
-
-      // 가장 가까운 선분 찾기
-      let bestEdge = null, bestEdgeDist = Infinity;
-      edges.forEach(edge => {
-        const a = verts[edge.i0], b = verts[edge.i1];
-        const d = pointToSegDist(pos.x, pos.y, a.x, a.y, b.x, b.y);
-        if (d < bestEdgeDist) { bestEdgeDist = d; bestEdge = edge; }
-      });
-
-      // 선분이 꼭지점보다 가까우면 선분 드래그 (양쪽 + 연결 그룹)
-      if (bestEdge && bestEdgeDist < bestVertDist * 1.3) {
-        dragRef.current = { pairs: collectPairs([bestEdge.i0, bestEdge.i1], pos) };
-      } else if (bestVertIdx >= 0) {
-        dragRef.current = { pairs: collectPairs([bestVertIdx], pos) };
+      if (target.type === 'arc') {
+        const arc = arcInfoRef.current;
+        dragRef.current = {
+          arcMode: target.arcMode,
+          arcStrokeIdx: arc.strokeIdx,
+          startPos: pos,
+          origArc: { cx: arc.cx, cy: arc.cy, rx: arc.rx, ry: arc.ry },
+          glowPos: target.glowPos,
+        };
+      } else {
+        dragRef.current = { pairs: collectPairs(target.indices, pos) };
       }
       draw();
     }
 
     function onMove(e) {
-      if (!dragRef.current) return;
+      const pos = toCanvas(e);
+
+      // 드래그 중이 아니면 호버 미리보기
+      if (!dragRef.current) {
+        const target = findTarget(pos);
+        hoverRef.current = target;
+        draw();
+        return;
+      }
+
       e.preventDefault();
       e.stopPropagation();
-      const pos = toCanvas(e);
       const d = dragRef.current;
 
       // Arc 모드 — rx/ry 조절
