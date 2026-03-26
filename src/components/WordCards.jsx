@@ -243,11 +243,11 @@ const WordCards = forwardRef(function WordCards({ onDeploy, isOverTrash, setTras
 
   return (
     <>
-      {/* 왼쪽 카드존 — 기본 카드(자음 공부) + 사용자 카드 */}
+      {/* 왼쪽 카드존 — 기본 카드(자음) + 사용자 카드 */}
       <div className="word-tray word-tray--left">
         <div className="word-card word-card--default" style={sideCardStyle(0, leftCards.length + 1)}
-          onTouchStart={(e) => startDrag('자음 공부', -1, e, { type: 'consonants', isDefault: true })}
-          onMouseDown={(e) => startDrag('자음 공부', -1, e, { type: 'consonants', isDefault: true })}>
+          onTouchStart={(e) => startDrag('자음', -1, e, { type: 'consonants', isDefault: true })}
+          onMouseDown={(e) => startDrag('자음', -1, e, { type: 'consonants', isDefault: true })}>
           <img className="word-card-preview" src={getDefaultPreviews().consonants} draggable={false} />
         </div>
         {leftCards.map((word, li) => {
@@ -261,11 +261,11 @@ const WordCards = forwardRef(function WordCards({ onDeploy, isOverTrash, setTras
           );
         })}
       </div>
-      {/* 오른쪽 카드존 — 기본 카드(모음 공부) + 사용자 카드 + 추가 버튼 */}
+      {/* 오른쪽 카드존 — 기본 카드(모음) + 사용자 카드 + 추가 버튼 */}
       <div className="word-tray word-tray--right">
         <div className="word-card word-card--default" style={sideCardStyle(0, rightCards.length + 2)}
-          onTouchStart={(e) => startDrag('모음 공부', -1, e, { type: 'vowels', isDefault: true })}
-          onMouseDown={(e) => startDrag('모음 공부', -1, e, { type: 'vowels', isDefault: true })}>
+          onTouchStart={(e) => startDrag('모음', -1, e, { type: 'vowels', isDefault: true })}
+          onMouseDown={(e) => startDrag('모음', -1, e, { type: 'vowels', isDefault: true })}>
           <img className="word-card-preview" src={getDefaultPreviews().vowels} draggable={false} />
         </div>
         {rightCards.map((word, ri) => {
