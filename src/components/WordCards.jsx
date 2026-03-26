@@ -127,7 +127,7 @@ const WordCards = forwardRef(function WordCards({ onDeploy, isOverTrash, setTras
     setDragCard({ word, x, y });
   }, []);
 
-  const CARD_ZONE_H = 130; // 카드존 높이
+  const CARD_ZONE_H = 180; // 카드존 높이 (bottom 20px + tray 160px)
 
   useEffect(() => {
     if (!dragCard) return;
@@ -185,7 +185,7 @@ const WordCards = forwardRef(function WordCards({ onDeploy, isOverTrash, setTras
     const spread = Math.min(window.innerWidth - 160, total * 90);
     const baseX = (window.innerWidth - 80) / 2 - spread / 2;
     const x = baseX + (i / Math.max(total - 1, 1)) * spread + Math.sin(seed) * 15;
-    const y = 15 + Math.cos(seed * 2.3) * 20;
+    const y = 25 + Math.cos(seed * 2.3) * 25;
     const rot = Math.sin(seed * 1.7) * 8;
     return {
       left: x, bottom: y,
@@ -224,9 +224,11 @@ const WordCards = forwardRef(function WordCards({ onDeploy, isOverTrash, setTras
             className={`word-drag-ghost ${escaped ? 'word-drag-ghost--escaped' : ''}`}
             style={{ left: dragCard.x, top: dragCard.y }}
           >
-            {previews[dragCard.word] ? (
-              <img src={previews[dragCard.word]} style={{ height: escaped ? 80 : 50 }} draggable={false} />
-            ) : <span>{dragCard.word}</span>}
+            <div className="word-drag-card">
+              {previews[dragCard.word] ? (
+                <img className="word-card-preview" src={previews[dragCard.word]} draggable={false} />
+              ) : <span className="word-card-placeholder">{dragCard.word}</span>}
+            </div>
           </div>
         );
       })()}

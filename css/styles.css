@@ -595,26 +595,25 @@ main {
 /* ─── 낱말카드 트레이 ─── */
 /* ─── 카드존 — 하단 흩어진 카드들 ─── */
 .word-tray {
-  position: fixed; bottom: 0; left: 0; right: 80px;
-  height: 130px;
+  position: fixed; bottom: 20px; left: 0; right: 80px;
+  height: 160px;
   z-index: 9100;
   pointer-events: none;
-  padding-top: 20px;
 }
 
 .word-card {
   position: absolute;
-  display: flex; flex-direction: column; align-items: center; gap: 3px;
-  padding: 8px 12px 6px;
-  background: rgba(255,255,255,0.18);
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  padding: 12px 16px 10px;
+  background: rgba(255,255,255,0.2);
   backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
-  border: 1.5px solid rgba(255,255,255,0.3);
-  border-radius: 14px;
+  border: 2px solid rgba(255,255,255,0.35);
+  border-radius: 18px;
   cursor: grab;
   user-select: none;
   transition: transform 0.2s, box-shadow 0.2s, filter 0.2s;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
-  min-width: 60px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+  min-width: 80px;
   pointer-events: auto;
 }
 .word-card:hover {
@@ -626,12 +625,12 @@ main {
 .word-card:active { cursor: grabbing; }
 .word-card--add {
   display: flex; align-items: center; justify-content: center;
-  min-width: 44px; height: 56px; padding: 0; gap: 0;
+  min-width: 56px; height: 72px; padding: 0; gap: 0;
   background: rgba(255,200,60,0.2);
   border-color: rgba(255,220,80,0.5);
   border-style: dashed;
   cursor: pointer;
-  bottom: 20px; right: 10px;
+  bottom: 30px; right: 10px;
   position: absolute;
 }
 .word-card--add:hover {
@@ -639,10 +638,10 @@ main {
   transform: scale(1.1) !important;
 }
 .word-card-preview {
-  height: 48px;
+  height: 70px;
   opacity: 0.9;
   pointer-events: none;
-  border-radius: 6px;
+  border-radius: 8px;
 }
 .word-card-placeholder {
   font-family: 'Noto Sans KR', sans-serif;
@@ -653,20 +652,25 @@ main {
   padding: 4px 0;
 }
 
-/* 드래그 고스트 */
+/* 드래그 고스트 — 카드 모양 그대로 */
 .word-drag-ghost {
   position: fixed; pointer-events: none; z-index: 99999;
-  font-family: 'Noto Sans KR', sans-serif;
-  font-size: 1.5rem; font-weight: 900; color: white;
-  text-shadow: 0 4px 12px rgba(0,0,0,0.3);
   transform: translate(-50%, -50%);
-  opacity: 0.6;
+  opacity: 0.7;
   transition: opacity 0.15s, transform 0.15s;
 }
 .word-drag-ghost--escaped {
   opacity: 1;
-  transform: translate(-50%, -50%) scale(1.1);
-  filter: drop-shadow(0 8px 24px rgba(255,255,255,0.4));
+  transform: translate(-50%, -50%) scale(1.15);
+}
+.word-drag-card {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  padding: 12px 16px 10px;
+  background: rgba(255,255,255,0.25);
+  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  border: 2px solid rgba(255,255,255,0.5);
+  border-radius: 18px;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.15);
 }
 
 /* 이름 추가 모달 */

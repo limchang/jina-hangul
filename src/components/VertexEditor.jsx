@@ -164,8 +164,8 @@ function rebuildArcPath(cx, cy, rx, ry, origRx, origRy) {
   const ratioY = origRy > 0 ? ry / origRy : 1;
   // 변형이 크면 직선 부분이 생김 (라운드 사각형화)
   // 곡률 반지름 = 원래 반지름의 비율 (최소한 원래의 70%, 최대 rx/ry)
-  const cornerRx = Math.min(rx, origRx * Math.min(1, 1 / Math.max(ratioX, 0.5)) * 0.85);
-  const cornerRy = Math.min(ry, origRy * Math.min(1, 1 / Math.max(ratioY, 0.5)) * 0.85);
+  const cornerRx = Math.min(rx, origRx * Math.min(1, 1 / Math.max(ratioX, 0.5)) * 1.1);
+  const cornerRy = Math.min(ry, origRy * Math.min(1, 1 / Math.max(ratioY, 0.5)) * 1.1);
 
   // 변형이 거의 없으면 원래 Arc path 유지
   if (Math.abs(ratioX - 1) < 0.08 && Math.abs(ratioY - 1) < 0.08) {
