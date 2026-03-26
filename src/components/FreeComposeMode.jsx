@@ -423,18 +423,29 @@ function TracePiece({ piece, selected, sourceVer, onDone, onDelete, onSelect, is
     if (!selected) setEditMode(false);
   }, [selected]);
 
-  // sourceVer가 바뀌면 (다른 글자에서 같은 char 편집 시) 가이드 다시 그리기
+  // sourceVer 바뀔 때: 자기 source가 실제로 변했을 때만 redraw
+  const prevSourceRef = useRef(null);
   useEffect(() => {
     if (!guideRef.current || !stateRef.current.inited) return;
-    redrawAll();
+    const curSrc = getSource(piece.char, piece.id);
+    // source 참조가 바뀌었을 때만 (다른 piece 편집으로 sourceVer만 올라간 경우 무시)
+    if (curSrc === prevSourceRef.current) return;
+    prevSourceRef.current = curSrc;
+    if (!editMode) redrawAll();
   }, [sourceVer]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // 편집 모드 해제 시 가이드+화살표+아이콘 복원
+  // 편집 모드 해제 시 가이드+화살표+아이콘 복원 + 따라쓰기 리셋
   const prevEditMode = useRef(false);
   useEffect(() => {
     if (prevEditMode.current && !editMode && stateRef.current.inited) {
-      // 편집 끝 → 최신 source로 전체 복원
-      redrawAll();
+      // 편집 끝 → 따라쓰기 진행 리셋 + 최신 source로 복원
+      stateRef.current.completed = [];
+      stateRef.current.strokeIdx = 0;
+      const src = getSource(piece.char, piece.id);
+      prevSourceRef.current = src;
+      if (src && engineRef.current) {
+        loadStrokeWith(0, src);
+      }
     }
     prevEditMode.current = editMode;
   }, [editMode]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -449,6 +460,7 @@ function TracePiece({ piece, selected, sourceVer, onDone, onDelete, onSelect, is
     gCanvas.width = aCanvas.width = tCanvas.width = SIZE;
     gCanvas.height = aCanvas.height = tCanvas.height = SIZE;
     engineRef.current = new TracingEngine(tCanvas.getContext('2d'), APP_CONFIG);
+    prevSourceRef.current = source;
     drawGuide();
     loadStroke(0);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
