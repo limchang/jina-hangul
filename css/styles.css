@@ -393,29 +393,6 @@ main {
   display: flex; gap: 3px;
   justify-content: center;
 }
-/* 가로 넓은 액션 버튼 */
-.remote-btn--wide {
-  width: auto; height: 40px;
-  padding: 0 24px;
-  font-size: 0.85rem; letter-spacing: 2px;
-  white-space: nowrap;
-  cursor: pointer;
-  flex: 1;
-  background: rgba(255,200,60,0.2);
-  border-color: rgba(255,220,80,0.5);
-}
-.remote-btn--wide:hover {
-  background: rgba(255,200,60,0.4);
-  border-color: rgba(255,220,80,0.7);
-}
-.remote-btn--danger {
-  background: rgba(255,80,80,0.15) !important;
-  border-color: rgba(255,80,80,0.35) !important;
-}
-.remote-btn--danger:hover {
-  background: rgba(255,80,80,0.3) !important;
-  border-color: rgba(255,80,80,0.5) !important;
-}
 .remote-list {
   display: flex; flex-wrap: wrap; gap: 3px;
   max-width: calc(100vw - 40px);
@@ -676,6 +653,24 @@ main {
   letter-spacing: 1px;
   white-space: nowrap;
   padding: 2px 0;
+}
+/* 기본 카드 (자음 공부, 모음 공부) */
+.word-card--default {
+  background: rgba(255,200,60,0.2);
+  border-color: rgba(255,220,80,0.5);
+}
+.word-card--default:hover {
+  background: rgba(255,200,60,0.35);
+  border-color: rgba(255,220,80,0.7);
+}
+.word-card-label {
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 0.75rem; font-weight: 800;
+  color: white;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  letter-spacing: 2px;
+  white-space: nowrap;
+  padding: 8px 4px;
 }
 
 /* 드래그 고스트 — 카드 모양 그대로 */

@@ -6,6 +6,12 @@ import { decomposeWord } from '../utils/jamo.js';
 const STORAGE_KEY = 'jina-word-cards';
 const PREVIEW_KEY = 'jina-word-previews';
 
+// 기본 카드 — 삭제 불가
+const DEFAULT_CARDS = [
+  { name: '자음 공부', type: 'consonants' },
+  { name: '모음 공부', type: 'vowels' },
+];
+
 function loadCards() {
   try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); } catch { return []; }
 }
@@ -20,7 +26,9 @@ function getJamoSource(char) {
 }
 
 // 배치된 pieces로부터 미리보기 이미지 생성
-// 배치 미리보기 — 글자 크기 비율 그대로 유지, CSS에서 축소
+// 배치 미리보기 — 글자 크기 비율 유지, 고정 스케일로 렌더링
+const PREVIEW_SCALE = 0.35; // 원본 대비 미리보기 축소 비율 (고정)
+
 export function renderLayoutPreview(pieces) {
   if (!pieces || pieces.length === 0) return null;
   let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
@@ -32,8 +40,10 @@ export function renderLayoutPreview(pieces) {
     if (p.y + half > maxY) maxY = p.y + half;
   });
   const PAD = 10;
-  const W = Math.ceil(maxX - minX + PAD * 2);
-  const H = Math.ceil(maxY - minY + PAD * 2);
+  const bw = maxX - minX + PAD * 2;
+  const bh = maxY - minY + PAD * 2;
+  const W = Math.ceil(bw * PREVIEW_SCALE);
+  const H = Math.ceil(bh * PREVIEW_SCALE);
 
   const canvas = document.createElement('canvas');
   canvas.width = W; canvas.height = H;
@@ -43,8 +53,8 @@ export function renderLayoutPreview(pieces) {
     const src = p.source || getJamoSource(p.char);
     if (!src) return;
     ctx.save();
-    ctx.translate(p.x - minX + PAD, p.y - minY + PAD);
-    ctx.scale(p.scale, p.scale);
+    ctx.translate((p.x - minX + PAD) * PREVIEW_SCALE, (p.y - minY + PAD) * PREVIEW_SCALE);
+    ctx.scale(p.scale * PREVIEW_SCALE, p.scale * PREVIEW_SCALE);
     ctx.translate(-250, -250);
     ctx.strokeStyle = 'rgba(255,255,255,0.3)';
     ctx.lineWidth = APP_CONFIG.GUIDE_STROKE_WIDTH + 20;
@@ -58,7 +68,7 @@ export function renderLayoutPreview(pieces) {
   return canvas.toDataURL();
 }
 
-const WordCards = forwardRef(function WordCards({ onDeploy, isOverTrash, setTrashHover, onNewCard }, ref) {
+const WordCards = forwardRef(function WordCards({ onDeploy, isOverTrash, setTrashHover, onNewCard, onPlaceAll }, ref) {
   const [cards, setCards] = useState(loadCards);
   const [previews, setPreviews] = useState(loadPreviews);
   const dragRef = useRef(null);
@@ -111,13 +121,13 @@ const WordCards = forwardRef(function WordCards({ onDeploy, isOverTrash, setTras
     }
   }, [onDeploy]);
 
-  const startDrag = useCallback((word, idx, e) => {
+  const startDrag = useCallback((word, idx, e, opts = {}) => {
     e.preventDefault();
     e.stopPropagation();
     let x, y;
     if (e.touches) { x = e.touches[0].clientX; y = e.touches[0].clientY; }
     else { x = e.clientX; y = e.clientY; }
-    dragRef.current = { word, idx, startX: x, startY: y, moved: false };
+    dragRef.current = { word, idx, startX: x, startY: y, moved: false, ...opts };
     setDragCard({ word, x, y });
   }, []);
 
@@ -148,16 +158,25 @@ const WordCards = forwardRef(function WordCards({ onDeploy, isOverTrash, setTras
       if (e.changedTouches) { x = e.changedTouches[0].clientX; y = e.changedTouches[0].clientY; }
       else { x = e.clientX; y = e.clientY; }
 
-      // 휴지통 위 → 카드 삭제
+      // 휴지통 위 → 카드 삭제 (기본 카드는 삭제 불가)
       if (d.moved && isOverTrash && isOverTrash(x, y)) {
+        if (d.isDefault) {
+          // 기본 카드는 삭제 불가
+          return;
+        }
         removeCard(d.idx);
         return;
       }
-      // 카드존 밖으로 나갔을 때만 배치 (카드존 안이면 원위치 복귀)
+      // 카드존 밖으로 나갔을 때만 배치
       if (d.moved && x > CARD_ZONE_W && x < window.innerWidth - CARD_ZONE_W) {
-        const jamos = decomposeWord(d.word);
-        if (jamos.length > 0) handleDeploy(jamos, d.word, x, y);
-        // 카드는 삭제하지 않음 — 재사용 가능
+        if (d.type === 'consonants') {
+          if (onPlaceAll) onPlaceAll(CONSONANTS);
+        } else if (d.type === 'vowels') {
+          if (onPlaceAll) onPlaceAll(VOWELS);
+        } else {
+          const jamos = decomposeWord(d.word);
+          if (jamos.length > 0) handleDeploy(jamos, d.word, x, y);
+        }
       }
       // 카드존 안에서 놓으면 아무것도 안 함 (원위치 복귀)
     }
@@ -192,12 +211,17 @@ const WordCards = forwardRef(function WordCards({ onDeploy, isOverTrash, setTras
 
   return (
     <>
-      {/* 왼쪽 카드존 */}
+      {/* 왼쪽 카드존 — 기본 카드(자음 공부) + 사용자 카드 */}
       <div className="word-tray word-tray--left">
+        <div className="word-card word-card--default" style={sideCardStyle(0, leftCards.length + 1)}
+          onTouchStart={(e) => startDrag('자음 공부', -1, e, { type: 'consonants', isDefault: true })}
+          onMouseDown={(e) => startDrag('자음 공부', -1, e, { type: 'consonants', isDefault: true })}>
+          <span className="word-card-label">자음 공부</span>
+        </div>
         {leftCards.map((word, li) => {
           const origIdx = leftIndices[li];
           return (
-            <div key={`${word}-${origIdx}`} className="word-card" style={sideCardStyle(li, leftCards.length)}
+            <div key={`${word}-${origIdx}`} className="word-card" style={sideCardStyle(li + 1, leftCards.length + 1)}
               onTouchStart={(e) => startDrag(word, origIdx, e)} onMouseDown={(e) => startDrag(word, origIdx, e)}>
               {previews[word] ? <img className="word-card-preview" src={previews[word]} draggable={false} />
                 : <span className="word-card-placeholder">{word}</span>}
@@ -205,19 +229,24 @@ const WordCards = forwardRef(function WordCards({ onDeploy, isOverTrash, setTras
           );
         })}
       </div>
-      {/* 오른쪽 카드존 */}
+      {/* 오른쪽 카드존 — 기본 카드(모음 공부) + 사용자 카드 + 추가 버튼 */}
       <div className="word-tray word-tray--right">
+        <div className="word-card word-card--default" style={sideCardStyle(0, rightCards.length + 2)}
+          onTouchStart={(e) => startDrag('모음 공부', -1, e, { type: 'vowels', isDefault: true })}
+          onMouseDown={(e) => startDrag('모음 공부', -1, e, { type: 'vowels', isDefault: true })}>
+          <span className="word-card-label">모음 공부</span>
+        </div>
         {rightCards.map((word, ri) => {
           const origIdx = rightIndices[ri];
           return (
-            <div key={`${word}-${origIdx}`} className="word-card" style={sideCardStyle(ri, rightCards.length)}
+            <div key={`${word}-${origIdx}`} className="word-card" style={sideCardStyle(ri + 1, rightCards.length + 2)}
               onTouchStart={(e) => startDrag(word, origIdx, e)} onMouseDown={(e) => startDrag(word, origIdx, e)}>
               {previews[word] ? <img className="word-card-preview" src={previews[word]} draggable={false} />
                 : <span className="word-card-placeholder">{word}</span>}
             </div>
           );
         })}
-        <div className="word-card word-card--add" style={sideCardStyle(rightCards.length, rightCards.length + 1)} onClick={onNewCard}>
+        <div className="word-card word-card--add" style={sideCardStyle(rightCards.length + 1, rightCards.length + 2)} onClick={onNewCard}>
           <span style={{ fontSize: '1.3rem', color: 'rgba(255,255,255,0.7)' }}>+</span>
         </div>
       </div>

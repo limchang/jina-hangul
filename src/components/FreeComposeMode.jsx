@@ -277,11 +277,7 @@ export default function FreeComposeMode() {
         ))}
       </div>
 
-      <DraggableRemote startY={window.innerHeight - 160}>
-        <div className="remote-row">
-          <div className="remote-btn remote-btn--wide" onClick={() => placeAll(CONSONANTS)}>자음 공부</div>
-          <div className="remote-btn remote-btn--wide" onClick={() => placeAll(VOWELS)}>모음 공부</div>
-        </div>
+      <DraggableRemote startY={window.innerHeight - 130}>
         <div className="remote-row">
           {CONSONANTS.map(c => (
             <div key={c.char} className="remote-btn" onTouchStart={(e) => startDragNew(c.char, 'jamo', e)} onMouseDown={(e) => startDragNew(c.char, 'jamo', e)}>{c.char}</div>
@@ -300,7 +296,7 @@ export default function FreeComposeMode() {
       </div>
 
       <div style={{ display: cardEditMode ? 'none' : undefined }}>
-        <WordCards ref={wordCardsRef} onDeploy={deployWord} isOverTrash={isOverTrash} setTrashHover={setTrashHover} onNewCard={startCardEdit} />
+        <WordCards ref={wordCardsRef} onDeploy={deployWord} isOverTrash={isOverTrash} setTrashHover={setTrashHover} onNewCard={startCardEdit} onPlaceAll={placeAll} />
       </div>
 
       {cardEditMode && <button className="card-edit-done-btn" onClick={finishCardEdit}>완료</button>}
