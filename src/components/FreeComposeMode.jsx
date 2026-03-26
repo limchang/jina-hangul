@@ -194,8 +194,7 @@ export default function FreeComposeMode() {
     const firstPiece = newPieces[0];
     setPieces(prev => [...prev, ...newPieces]);
     setSelectedId(firstPiece.id);
-    setPanOffset({ x: screenCX - firstPiece.x, y: screenCY - firstPiece.y });
-
+    // 카메라 이동하지 않음 — 드롭한 위치에 그대로 표시
   }, [pieces, panOffset]);
 
   // ── 패널에서 클릭 or 드래그 ──
