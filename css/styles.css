@@ -588,7 +588,8 @@ main {
 
 .word-card {
   flex-shrink: 0;
-  padding: 10px 18px;
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  padding: 8px 12px 6px;
   background: rgba(255,255,255,0.15);
   backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
   border: 1.5px solid rgba(255,255,255,0.3);
@@ -597,29 +598,46 @@ main {
   user-select: none;
   transition: all 0.15s;
   box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+  min-width: 60px;
 }
 .word-card:hover {
   background: rgba(255,255,255,0.25);
   border-color: rgba(255,255,255,0.5);
-  transform: translateY(-4px);
+  transform: translateY(-6px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.1);
 }
 .word-card:active { cursor: grabbing; transform: scale(0.95); }
 .word-card--add {
   display: flex; align-items: center; justify-content: center;
-  width: 44px; height: 44px; padding: 0;
+  min-width: 44px; height: 60px; padding: 0; gap: 0;
   background: rgba(255,200,60,0.2);
   border-color: rgba(255,220,80,0.5);
+  border-style: dashed;
   cursor: pointer;
 }
 .word-card--add:hover {
   background: rgba(255,200,60,0.4);
 }
+.word-card-preview {
+  height: 36px;
+  opacity: 0.85;
+  pointer-events: none;
+  border-radius: 6px;
+}
+.word-card-placeholder {
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 0.9rem; font-weight: 800;
+  color: rgba(255,255,255,0.5);
+  letter-spacing: 2px;
+  white-space: nowrap;
+  padding: 6px 0;
+}
 .word-card-text {
   font-family: 'Noto Sans KR', sans-serif;
-  font-size: 1.1rem; font-weight: 800;
+  font-size: 0.85rem; font-weight: 800;
   color: white;
   text-shadow: 0 1px 4px rgba(0,0,0,0.15);
-  letter-spacing: 2px;
+  letter-spacing: 3px;
   white-space: nowrap;
 }
 

@@ -10,9 +10,25 @@ import { playStart, playComplete, playCelebrate, playFail, playSlam, playFloat, 
 import { ICON_MAP } from '../icon-map.js';
 import DragPanel from './DragPanel.jsx';
 import VertexEditor from './VertexEditor.jsx';
-import WordCards from './WordCards.jsx';
+import WordCards, { renderLayoutPreview } from './WordCards.jsx';
 
 let nextId = 1;
+
+// 배치 기억 — 낱말별 글자 위치 저장
+const LAYOUT_KEY = 'jina-word-layouts';
+function loadWordLayout(word) {
+  try {
+    const all = JSON.parse(localStorage.getItem(LAYOUT_KEY) || '{}');
+    return all[word] || null;
+  } catch { return null; }
+}
+function saveWordLayout(word, layout) {
+  try {
+    const all = JSON.parse(localStorage.getItem(LAYOUT_KEY) || '{}');
+    all[word] = layout;
+    localStorage.setItem(LAYOUT_KEY, JSON.stringify(all));
+  } catch {}
+}
 
 // 자음+모음 통합 배열
 const ALL_JAMO = [...CONSONANTS, ...VOWELS];
@@ -137,25 +153,42 @@ export default function FreeComposeMode() {
     setPanOffset({ x: screenCX - firstPiece.x, y: screenCY - firstPiece.y });
   }, [pieces]);
 
-  // ── 낱말카드에서 자모 배치 ──
-  const deployWord = useCallback((jamos, dropY) => {
-    const scale = pieces.length > 0 ? pieces[pieces.length - 1].scale : 0.5;
-    const gap = 500 * scale * 0.8;
+  // ── 낱말카드에서 자모 배치 (배치 기억 + 미리보기 생성) ──
+  const deployWord = useCallback((jamos, word, updatePreview) => {
     const screenCX = window.innerWidth / 2;
     const screenCY = window.innerHeight / 2;
-    // 화면 중앙에 가로로 배치
-    const totalW = (jamos.length - 1) * gap;
-    const startX = screenCX - panOffset.x - totalW / 2;
-    const y = screenCY - panOffset.y;
 
-    const newPieces = jamos.map((char, i) => ({
-      id: nextId++, char, x: startX + i * gap, y, scale, done: false,
-    }));
+    // 저장된 배치가 있으면 복원
+    const saved = loadWordLayout(word);
+    let newPieces;
+    if (saved && saved.length === jamos.length) {
+      newPieces = jamos.map((char, i) => ({
+        id: nextId++, char, x: saved[i].x, y: saved[i].y, scale: saved[i].scale, done: false,
+      }));
+    } else {
+      // 새로 배치 — 화면 중앙에 가로로
+      const scale = pieces.length > 0 ? pieces[pieces.length - 1].scale : 0.5;
+      const gap = 500 * scale * 0.8;
+      const totalW = (jamos.length - 1) * gap;
+      const startX = screenCX - panOffset.x - totalW / 2;
+      const y = screenCY - panOffset.y;
+      newPieces = jamos.map((char, i) => ({
+        id: nextId++, char, x: startX + i * gap, y, scale, done: false,
+      }));
+    }
 
     const firstPiece = newPieces[0];
     setPieces(prev => [...prev, ...newPieces]);
     setSelectedId(firstPiece.id);
     setPanOffset({ x: screenCX - firstPiece.x, y: screenCY - firstPiece.y });
+
+    // 배치 저장
+    saveWordLayout(word, newPieces.map(p => ({ x: p.x, y: p.y, scale: p.scale })));
+    // 미리보기 생성
+    if (updatePreview) {
+      const previewImg = renderLayoutPreview(newPieces);
+      if (previewImg) updatePreview(word, previewImg);
+    }
   }, [pieces, panOffset]);
 
   // ── 패널에서 클릭 or 드래그 ──

@@ -1,28 +1,82 @@
-// WordCards.jsx — 낱말카드 (하단 반투명 카드, 드래그로 올리면 글자 배치)
-import React, { useState, useRef, useCallback, useEffect } from 'react';
+// WordCards.jsx — 낱말카드 (하단 카드, 실제 배치 미리보기, 드래그 배치)
+import React, { useState, useRef, useCallback, useEffect, useMemo } from 'react';
+import { CONSONANTS, VOWELS, APP_CONFIG } from '../data.js';
 import { decomposeWord } from '../utils/jamo.js';
 
 const STORAGE_KEY = 'jina-word-cards';
+const PREVIEW_KEY = 'jina-word-previews';
 
 function loadCards() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch { return []; }
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); } catch { return []; }
+}
+function saveCards(cards) { localStorage.setItem(STORAGE_KEY, JSON.stringify(cards)); }
+
+function loadPreviews() {
+  try { return JSON.parse(localStorage.getItem(PREVIEW_KEY) || '{}'); } catch { return {}; }
+}
+function savePreviews(previews) { localStorage.setItem(PREVIEW_KEY, JSON.stringify(previews)); }
+
+function getJamoSource(char) {
+  return CONSONANTS.find(c => c.char === char) || VOWELS.find(v => v.char === char);
 }
 
-function saveCards(cards) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(cards));
+// 배치된 pieces로부터 미리보기 이미지 생성
+export function renderLayoutPreview(pieces) {
+  if (!pieces || pieces.length === 0) return null;
+  // 전체 바운딩 박스 계산
+  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+  pieces.forEach(p => {
+    const half = 500 * p.scale / 2;
+    if (p.x - half < minX) minX = p.x - half;
+    if (p.x + half > maxX) maxX = p.x + half;
+    if (p.y - half < minY) minY = p.y - half;
+    if (p.y + half > maxY) maxY = p.y + half;
+  });
+  const PAD = 20;
+  const bw = maxX - minX + PAD * 2;
+  const bh = maxY - minY + PAD * 2;
+  // 캔버스 크기를 카드에 맞게 축소
+  const MAX_W = 200, MAX_H = 80;
+  const fitScale = Math.min(MAX_W / bw, MAX_H / bh, 1);
+  const W = Math.ceil(bw * fitScale);
+  const H = Math.ceil(bh * fitScale);
+
+  const canvas = document.createElement('canvas');
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext('2d');
+
+  pieces.forEach(p => {
+    const src = p.source || getJamoSource(p.char);
+    if (!src) return;
+    ctx.save();
+    const px = (p.x - minX + PAD) * fitScale;
+    const py = (p.y - minY + PAD) * fitScale;
+    ctx.translate(px, py);
+    const s = p.scale * fitScale;
+    ctx.scale(s, s);
+    ctx.translate(-250, -250); // 500x500 캔버스 중앙 기준
+    // 외곽
+    ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+    ctx.lineWidth = APP_CONFIG.GUIDE_STROKE_WIDTH + 20;
+    ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    src.strokes.forEach(st => ctx.stroke(new Path2D(st.path)));
+    // 내부
+    ctx.strokeStyle = p.done ? APP_CONFIG.TRACE_COLOR : 'rgba(255,255,255,0.8)';
+    ctx.lineWidth = APP_CONFIG.GUIDE_STROKE_WIDTH;
+    src.strokes.forEach(st => ctx.stroke(new Path2D(st.path)));
+    ctx.restore();
+  });
+  return canvas.toDataURL();
 }
 
 export default function WordCards({ onDeploy }) {
   const [cards, setCards] = useState(loadCards);
   const [showAdd, setShowAdd] = useState(false);
   const [inputVal, setInputVal] = useState('');
+  const [previews, setPreviews] = useState(loadPreviews);
   const dragRef = useRef(null);
-  const [dragCard, setDragCard] = useState(null); // { word, x, y }
+  const [dragCard, setDragCard] = useState(null);
 
-  // 카드 추가
   const addCard = useCallback(() => {
     const word = inputVal.trim();
     if (!word) return;
@@ -33,14 +87,32 @@ export default function WordCards({ onDeploy }) {
     setShowAdd(false);
   }, [inputVal, cards]);
 
-  // 카드 삭제
   const removeCard = useCallback((idx) => {
+    const word = cards[idx];
     const next = cards.filter((_, i) => i !== idx);
     setCards(next);
     saveCards(next);
-  }, [cards]);
+    // 미리보기도 정리
+    const np = { ...previews };
+    delete np[word];
+    setPreviews(np);
+    savePreviews(np);
+  }, [cards, previews]);
 
-  // 드래그 시작
+  // 외부에서 미리보기 업데이트
+  const updatePreview = useCallback((word, dataUrl) => {
+    setPreviews(prev => {
+      const next = { ...prev, [word]: dataUrl };
+      savePreviews(next);
+      return next;
+    });
+  }, []);
+
+  // onDeploy에 updatePreview를 같이 전달
+  const handleDeploy = useCallback((jamos, word) => {
+    if (onDeploy) onDeploy(jamos, word, updatePreview);
+  }, [onDeploy, updatePreview]);
+
   const startDrag = useCallback((word, e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -69,16 +141,12 @@ export default function WordCards({ onDeploy }) {
       const d = dragRef.current;
       dragRef.current = null;
       setDragCard(null);
-      // 위쪽으로 충분히 올렸으면 배치
       let y;
       if (e.changedTouches) y = e.changedTouches[0].clientY;
       else y = e.clientY;
       if (d.moved && y < window.innerHeight - 200) {
-        // 자모 분해 → 배치
         const jamos = decomposeWord(d.word);
-        if (jamos.length > 0 && onDeploy) {
-          onDeploy(jamos, y);
-        }
+        if (jamos.length > 0) handleDeploy(jamos, d.word);
       }
     }
     window.addEventListener('touchmove', onMove, { passive: false });
@@ -95,32 +163,35 @@ export default function WordCards({ onDeploy }) {
 
   return (
     <>
-      {/* 하단 카드 트레이 */}
       <div className="word-tray">
         {cards.map((word, i) => (
           <div
-            key={i}
+            key={`${word}-${i}`}
             className="word-card"
             onTouchStart={(e) => startDrag(word, e)}
             onMouseDown={(e) => startDrag(word, e)}
             onContextMenu={(e) => { e.preventDefault(); removeCard(i); }}
           >
-            <span className="word-card-text">{word}</span>
+            {previews[word] ? (
+              <img className="word-card-preview" src={previews[word]} draggable={false} />
+            ) : (
+              <span className="word-card-placeholder">{word}</span>
+            )}
           </div>
         ))}
         <div className="word-card word-card--add" onClick={() => setShowAdd(true)}>
-          <span style={{ fontSize: '1.5rem' }}>+</span>
+          <span style={{ fontSize: '1.5rem', color: 'rgba(255,255,255,0.7)' }}>+</span>
         </div>
       </div>
 
-      {/* 드래그 고스트 */}
       {dragCard && (
         <div className="word-drag-ghost" style={{ left: dragCard.x, top: dragCard.y }}>
-          {dragCard.word}
+          {previews[dragCard.word] ? (
+            <img src={previews[dragCard.word]} style={{ height: 60 }} draggable={false} />
+          ) : dragCard.word}
         </div>
       )}
 
-      {/* 이름 추가 모달 */}
       {showAdd && (
         <div className="word-modal-overlay" onClick={() => setShowAdd(false)}>
           <div className="word-modal" onClick={(e) => e.stopPropagation()}>
