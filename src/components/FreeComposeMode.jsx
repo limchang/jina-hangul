@@ -648,8 +648,9 @@ function TracePiece({ piece, selected, onDone, onDelete, onSelect, isOverTrash, 
 
   function completeStroke() {
     const S = stateRef.current;
+    const curSource = getSource(piece.char, piece.id);
     S.completed.push([...engineRef.current.pts]); S.strokeIdx++;
-    if (S.strokeIdx >= source.strokes.length) {
+    if (S.strokeIdx >= curSource.strokes.length) {
       if (arrowAnimRef.current) { arrowAnimRef.current.stop(); arrowAnimRef.current = null; }
       overlayRef.current.innerHTML = '';
       particleRef.current.celebrate(SIZE/2, SIZE/2); startPLoop();
