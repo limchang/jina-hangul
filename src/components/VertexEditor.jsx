@@ -126,21 +126,41 @@ function buildEdges(verts) {
   return edges;
 }
 
+// 같은 좌표(±3px)를 공유하는 꼭지점 그룹 맵 생성
+// vertIdx → [vertIdx, vertIdx, ...] (자기 자신 포함)
+function buildLinkedGroups(verts) {
+  const SNAP = 3;
+  const groups = {};
+  for (let i = 0; i < verts.length; i++) {
+    const linked = [i];
+    for (let j = 0; j < verts.length; j++) {
+      if (i === j) continue;
+      if (Math.abs(verts[i].x - verts[j].x) < SNAP && Math.abs(verts[i].y - verts[j].y) < SNAP) {
+        linked.push(j);
+      }
+    }
+    groups[i] = linked;
+  }
+  return groups;
+}
+
 const SIZE = 500;
 
 export default function VertexEditor({ source, onUpdate }) {
   const canvasRef = useRef(null);
   const vertsRef = useRef([]);
   const edgesRef = useRef([]);
+  const linkedRef = useRef({}); // 좌표 공유 그룹
   const dragRef = useRef(null);
-  // dragRef: { type: 'vertex', idx, offsetX, offsetY }
-  //       or { type: 'edge', i0, i1, off0x, off0y, off1x, off1y }
+  // dragRef: { type: 'vertex', indices: [...], offsets: [{dx,dy},...] }
+  //       or { type: 'edge', pairs: [{idx, dx, dy},...] }
 
-  // source 바뀌면 verts 재파싱 (글로우는 그리지 않음 — 드래그 중일 때만 draw)
+  // source 바뀌면 verts 재파싱
   useEffect(() => {
     if (!source) return;
     vertsRef.current = extractVerts(source);
     edgesRef.current = buildEdges(vertsRef.current);
+    linkedRef.current = buildLinkedGroups(vertsRef.current);
   }, [source]);
 
   function draw() {
@@ -149,26 +169,12 @@ export default function VertexEditor({ source, onUpdate }) {
     const ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, SIZE, SIZE);
     const d = dragRef.current;
-    if (!d) return;
-
-    if (d.type === 'vertex') {
-      const v = vertsRef.current[d.idx];
+    if (!d || !d.pairs) return;
+    // 모든 움직이는 꼭지점에 글로우
+    d.pairs.forEach(p => {
+      const v = vertsRef.current[p.idx];
       if (v) drawGlow(ctx, v.x, v.y);
-    } else if (d.type === 'edge') {
-      const v0 = vertsRef.current[d.i0], v1 = vertsRef.current[d.i1];
-      if (v0 && v1) {
-        drawGlow(ctx, v0.x, v0.y);
-        drawGlow(ctx, v1.x, v1.y);
-        // 선분 글로우
-        ctx.beginPath();
-        ctx.moveTo(v0.x, v0.y);
-        ctx.lineTo(v1.x, v1.y);
-        ctx.strokeStyle = 'rgba(255,100,150,0.3)';
-        ctx.lineWidth = 20;
-        ctx.lineCap = 'round';
-        ctx.stroke();
-      }
-    }
+    });
   }
 
   function drawGlow(ctx, x, y) {
@@ -198,6 +204,18 @@ export default function VertexEditor({ source, onUpdate }) {
       };
     }
 
+    // 꼭지점 idx에 연결된 모든 인덱스를 모아서 pairs 생성
+    function collectPairs(indices, pos) {
+      const seen = new Set();
+      indices.forEach(i => {
+        (linkedRef.current[i] || [i]).forEach(li => seen.add(li));
+      });
+      return [...seen].map(idx => {
+        const v = vertsRef.current[idx];
+        return { idx, dx: v.x - pos.x, dy: v.y - pos.y };
+      });
+    }
+
     function onDown(e) {
       e.preventDefault();
       e.stopPropagation();
@@ -220,17 +238,12 @@ export default function VertexEditor({ source, onUpdate }) {
         if (d < bestEdgeDist) { bestEdgeDist = d; bestEdge = edge; }
       });
 
-      // 선분이 꼭지점보다 가까우면 (또는 비슷하면) 선분 드래그
+      // 선분이 꼭지점보다 가까우면 선분 드래그 (양쪽 + 연결 그룹)
       if (bestEdge && bestEdgeDist < bestVertDist * 0.9) {
-        const a = verts[bestEdge.i0], b = verts[bestEdge.i1];
-        dragRef.current = {
-          type: 'edge', i0: bestEdge.i0, i1: bestEdge.i1,
-          off0x: a.x - pos.x, off0y: a.y - pos.y,
-          off1x: b.x - pos.x, off1y: b.y - pos.y,
-        };
+        dragRef.current = { pairs: collectPairs([bestEdge.i0, bestEdge.i1], pos) };
       } else if (bestVertIdx >= 0) {
-        const v = verts[bestVertIdx];
-        dragRef.current = { type: 'vertex', idx: bestVertIdx, offsetX: v.x - pos.x, offsetY: v.y - pos.y };
+        // 꼭지점 + 연결 그룹
+        dragRef.current = { pairs: collectPairs([bestVertIdx], pos) };
       }
       draw();
     }
@@ -240,23 +253,13 @@ export default function VertexEditor({ source, onUpdate }) {
       e.preventDefault();
       e.stopPropagation();
       const pos = toCanvas(e);
-      const d = dragRef.current;
+      const pairs = dragRef.current.pairs;
 
-      if (d.type === 'vertex') {
-        const newX = pos.x + d.offsetX;
-        const newY = pos.y + d.offsetY;
-        vertsRef.current = vertsRef.current.map((v, i) =>
-          i === d.idx ? { ...v, x: newX, y: newY } : v
-        );
-      } else if (d.type === 'edge') {
-        const new0x = pos.x + d.off0x, new0y = pos.y + d.off0y;
-        const new1x = pos.x + d.off1x, new1y = pos.y + d.off1y;
-        vertsRef.current = vertsRef.current.map((v, i) => {
-          if (i === d.i0) return { ...v, x: new0x, y: new0y };
-          if (i === d.i1) return { ...v, x: new1x, y: new1y };
-          return v;
-        });
-      }
+      vertsRef.current = vertsRef.current.map((v, i) => {
+        const p = pairs.find(p => p.idx === i);
+        if (p) return { ...v, x: pos.x + p.dx, y: pos.y + p.dy };
+        return v;
+      });
 
       if (onUpdate && source) {
         onUpdate(vertsToStrokes(source, vertsRef.current));
