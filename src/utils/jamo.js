@@ -19,3 +19,35 @@ export function composeSyllable(cho, jung, jong = '') {
   if (c === undefined || j === undefined) return '';
   return String.fromCharCode(0xAC00 + c * 21 * 28 + j * 28 + jj);
 }
+
+// 초성 역매핑 (인덱스 → 자모)
+const CHO_LIST = ['ㄱ','ㄲ','ㄴ','ㄷ','ㄸ','ㄹ','ㅁ','ㅂ','ㅃ','ㅅ','ㅆ','ㅇ','ㅈ','ㅉ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
+const JUNG_LIST = ['ㅏ','ㅐ','ㅑ','ㅒ','ㅓ','ㅔ','ㅕ','ㅖ','ㅗ','ㅘ','ㅙ','ㅚ','ㅛ','ㅜ','ㅝ','ㅞ','ㅟ','ㅠ','ㅡ','ㅢ','ㅣ'];
+const JONG_LIST = ['','ㄱ','ㄲ','ㄳ','ㄴ','ㄵ','ㄶ','ㄷ','ㄹ','ㄺ','ㄻ','ㄼ','ㄽ','ㄾ','ㄿ','ㅀ','ㅁ','ㅂ','ㅄ','ㅅ','ㅆ','ㅇ','ㅈ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
+
+// 한글 음절 → 자모 배열로 분해 (초성, 중성, 종성)
+// 예: '진' → ['ㅈ', 'ㅣ', 'ㄴ'], '아' → ['ㅇ', 'ㅏ']
+export function decompose(syllable) {
+  const code = syllable.charCodeAt(0);
+  // 이미 자모이면 그대로
+  if (CONS_CHARS.has(syllable) || VOW_CHARS.has(syllable)) return [syllable];
+  // 한글 음절 범위
+  if (code < 0xAC00 || code > 0xD7A3) return [syllable];
+  const offset = code - 0xAC00;
+  const cho = CHO_LIST[Math.floor(offset / (21 * 28))];
+  const jung = JUNG_LIST[Math.floor((offset % (21 * 28)) / 28)];
+  const jong = JONG_LIST[offset % 28];
+  const result = [cho, jung];
+  if (jong) result.push(jong);
+  return result;
+}
+
+// 문자열 → 모든 글자를 자모로 분해
+export function decomposeWord(word) {
+  const jamos = [];
+  for (const ch of word) {
+    jamos.push(...decompose(ch));
+  }
+  // data.js에 있는 자모만 필터 (ㄲ, ㅐ 등 지원 안 되는 건 제외)
+  return jamos.filter(j => CONS_CHARS.has(j) || VOW_CHARS.has(j));
+}

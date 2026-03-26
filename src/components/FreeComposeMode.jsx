@@ -10,8 +10,12 @@ import { playStart, playComplete, playCelebrate, playFail, playSlam, playFloat, 
 import { ICON_MAP } from '../icon-map.js';
 import DragPanel from './DragPanel.jsx';
 import VertexEditor from './VertexEditor.jsx';
+import WordCards from './WordCards.jsx';
 
 let nextId = 1;
+
+// 자음+모음 통합 배열
+const ALL_JAMO = [...CONSONANTS, ...VOWELS];
 
 // Canvas로 가이드 글자 이미지 생성
 function renderJamoImage(source) {
@@ -132,6 +136,27 @@ export default function FreeComposeMode() {
     // 캔버스 센터를 첫 글자로
     setPanOffset({ x: screenCX - firstPiece.x, y: screenCY - firstPiece.y });
   }, [pieces]);
+
+  // ── 낱말카드에서 자모 배치 ──
+  const deployWord = useCallback((jamos, dropY) => {
+    const scale = pieces.length > 0 ? pieces[pieces.length - 1].scale : 0.5;
+    const gap = 500 * scale * 0.8;
+    const screenCX = window.innerWidth / 2;
+    const screenCY = window.innerHeight / 2;
+    // 화면 중앙에 가로로 배치
+    const totalW = (jamos.length - 1) * gap;
+    const startX = screenCX - panOffset.x - totalW / 2;
+    const y = screenCY - panOffset.y;
+
+    const newPieces = jamos.map((char, i) => ({
+      id: nextId++, char, x: startX + i * gap, y, scale, done: false,
+    }));
+
+    const firstPiece = newPieces[0];
+    setPieces(prev => [...prev, ...newPieces]);
+    setSelectedId(firstPiece.id);
+    setPanOffset({ x: screenCX - firstPiece.x, y: screenCY - firstPiece.y });
+  }, [pieces, panOffset]);
 
   // ── 패널에서 클릭 or 드래그 ──
   const dragMovedRef = useRef(false);
@@ -340,42 +365,29 @@ export default function FreeComposeMode() {
         ))}
       </div>
 
-      {/* 플로팅 리모컨 — 자음 (좌) */}
+      {/* 플로팅 리모컨 — 자음+모음 통합 (좌) */}
       <div className="remote remote--left">
-        <div className="remote-label">자음</div>
+        <div className="remote-label">글자</div>
         <div className="remote-list">
-          {CONSONANTS.map(c => (
-            <div key={c.char} className="remote-btn"
-              onTouchStart={(e) => startDragNew(c.char, 'consonant', e)}
-              onMouseDown={(e) => startDragNew(c.char, 'consonant', e)}
-            >{c.char}</div>
+          {ALL_JAMO.map(j => (
+            <div key={j.char} className="remote-btn"
+              onTouchStart={(e) => startDragNew(j.char, 'jamo', e)}
+              onMouseDown={(e) => startDragNew(j.char, 'jamo', e)}
+            >{j.char}</div>
           ))}
           <div className="remote-btn remote-btn--all"
-            onClick={() => placeAll(CONSONANTS)}
-          >ALL</div>
-        </div>
-      </div>
-
-      {/* 플로팅 리모컨 — 모음 (우) */}
-      <div className="remote remote--right">
-        <div className="remote-label">모음</div>
-        <div className="remote-list">
-          {VOWELS.map(v => (
-            <div key={v.char} className="remote-btn"
-              onTouchStart={(e) => startDragNew(v.char, 'vowel', e)}
-              onMouseDown={(e) => startDragNew(v.char, 'vowel', e)}
-            >{v.char}</div>
-          ))}
-          <div className="remote-btn remote-btn--all"
-            onClick={() => placeAll(VOWELS)}
+            onClick={() => placeAll(ALL_JAMO)}
           >ALL</div>
         </div>
       </div>
 
       {/* 상단 힌트 */}
       <div className="free-top-hint">
-        {pieces.length === 0 ? '자음/모음을 끌어서 배치하세요' : '따라쓰기 · 빈곳=이동 · 꾹누르기=꼭지점편집'}
+        {pieces.length === 0 ? '글자를 끌어서 배치하거나, 아래 낱말카드를 올려보세요' : '따라쓰기 · 빈곳=이동 · 꾹=편집'}
       </div>
+
+      {/* 낱말카드 (하단) */}
+      <WordCards onDeploy={deployWord} />
 
       {/* 휴지통 — 드래그 삭제 + 롱프레스 모두 지우기 */}
       <TrashZone
