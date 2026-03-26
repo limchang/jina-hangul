@@ -641,10 +641,15 @@ main {
 }
 .word-card-preview {
   max-height: 70px;
-  max-width: 80px;
+  max-width: 90px;
   opacity: 0.9;
   pointer-events: none;
   border-radius: 6px;
+}
+/* 기본 카드(자음/모음 공부)는 넓게 */
+.word-card--default .word-card-preview {
+  max-width: none;
+  height: 40px;
 }
 .word-card-placeholder {
   font-family: 'Noto Sans KR', sans-serif;
