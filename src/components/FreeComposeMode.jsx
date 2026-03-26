@@ -586,7 +586,7 @@ function TracePiece({ piece, selected, sourceVer, onDone, onDelete, onSelect, is
     // 글자 모양 히트 테스트 — 획 위에 있는지 확인
     function isOnGlyph(canvasPos) {
       const gCtx = guideRef.current.getContext('2d');
-      const hitWidth = APP_CONFIG.GUIDE_STROKE_WIDTH + 40; // 넉넉한 히트 영역
+      const hitWidth = APP_CONFIG.GUIDE_STROKE_WIDTH + 80; // 넉넉한 히트 영역
       for (const s of source.strokes) {
         const p = new Path2D(s.path);
         gCtx.lineWidth = hitWidth;

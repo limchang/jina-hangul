@@ -52,7 +52,7 @@ export class TracingEngine {
     if (!this.pts || this.pts.length === 0) return false;
     const startPt = this.pts[0];
     const dist = Math.hypot(x - startPt.x, y - startPt.y);
-    if (dist < 80) {
+    if (dist < 110) {
       this.isTracing = true;
       this.maxReachedIdx = 0;
       return true;
