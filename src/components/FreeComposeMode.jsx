@@ -413,8 +413,18 @@ function TracePiece({ piece, selected, sourceVer, onDone, onDelete, onSelect, is
   // sourceVer가 바뀌면 (다른 글자에서 같은 char 편집 시) 가이드 다시 그리기
   useEffect(() => {
     if (!guideRef.current || !stateRef.current.inited) return;
-    drawGuide();
+    redrawAll();
   }, [sourceVer]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // 편집 모드 해제 시 가이드+화살표+아이콘 복원
+  const prevEditMode = useRef(false);
+  useEffect(() => {
+    if (prevEditMode.current && !editMode && stateRef.current.inited) {
+      // 편집 끝 → 최신 source로 전체 복원
+      redrawAll();
+    }
+    prevEditMode.current = editMode;
+  }, [editMode]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const SIZE = 500;
   const pixelSize = SIZE * piece.scale;
@@ -430,17 +440,19 @@ function TracePiece({ piece, selected, sourceVer, onDone, onDelete, onSelect, is
     loadStroke(0);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  function drawGuide() {
-    const gCtx = guideRef.current.getContext('2d');
+  // 항상 최신 source를 getSource()로 가져와서 그리기
+  function drawGuideWith(src) {
+    const gCtx = guideRef.current?.getContext('2d');
+    if (!gCtx || !src) return;
     const S = stateRef.current;
     gCtx.clearRect(0, 0, SIZE, SIZE);
     gCtx.strokeStyle = 'rgba(255,255,255,0.25)';
     gCtx.lineWidth = APP_CONFIG.GUIDE_STROKE_WIDTH + 28;
     gCtx.lineCap = 'round'; gCtx.lineJoin = 'round'; gCtx.setLineDash([]);
-    source.strokes.forEach(s => gCtx.stroke(new Path2D(s.path)));
+    src.strokes.forEach(s => gCtx.stroke(new Path2D(s.path)));
     gCtx.strokeStyle = APP_CONFIG.GUIDE_COLOR;
     gCtx.lineWidth = APP_CONFIG.GUIDE_STROKE_WIDTH;
-    source.strokes.forEach(s => gCtx.stroke(new Path2D(s.path)));
+    src.strokes.forEach(s => gCtx.stroke(new Path2D(s.path)));
     S.completed.forEach(pts => {
       gCtx.beginPath(); gCtx.strokeStyle = APP_CONFIG.TRACE_COLOR;
       gCtx.lineWidth = APP_CONFIG.TRACE_STROKE_WIDTH;
@@ -449,8 +461,8 @@ function TracePiece({ piece, selected, sourceVer, onDone, onDelete, onSelect, is
       for (const p of pts) gCtx.lineTo(p.x, p.y);
       gCtx.stroke();
     });
-    if (S.strokeIdx < source.strokes.length) {
-      const pts = samplePath(source.strokes[S.strokeIdx].path, 80);
+    if (S.strokeIdx < src.strokes.length) {
+      const pts = samplePath(src.strokes[S.strokeIdx].path, 80);
       if (pts.length >= 2) {
         gCtx.beginPath(); gCtx.arc(pts[0].x, pts[0].y, 12, 0, Math.PI * 2);
         gCtx.fillStyle = '#44ee88'; gCtx.fill();
@@ -459,15 +471,30 @@ function TracePiece({ piece, selected, sourceVer, onDone, onDelete, onSelect, is
     }
   }
 
-  function loadStroke(idx) {
+  function drawGuide() { drawGuideWith(getSource(piece.char)); }
+
+  function loadStrokeWith(idx, src) {
     stateRef.current.strokeIdx = idx;
-    const stroke = source.strokes[idx];
+    const stroke = src.strokes[idx];
     if (!stroke) return;
     const isClosed = stroke.path.includes('A') || piece.char === 'ㅁ' || piece.char === 'ㅇ';
     engineRef.current.setStroke(stroke.path, isClosed);
-    drawGuide(); renderTrace(); setupIcons();
+    drawGuideWith(src); renderTrace(); setupIcons();
     if (arrowAnimRef.current) arrowAnimRef.current.stop();
     arrowAnimRef.current = createArrowAnim(engineRef.current.pts, arrowRef.current.getContext('2d'), SIZE, SIZE);
+  }
+
+  function loadStroke(idx) { loadStrokeWith(idx, getSource(piece.char)); }
+
+  // 최신 source로 전체 복원 (편집 후, sourceVer 변경 시)
+  function redrawAll() {
+    const src = getSource(piece.char);
+    if (!src) return;
+    drawGuideWith(src);
+    const S = stateRef.current;
+    if (S.strokeIdx < src.strokes.length && engineRef.current) {
+      loadStrokeWith(S.strokeIdx, src);
+    }
   }
 
   function renderTrace() {
@@ -696,12 +723,12 @@ function TracePiece({ piece, selected, sourceVer, onDone, onDelete, onSelect, is
       }}
     >
       <canvas ref={guideRef} className="free-trace-layer" />
-      {!editMode && <canvas ref={arrowRef} className="free-trace-layer" style={{ zIndex: 2 }} />}
-      {!editMode && <canvas ref={traceRef} className="free-trace-layer" style={{ zIndex: 3 }} />}
-      {!editMode && <div ref={overlayRef} className="free-trace-layer free-trace-overlay" style={{ zIndex: 4 }} />}
+      <canvas ref={arrowRef} className="free-trace-layer" style={{ zIndex: 2, display: editMode ? 'none' : undefined }} />
+      <canvas ref={traceRef} className="free-trace-layer" style={{ zIndex: 3, display: editMode ? 'none' : undefined }} />
+      <div ref={overlayRef} className="free-trace-layer free-trace-overlay" style={{ zIndex: 4, display: editMode ? 'none' : undefined }} />
       {editMode && (
         <VertexEditor
-          source={source}
+          source={getSource(piece.char)}
           onUpdate={handleVertexUpdate}
         />
       )}
