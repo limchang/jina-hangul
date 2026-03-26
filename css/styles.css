@@ -753,7 +753,7 @@ main {
 
 /* 카드 편집 모드 — 완료 버튼 */
 .card-edit-done-btn {
-  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+  position: fixed; bottom: 180px; left: 50%; transform: translateX(-50%);
   z-index: 9200;
   font-family: 'Fredoka', 'Noto Sans KR', sans-serif;
   font-size: 1.1rem; font-weight: 800;
