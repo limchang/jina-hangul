@@ -393,26 +393,27 @@ main {
   display: flex; gap: 3px;
   justify-content: center;
 }
-/* 액션 버튼 — 글자 버튼과 동일 사이즈, 텍스트만 다름 */
-.remote-btn--action {
-  font-size: 0.55rem; line-height: 1.2;
-  text-align: center; letter-spacing: 0.5px;
+/* 가로 넓은 액션 버튼 — 같은 높이, 가로로 길게 */
+.remote-btn--wide {
+  width: auto; height: 36px;
+  padding: 0 14px;
+  font-size: 0.7rem; letter-spacing: 1px;
+  white-space: nowrap;
   cursor: pointer;
   background: rgba(255,200,60,0.2);
   border-color: rgba(255,220,80,0.5);
 }
-.remote-btn--action:hover {
+.remote-btn--wide:hover {
   background: rgba(255,200,60,0.4);
   border-color: rgba(255,220,80,0.7);
 }
 .remote-btn--danger {
-  background: rgba(255,80,80,0.15);
-  border-color: rgba(255,80,80,0.35);
-  font-size: 0.5rem;
+  background: rgba(255,80,80,0.15) !important;
+  border-color: rgba(255,80,80,0.35) !important;
 }
 .remote-btn--danger:hover {
-  background: rgba(255,80,80,0.3);
-  border-color: rgba(255,80,80,0.5);
+  background: rgba(255,80,80,0.3) !important;
+  border-color: rgba(255,80,80,0.5) !important;
 }
 .remote-list {
   display: flex; flex-wrap: wrap; gap: 3px;

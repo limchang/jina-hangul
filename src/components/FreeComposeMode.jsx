@@ -279,15 +279,17 @@ export default function FreeComposeMode() {
 
       <DraggableRemote startY={window.innerHeight - 160}>
         <div className="remote-row">
-          <div className="remote-btn remote-btn--action" onClick={() => placeAll(CONSONANTS)}>자음<br/>공부</div>
-          <div className="remote-btn remote-btn--action" onClick={() => placeAll(VOWELS)}>모음<br/>공부</div>
+          <div className="remote-btn remote-btn--wide" onClick={() => placeAll(CONSONANTS)}>자음 공부</div>
+          <div className="remote-btn remote-btn--wide" onClick={() => placeAll(VOWELS)}>모음 공부</div>
+          <div className="remote-btn remote-btn--wide remote-btn--danger" onClick={resetAll}>모두 지우기</div>
+          <div className="remote-btn remote-btn--wide" onClick={startCardEdit}>+ 카드</div>
+        </div>
+        <div className="remote-row">
           {CONSONANTS.map(c => (
             <div key={c.char} className="remote-btn" onTouchStart={(e) => startDragNew(c.char, 'jamo', e)} onMouseDown={(e) => startDragNew(c.char, 'jamo', e)}>{c.char}</div>
           ))}
         </div>
         <div className="remote-row">
-          <div className="remote-btn remote-btn--action remote-btn--danger" onClick={resetAll}>모두<br/>지우기</div>
-          <div className="remote-btn remote-btn--action" onClick={startCardEdit}>+</div>
           {VOWELS.map(v => (
             <div key={v.char} className="remote-btn" onTouchStart={(e) => startDragNew(v.char, 'jamo', e)} onMouseDown={(e) => startDragNew(v.char, 'jamo', e)}>{v.char}</div>
           ))}
