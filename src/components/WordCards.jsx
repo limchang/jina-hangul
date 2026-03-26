@@ -8,8 +8,8 @@ const PREVIEW_KEY = 'jina-word-previews';
 
 // 기본 카드용 미리보기 — 가이드 스트로크로 ㄱㄴㄷ / ㅏㅑ 렌더링
 function renderDefaultCardPreview(items) {
-  const CELL = 80;
-  const PAD = 10;
+  const CELL = 50;
+  const PAD = 6;
   const W = items.length * CELL + PAD * 2;
   const H = CELL + PAD * 2;
   const canvas = document.createElement('canvas');
@@ -21,12 +21,12 @@ function renderDefaultCardPreview(items) {
     const s = CELL / 500;
     ctx.scale(s, s);
     ctx.translate(-250, -250);
-    ctx.strokeStyle = 'rgba(255,255,255,0.25)';
-    ctx.lineWidth = APP_CONFIG.GUIDE_STROKE_WIDTH + 20;
+    ctx.strokeStyle = 'rgba(80,160,220,0.3)';
+    ctx.lineWidth = APP_CONFIG.GUIDE_STROKE_WIDTH + 10;
     ctx.lineCap = 'round'; ctx.lineJoin = 'round';
     item.strokes.forEach(st => ctx.stroke(new Path2D(st.path)));
-    ctx.strokeStyle = 'rgba(255,255,255,0.9)';
-    ctx.lineWidth = APP_CONFIG.GUIDE_STROKE_WIDTH;
+    ctx.strokeStyle = 'rgba(60,140,200,0.8)';
+    ctx.lineWidth = APP_CONFIG.GUIDE_STROKE_WIDTH - 10;
     item.strokes.forEach(st => ctx.stroke(new Path2D(st.path)));
     ctx.restore();
   });

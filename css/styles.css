@@ -659,14 +659,15 @@ main {
   white-space: nowrap;
   padding: 2px 0;
 }
-/* 기본 카드 (자음 공부, 모음 공부) */
+/* 기본 카드 (자음, 모음) — 흰색 배경에 파란 글자 */
 .word-card--default {
-  background: rgba(255,200,60,0.2);
-  border-color: rgba(255,220,80,0.5);
+  background: rgba(255,255,255,0.4);
+  border-color: rgba(255,255,255,0.7);
+  padding: 4px 6px;
 }
 .word-card--default:hover {
-  background: rgba(255,200,60,0.35);
-  border-color: rgba(255,220,80,0.7);
+  background: rgba(255,255,255,0.55);
+  border-color: rgba(255,255,255,0.9);
 }
 .word-card-label {
   font-family: 'Noto Sans KR', sans-serif;
