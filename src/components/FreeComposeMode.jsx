@@ -48,24 +48,19 @@ export default function FreeComposeMode() {
   const [dragNew, setDragNew] = useState(null);
   const [selectedId, setSelectedId] = useState(null); // 선택된 글자 강조
   const [panOffset, setPanOffset] = useState({ x: 0, y: 0 }); // 캔버스 전체 이동
-  const [editMode, setEditMode] = useState(false); // 꼭지점 편집 모드
+  const [sourceVer, setSourceVer] = useState(0); // 소스 변경 시 모든 같은 char 글자 리렌더
   const dragNewRef = useRef(null);
   const panStart = useRef(null);
 
   useEffect(() => { initSvgHelper(); }, []);
 
-  // 편집 결과를 콘솔에 내보내기
-  const exportEdits = useCallback(() => {
-    if (Object.keys(sourceOverrides).length === 0) {
-      console.log('변경된 글자가 없습니다.');
-      return;
-    }
-    console.log('=== 편집된 글자 데이터 ===');
-    Object.entries(sourceOverrides).forEach(([char, src]) => {
-      const strokesStr = src.strokes.map(s => `{path:'${s.path}'}`).join(', ');
-      console.log(`  { char:'${char}', strokes:[${strokesStr}] },`);
-    });
-    console.log('=========================');
+  // sourceOverrides 갱신 → 같은 char 모든 글자 리렌더
+  const updateSource = useCallback((char, newStrokes) => {
+    sourceOverrides[char] = { char, strokes: newStrokes };
+    setSourceVer(v => v + 1); // 모든 같은 char 글자가 리렌더됨
+    // 콘솔에 자동 내보내기
+    const strokesStr = newStrokes.map(s => `{path:'${s.path}'}`).join(', ');
+    console.log(`편집: { char:'${char}', strokes:[${strokesStr}] }`);
   }, []);
 
   // 가이드 이미지 캐시
@@ -323,15 +318,13 @@ export default function FreeComposeMode() {
             key={piece.id}
             piece={piece}
             selected={piece.id === selectedId}
-            editMode={editMode && piece.id === selectedId}
+            sourceVer={sourceVer}
             onDone={() => markDone(piece.id)}
             onDelete={() => setPieces(prev => prev.filter(p => p.id !== piece.id))}
             isOverTrash={isOverTrash}
             setTrashHover={setTrashHover}
             onSelect={() => selectPiece(piece.id)}
-            onSourceUpdate={(newStrokes) => {
-              sourceOverrides[piece.char] = { char: piece.char, strokes: newStrokes };
-            }}
+            onSourceUpdate={(newStrokes) => updateSource(piece.char, newStrokes)}
           />
         ))}
       </div>
@@ -368,26 +361,9 @@ export default function FreeComposeMode() {
         </div>
       </div>
 
-      {/* 상단 힌트 + 편집 버튼 */}
-      <div className="free-top-bar">
-        <div className="free-top-hint" style={{ position: 'static', transform: 'none' }}>
-          {editMode
-            ? '꼭지점 편집 모드 · 점을 드래그하세요'
-            : pieces.length === 0 ? '자음/모음을 끌어서 배치하세요' : '따라쓰기 · 빈곳 드래그=이동 · 더블탭=삭제'}
-        </div>
-        <div className="edit-toolbar">
-          <button
-            className={`edit-btn ${editMode ? 'edit-btn--active' : ''}`}
-            onClick={() => setEditMode(m => !m)}
-          >
-            {editMode ? '편집 끝' : '꼭지점 편집'}
-          </button>
-          {editMode && (
-            <button className="edit-btn edit-btn--export" onClick={exportEdits}>
-              내보내기
-            </button>
-          )}
-        </div>
+      {/* 상단 힌트 */}
+      <div className="free-top-hint">
+        {pieces.length === 0 ? '자음/모음을 끌어서 배치하세요' : '따라쓰기 · 빈곳=이동 · 꾹누르기=꼭지점편집'}
       </div>
 
       {/* 휴지통 — 드래그 삭제 + 롱프레스 모두 지우기 */}
@@ -410,9 +386,9 @@ export default function FreeComposeMode() {
 }
 
 // ── 개별 글자 따라쓰기 컴포넌트 ──
-function TracePiece({ piece, selected, editMode, onDone, onDelete, onSelect, isOverTrash, setTrashHover, onSourceUpdate }) {
-  const [sourceVer, setSourceVer] = useState(0); // 편집 시 리렌더 트리거
+function TracePiece({ piece, selected, sourceVer, onDone, onDelete, onSelect, isOverTrash, setTrashHover, onSourceUpdate }) {
   const source = getSource(piece.char);
+  const [editMode, setEditMode] = useState(false); // 롱프레스로 활성화되는 꼭지점 편집 모드
   const guideRef = useRef(null);
   const arrowRef = useRef(null);
   const traceRef = useRef(null);
@@ -428,6 +404,17 @@ function TracePiece({ piece, selected, editMode, onDone, onDelete, onSelect, isO
   const longPressRef = useRef(null);
   const [unlocked, setUnlocked] = useState(false); // 완성 글자 롱프레스 해제
   const [localPos, setLocalPos] = useState({ x: piece.x, y: piece.y });
+
+  // 선택 해제되면 편집 모드 끄기
+  useEffect(() => {
+    if (!selected) setEditMode(false);
+  }, [selected]);
+
+  // sourceVer가 바뀌면 (다른 글자에서 같은 char 편집 시) 가이드 다시 그리기
+  useEffect(() => {
+    if (!guideRef.current || !stateRef.current.inited) return;
+    drawGuide();
+  }, [sourceVer]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const SIZE = 500;
   const pixelSize = SIZE * piece.scale;
@@ -557,6 +544,8 @@ function TracePiece({ piece, selected, editMode, onDone, onDelete, onSelect, isO
 
     function onDown(e) {
       if (e.touches?.length > 1) return;
+      // 편집 모드에서는 VertexEditor가 이벤트 처리 — 여기선 무시
+      if (editMode) return;
       e.stopPropagation();
 
       const cPos = getPos(e);
@@ -580,26 +569,24 @@ function TracePiece({ piece, selected, editMode, onDone, onDelete, onSelect, isO
         }
       }
 
-      // 완료된 글자 — 롱프레스로 이동 해제
-      if (piece.done) {
+      // 롱프레스 → 꼭지점 편집 모드 (미완성/완료 모두)
+      {
         let cx, cy;
         if (e.touches) { cx = e.touches[0].clientX; cy = e.touches[0].clientY; }
         else { cx = e.clientX; cy = e.clientY; }
         longPressRef.current = setTimeout(() => {
-          // 롱프레스 성공 → 이동 모드
           playFloat();
-          moveStartRef.current = { startX: cx, startY: cy, origX: localPos.x, origY: localPos.y };
           longPressRef.current = null;
-          setUnlocked(true);
+          setEditMode(true);
         }, 500);
-        return;
+        // 완료된 글자: 짧은 터치 = 이동 해제
+        if (piece.done) {
+          moveStartRef.current = { startX: cx, startY: cy, origX: localPos.x, origY: localPos.y };
+          return;
+        }
+        // 미완성 글자: 짧은 터치 = 이동
+        moveStartRef.current = { startX: cx, startY: cy, origX: localPos.x, origY: localPos.y };
       }
-
-      // 이동
-      let cx, cy;
-      if (e.touches) { cx = e.touches[0].clientX; cy = e.touches[0].clientY; }
-      else { cx = e.clientX; cy = e.clientY; }
-      moveStartRef.current = { startX: cx, startY: cy, origX: localPos.x, origY: localPos.y };
     }
 
     function onMove(e) {
@@ -679,7 +666,7 @@ function TracePiece({ piece, selected, editMode, onDone, onDelete, onSelect, isO
       wrap.removeEventListener('touchend', onUp);
       window.removeEventListener('touchend', onUp);
     };
-  }, [localPos, piece.done]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [localPos, piece.done, editMode]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!source) return null;
 
@@ -715,7 +702,6 @@ function TracePiece({ piece, selected, editMode, onDone, onDelete, onSelect, isO
       {editMode && (
         <VertexEditor
           source={source}
-          scale={piece.scale}
           onUpdate={handleVertexUpdate}
         />
       )}
