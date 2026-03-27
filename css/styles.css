@@ -540,7 +540,7 @@ main {
 .free-trace-wrap--selected {
   z-index: 8000 !important;
 }
-.free-trace-wrap--selected .free-trace-layer {
+.free-trace-wrap--selected .free-trace-layer:first-child {
   filter: drop-shadow(0 0 28px rgba(255,255,100,0.7)) drop-shadow(0 0 8px rgba(255,235,80,0.4));
 }
 /* 완성 — 쾅 애니메이션 (justDone 중에만) */

@@ -72,8 +72,8 @@ export default function TracePiece({ piece, selected, inputLocked, onDone, onRes
     prevEditMode.current = editMode;
   }, [editMode]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const SIZE = 700; // 가이드 두께까지 담을 수 있도록 여유
-  const PAD = 100; // 캔버스 패딩 (양쪽)
+  const SIZE = 2000; // 초대형 캔버스 — 어떤 효과도 안 잘림
+  const PAD = 750; // 캔버스 패딩 (양쪽)
   const pixelSize = SIZE * piece.scale;
 
   useEffect(() => {
