@@ -29,6 +29,7 @@ export default function TracePiece({ piece, selected, inputLocked, onDone, onRes
   const particleAnimRef = useRef(null);
 
   const wrapRef = useRef(null);
+  const hitRef = useRef(null);
   const moveStartRef = useRef(null);
   const movedRef = useRef(false);
   const longPressRef = useRef(null);
@@ -225,7 +226,7 @@ export default function TracePiece({ piece, selected, inputLocked, onDone, onRes
   }
 
   useEffect(() => {
-    const wrap = guideRef.current; if (!wrap) return;
+    const wrap = hitRef.current; if (!wrap) return;
 
     function getPos(e) {
       let cx, cy;
@@ -417,8 +418,10 @@ export default function TracePiece({ piece, selected, inputLocked, onDone, onRes
       className={`free-trace-wrap ${justDone ? 'free-trace-wrap--slam' : piece.done ? 'free-trace-wrap--done' : ''} ${selected ? 'free-trace-wrap--selected' : ''} ${unlocked ? 'free-trace-wrap--unlocked' : ''} ${editMode ? 'free-trace-wrap--editing' : ''}`}
       style={{ left: localPos.x, top: localPos.y, width: 0, height: 0 }}
     >
-      <canvas ref={guideRef} className="free-trace-layer" style={{ width: pixelSize, height: pixelSize, pointerEvents: 'auto' }} />
+      <canvas ref={guideRef} className="free-trace-layer" style={{ width: pixelSize, height: pixelSize }} />
       <canvas ref={traceRef} className="free-trace-layer" style={{ width: pixelSize, height: pixelSize, zIndex: 3, display: editMode ? 'none' : undefined }} />
+      {/* 히트 영역 — 글자 크기만큼만 (큰 canvas가 다른 글자를 가리지 않도록) */}
+      <div ref={hitRef} className="free-trace-hit" style={{ width: 500 * piece.scale, height: 500 * piece.scale, zIndex: 5 }} />
       <div ref={overlayRef} className={`free-trace-layer free-trace-overlay ${flyAway ? 'overlay-fly-away' : ''}`} style={{ zIndex: 4, display: editMode ? 'none' : undefined }} />
       {editMode && (
         <VertexEditor

@@ -568,6 +568,13 @@ main {
   pointer-events: none;
   overflow: visible;
 }
+/* 히트 영역 — 글자 크기만큼만, 투명 */
+.free-trace-hit {
+  position: absolute; top: 0; left: 0;
+  transform: translate(-50%, -50%);
+  pointer-events: auto;
+  cursor: grab;
+}
 .free-trace-overlay {
   pointer-events: none;
   overflow: visible;
