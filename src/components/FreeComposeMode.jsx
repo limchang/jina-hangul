@@ -251,9 +251,27 @@ export default function FreeComposeMode() {
     return () => { window.removeEventListener('touchmove', onMove); window.removeEventListener('mousemove', onMove); window.removeEventListener('touchend', onEnd); window.removeEventListener('mouseup', onEnd); };
   });
 
+  const undoRef = useRef(null);
+
   const resetAll = useCallback(() => {
-    setPieces([]); nextId = 1; setSelectedId(null); setPanOffset({ x: 0, y: 0 });
+    // 되돌리기용 백업
+    setPieces(prev => {
+      undoRef.current = { pieces: prev, panOffset, selectedId, overrides: { ...pieceOverrides } };
+      return [];
+    });
+    nextId = 1; setSelectedId(null); setPanOffset({ x: 0, y: 0 });
     Object.keys(pieceOverrides).forEach(k => delete pieceOverrides[k]);
+  }, [panOffset, selectedId]);
+
+  const undoReset = useCallback(() => {
+    if (!undoRef.current) return;
+    const snap = undoRef.current;
+    undoRef.current = null;
+    setPieces(snap.pieces);
+    setPanOffset(snap.panOffset);
+    setSelectedId(snap.selectedId);
+    Object.assign(pieceOverrides, snap.overrides);
+    nextId = Math.max(...snap.pieces.map(p => p.id), 0) + 1;
   }, []);
 
   const startCardEdit = useCallback(() => {
@@ -364,7 +382,7 @@ export default function FreeComposeMode() {
         </svg>
       </div>
 
-      <TrashZone trashHover={trashHover} onClearAll={resetAll} />
+      <TrashZone trashHover={trashHover} onClearAll={resetAll} onUndo={undoReset} />
 
       {dragNew && jamoImages[dragNew.char] && (
         <img className="drag-ghost-img" src={jamoImages[dragNew.char]} style={{ left: dragNew.x, top: dragNew.y }} draggable={false} />
@@ -406,29 +424,40 @@ function DraggableRemote({ children, startY = 10 }) {
 }
 
 // ── 휴지통 ──
-function TrashZone({ trashHover, onClearAll }) {
-  const [showSlide, setShowSlide] = useState(false);
-  const longRef = useRef(null);
-  const onDown = (e) => { e.stopPropagation(); longRef.current = setTimeout(() => { setShowSlide(true); longRef.current = null; }, 600); };
-  const onUp = () => { if (longRef.current) { clearTimeout(longRef.current); longRef.current = null; } };
+function TrashZone({ trashHover, onClearAll, onUndo }) {
+  const [showToast, setShowToast] = useState(false);
+  const toastTimer = useRef(null);
+
+  const handleClick = (e) => {
+    e.stopPropagation();
+    onClearAll();
+    setShowToast(true);
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    toastTimer.current = setTimeout(() => setShowToast(false), 4000);
+  };
+
+  const handleUndo = () => {
+    setShowToast(false);
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    if (onUndo) onUndo();
+  };
+
   return (
     <>
       <div id="trash-zone" className={`trash-zone ${trashHover ? 'trash-zone--hover' : ''}`}
-        onMouseDown={onDown} onMouseUp={onUp} onMouseLeave={onUp} onTouchStart={onDown} onTouchEnd={onUp}>
+        onClick={handleClick}>
         <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <polyline points="3 6 5 6 21 6"></polyline>
           <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
         </svg>
       </div>
-      {showSlide && (
-        <div className="clear-all-overlay" onClick={() => setShowSlide(false)}>
-          <div className="clear-all-card" onClick={(e) => e.stopPropagation()}>
-            <p>모두 지울까요?</p>
-            <div className="clear-all-actions">
-              <div className="clear-all-btn clear-all-btn--cancel" onClick={() => setShowSlide(false)}>취소</div>
-              <div className="clear-all-btn clear-all-btn--confirm" onClick={() => { onClearAll(); setShowSlide(false); }}>모두 지우기</div>
-            </div>
-          </div>
+      {showToast && (
+        <div className="undo-toast" onClick={handleUndo}>
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="1 4 1 10 7 10"></polyline>
+            <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+          </svg>
+          <span>되돌리기</span>
         </div>
       )}
     </>

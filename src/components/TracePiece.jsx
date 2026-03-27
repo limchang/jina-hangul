@@ -32,6 +32,7 @@ export default function TracePiece({ piece, selected, onDone, onResetDone, onDel
   const moveStartRef = useRef(null);
   const movedRef = useRef(false);
   const longPressRef = useRef(null);
+  const lastTapRef = useRef(0);
   const [unlocked, setUnlocked] = useState(false);
   const [justDone, setJustDone] = useState(false);
   const [localPos, setLocalPos] = useState({ x: piece.x, y: piece.y });
@@ -213,6 +214,21 @@ export default function TracePiece({ piece, selected, onDone, onResetDone, onDel
       e.preventDefault();
       onSelect();
       movedRef.current = false;
+
+      // 더블탭 — 완료된 글자 따라쓰기 리셋
+      const now = Date.now();
+      if (piece.done && now - lastTapRef.current < 350) {
+        lastTapRef.current = 0;
+        if (onResetDone) onResetDone();
+        stateRef.current.completed = [];
+        stateRef.current.strokeIdx = 0;
+        const tCtx = traceRef.current?.getContext('2d');
+        if (tCtx) tCtx.clearRect(0, 0, SIZE, SIZE);
+        const src = getSource(piece.char, piece.id);
+        if (src && engineRef.current) loadStrokeWith(0, src);
+        return;
+      }
+      lastTapRef.current = now;
 
       if (engineRef.current && !piece.done) {
         if (engineRef.current.start(cPos.x, cPos.y)) {
