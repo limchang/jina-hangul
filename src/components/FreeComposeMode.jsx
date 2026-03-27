@@ -204,8 +204,11 @@ export default function FreeComposeMode() {
   useEffect(() => {
     if (kbMode && kbInputRef.current) {
       kbInputRef.current.focus();
+      kbInputRef.current.value = '';
       kbPrevRef.current = '';
-      syllableCursorRef.current = null; // 커서 리셋
+      kbPlacedLenRef.current = 0;
+      kbComposingRef.current = false;
+      syllableCursorRef.current = null;
     }
   }, [kbMode]);
 
@@ -318,25 +321,56 @@ export default function FreeComposeMode() {
     syllableCursorRef.current.x = rightmost + SYLLABLE_GAP;
   }, [allChars, bboxCache]);
 
-  const handleKbInput = useCallback((e) => {
-    const val = e.target.value;
-    const prev = kbPrevRef.current;
-    if (val.length > prev.length) {
-      const newChars = val.slice(prev.length);
-      for (let i = 0; i < newChars.length - 1; i++) {
-        placeSyllable(newChars[i]);
+  const kbTimerRef = useRef(null);
+  const kbComposingRef = useRef(false);
+  const kbPlacedLenRef = useRef(0); // 이미 배치한 글자 수
+
+  // 대기 타이머 — 500ms 입력 없으면 조합 중인 글자도 강제 배치
+  const resetKbTimer = useCallback(() => {
+    if (kbTimerRef.current) clearTimeout(kbTimerRef.current);
+    kbTimerRef.current = setTimeout(() => {
+      const val = kbInputRef.current?.value || '';
+      if (val.length > kbPlacedLenRef.current) {
+        // 아직 배치 안 한 글자들 모두 배치
+        for (let i = kbPlacedLenRef.current; i < val.length; i++) {
+          placeSyllable(val[i]);
+        }
+        kbPlacedLenRef.current = val.length;
+        if (kbInputRef.current) kbInputRef.current.value = '';
+        kbPlacedLenRef.current = 0;
+        kbPrevRef.current = '';
       }
-    }
-    kbPrevRef.current = val;
+    }, 500);
   }, [placeSyllable]);
 
+  const handleKbInput = useCallback((e) => {
+    const val = e.target.value;
+    // 확정된 글자 즉시 배치 (마지막 글자는 아직 조합 중일 수 있음)
+    const confirmed = kbComposingRef.current ? val.length - 1 : val.length;
+    for (let i = kbPlacedLenRef.current; i < confirmed; i++) {
+      placeSyllable(val[i]);
+    }
+    kbPlacedLenRef.current = confirmed;
+    resetKbTimer();
+  }, [placeSyllable, resetKbTimer]);
+
+  const handleCompositionStart = useCallback(() => {
+    kbComposingRef.current = true;
+  }, []);
+
   const handleCompositionEnd = useCallback((e) => {
+    kbComposingRef.current = false;
     const val = kbInputRef.current?.value || '';
-    if (val.length === 0) return;
-    const lastChar = val[val.length - 1];
-    placeSyllable(lastChar);
+    // 조합 완료 → 마지막 글자 배치
+    for (let i = kbPlacedLenRef.current; i < val.length; i++) {
+      placeSyllable(val[i]);
+    }
+    kbPlacedLenRef.current = val.length;
+    // 입력 초기화
     if (kbInputRef.current) kbInputRef.current.value = '';
+    kbPlacedLenRef.current = 0;
     kbPrevRef.current = '';
+    if (kbTimerRef.current) clearTimeout(kbTimerRef.current);
   }, [placeSyllable]);
 
   // ── 휠 줌 (마우스 위치 기준) ──
@@ -839,6 +873,7 @@ export default function FreeComposeMode() {
           className="kb-hidden-input"
           autoFocus
           onInput={handleKbInput}
+          onCompositionStart={handleCompositionStart}
           onCompositionEnd={handleCompositionEnd}
           onBlur={() => { if (kbMode && kbInputRef.current) setTimeout(() => kbInputRef.current?.focus(), 100); }}
         />
