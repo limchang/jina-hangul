@@ -384,6 +384,17 @@ main {
 .free-pan-layer--smooth {
   transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
+/* 그리드 오버레이 — 모눈종이 */
+.grid-overlay {
+  position: absolute;
+  left: -5000px; top: -5000px;
+  width: 10000px; height: 10000px;
+  pointer-events: none;
+  background-image:
+    linear-gradient(to right, rgba(255,255,255,0.12) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255,255,255,0.12) 1px, transparent 1px);
+  z-index: 0;
+}
 
 /* 플로팅 리모컨 — 하단 중앙 */
 .remote {
@@ -471,7 +482,7 @@ main {
   transform: translate(-50%, -50%);
   pointer-events: auto;
   cursor: grab;
-  transition: filter 0.2s, transform 0.2s, left 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), top 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: filter 0.2s, transform 0.2s;
   overflow: visible;
 }
 .free-trace-wrap:active { cursor: grabbing; }

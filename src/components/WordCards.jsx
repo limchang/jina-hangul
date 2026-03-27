@@ -9,7 +9,7 @@ const PREVIEW_KEY = 'jina-word-previews';
 // 카드용 가이드 미리보기 렌더링 (흰색 배경선 + 노란 점선)
 function renderCardPreview(items) {
   const CELL = 56;
-  const PAD = 6;
+  const PAD = 8;
   const W = items.length * CELL + PAD * 2;
   const H = CELL + PAD * 2;
   const canvas = document.createElement('canvas');
@@ -21,17 +21,15 @@ function renderCardPreview(items) {
     const s = CELL / 500;
     ctx.scale(s, s);
     ctx.translate(-250, -250);
-    // 흰색 배경선
-    ctx.strokeStyle = 'rgba(255,255,255,0.35)';
-    ctx.lineWidth = APP_CONFIG.GUIDE_STROKE_WIDTH + 28;
+    // 그림자 (시인성)
+    ctx.shadowColor = 'rgba(200,160,0,0.4)';
+    ctx.shadowBlur = 12;
+    // 노란 실선 (두꺼운 가이드)
+    ctx.strokeStyle = '#f0c830';
+    ctx.lineWidth = 50;
     ctx.lineCap = 'round'; ctx.lineJoin = 'round';
     item.strokes.forEach(st => ctx.stroke(new Path2D(st.path)));
-    // 노란 점선 가이드
-    ctx.strokeStyle = 'rgba(255,200,0,0.7)';
-    ctx.lineWidth = 6;
-    ctx.setLineDash([18, 14]);
-    item.strokes.forEach(st => ctx.stroke(new Path2D(st.path)));
-    ctx.setLineDash([]);
+    ctx.shadowBlur = 0;
     ctx.restore();
   });
   return canvas.toDataURL();
@@ -92,10 +90,13 @@ export function renderLayoutPreview(pieces) {
     ctx.translate((p.x - minX + PAD) * PREVIEW_SCALE, (p.y - minY + PAD) * PREVIEW_SCALE);
     ctx.scale(p.scale * PREVIEW_SCALE, p.scale * PREVIEW_SCALE);
     ctx.translate(-250, -250);
-    ctx.strokeStyle = '#ffeb3b';
+    ctx.shadowColor = 'rgba(200,160,0,0.4)';
+    ctx.shadowBlur = 8;
+    ctx.strokeStyle = '#f0c830';
     ctx.lineWidth = 74;
     ctx.lineCap = 'round'; ctx.lineJoin = 'round';
     src.strokes.forEach(st => ctx.stroke(new Path2D(st.path)));
+    ctx.shadowBlur = 0;
     ctx.restore();
   });
   return canvas.toDataURL();

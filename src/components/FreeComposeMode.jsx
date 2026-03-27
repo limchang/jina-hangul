@@ -53,6 +53,8 @@ export default function FreeComposeMode() {
   const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [panLocked, setPanLocked] = useState(false);
+  const [gridOn, setGridOn] = useState(false);
+  const GRID_SIZE = 200; // 스냅 그리드 간격
   const [cardEditMode, setCardEditMode] = useState(false);
   const wordCardsRef = useRef(null);
   const dragNewRef = useRef(null);
@@ -176,30 +178,19 @@ export default function FreeComposeMode() {
     const gap = 500 * scale * 0.8;
     const screenCX = window.innerWidth / 2;
     const screenCY = window.innerHeight / 2;
-    // 화면 중앙에서 착~ 뿌려지는 효과
     const centerX = (screenCX - panOffset.x) / zoom;
     const centerY = (screenCY - panOffset.y) / zoom;
     const totalW = (items.length - 1) * gap;
     const startX = centerX - totalW / 2;
-    // 처음엔 모두 중앙에 모아놓고
     const newPieces = items.map((item, i) => ({
       id: nextId++, char: item.char,
-      x: centerX, y: centerY, // 시작: 중앙
-      _targetX: startX + i * gap, _targetY: centerY, // 목표 위치
+      x: startX + i * gap, y: centerY,
       scale, done: false
     }));
+    const firstPiece = newPieces[0];
     setPieces(prev => [...prev, ...newPieces]);
-    setSelectedId(newPieces[0].id);
-    // stagger로 하나씩 퍼져나가기
-    newPieces.forEach((p, i) => {
-      setTimeout(() => {
-        setPieces(prev => prev.map(pp => pp.id === p.id ? { ...pp, x: p._targetX, y: p._targetY } : pp));
-      }, 50 + i * 60);
-    });
-    // 첫 글자 위치로 포커스
-    setTimeout(() => {
-      setPanOffset({ x: screenCX - newPieces[0]._targetX * zoom, y: screenCY - newPieces[0]._targetY * zoom });
-    }, 50);
+    setSelectedId(firstPiece.id);
+    setPanOffset({ x: screenCX - firstPiece.x * zoom, y: screenCY - firstPiece.y * zoom });
   }, [pieces, zoom, panOffset]);
 
   // ── 낱말카드에서 자모 배치 ──
@@ -242,7 +233,17 @@ export default function FreeComposeMode() {
     setDragNew({ char, type, x, y });
   }, []);
 
-  // 드래그 이벤트 — 항상 등록/해제 (window 레벨)
+  // 최신 값 참조용 refs
+  const panOffsetRef = useRef(panOffset);
+  const zoomValRef = useRef(zoom);
+  useEffect(() => { panOffsetRef.current = panOffset; }, [panOffset]);
+  useEffect(() => { zoomValRef.current = zoom; }, [zoom]);
+  const getNextPlacePosRef = useRef(getNextPlacePos);
+  const placeNewPieceRef = useRef(placeNewPiece);
+  useEffect(() => { getNextPlacePosRef.current = getNextPlacePos; }, [getNextPlacePos]);
+  useEffect(() => { placeNewPieceRef.current = placeNewPiece; }, [placeNewPiece]);
+
+  // 드래그 이벤트 — 한 번만 등록
   useEffect(() => {
     function onMove(e) {
       if (!dragNewRef.current) return;
@@ -258,7 +259,6 @@ export default function FreeComposeMode() {
       const d = dragNewRef.current; if (!d) return;
       dragNewRef.current = null; setDragNew(null);
       if (e.type === 'mouseup' && d.wasTouch) return;
-      // 놓은 위치가 리모컨 위면 취소
       let ex, ey;
       if (e.changedTouches) { ex = e.changedTouches[0].clientX; ey = e.changedTouches[0].clientY; } else { ex = e.clientX; ey = e.clientY; }
       const remoteEl = document.querySelector('.remote');
@@ -266,10 +266,11 @@ export default function FreeComposeMode() {
         const r = remoteEl.getBoundingClientRect();
         if (ex >= r.left && ex <= r.right && ey >= r.top && ey <= r.bottom) return;
       }
+      const po = panOffsetRef.current, z = zoomValRef.current;
       if (!dragMovedRef.current) {
-        const pos = getNextPlacePos(); placeNewPiece(d.char, pos.x, pos.y);
+        const pos = getNextPlacePosRef.current(); placeNewPieceRef.current(d.char, pos.x, pos.y);
       } else {
-        placeNewPiece(d.char, (ex - panOffset.x) / zoom, (ey - panOffset.y) / zoom, false);
+        placeNewPieceRef.current(d.char, (ex - po.x) / z, (ey - po.y) / z, false);
       }
     }
     window.addEventListener('touchmove', onMove, { passive: false });
@@ -277,7 +278,7 @@ export default function FreeComposeMode() {
     window.addEventListener('touchend', onEnd);
     window.addEventListener('mouseup', onEnd);
     return () => { window.removeEventListener('touchmove', onMove); window.removeEventListener('mousemove', onMove); window.removeEventListener('touchend', onEnd); window.removeEventListener('mouseup', onEnd); };
-  }); // 매 렌더마다 최신 클로저 유지
+  }, []); // 한 번만 등록
 
   // ── 빈 공간 드래그 = 캔버스 패닝 (DOM 직접 조작으로 최적화) ──
   const startPan = useCallback((e) => {
@@ -446,6 +447,7 @@ export default function FreeComposeMode() {
   return (
     <div className="free-fullscreen" onMouseDown={startPan} onTouchStart={startPan}>
       <div ref={panLayerRef} className={`free-pan-layer ${panSmooth ? 'free-pan-layer--smooth' : ''}`} style={{ transform: `translate(${panOffset.x}px, ${panOffset.y}px) scale(${zoom})`, transformOrigin: '0 0' }}>
+        {gridOn && <div className="grid-overlay" style={{ backgroundSize: `${GRID_SIZE}px ${GRID_SIZE}px` }} />}
         {pieces.map(piece => (
           <TracePiece
             key={piece.id} piece={piece} selected={piece.id === selectedId}
@@ -456,7 +458,11 @@ export default function FreeComposeMode() {
             isOverTrash={isOverTrash} setTrashHover={setTrashHover}
             onSelect={() => selectPiece(piece.id)}
             onSourceUpdate={(ns) => updateSource(piece.id, piece.char, ns)}
-            onMoved={(nx, ny) => setPieces(prev => prev.map(p => p.id === piece.id ? { ...p, x: nx, y: ny } : p))}
+            onMoved={(nx, ny) => {
+              const sx = gridOn ? Math.round(nx / GRID_SIZE) * GRID_SIZE : nx;
+              const sy = gridOn ? Math.round(ny / GRID_SIZE) * GRID_SIZE : ny;
+              setPieces(prev => prev.map(p => p.id === piece.id ? { ...p, x: sx, y: sy } : p));
+            }}
           />
         ))}
       </div>
@@ -485,8 +491,14 @@ export default function FreeComposeMode() {
 
       {cardEditMode && <button className="card-edit-done-btn" onClick={finishCardEdit}>완료</button>}
 
-      {/* 좌하단 컨트롤 — 배율 버튼 + 잠금 (세로 쌓기) */}
+      {/* 좌하단 컨트롤 — 그리드 + 배율 + 잠금 (세로 쌓기) */}
       <div className="left-controls">
+        <div className={`zoom-btn ${gridOn ? 'zoom-btn--active' : ''}`} onClick={() => setGridOn(g => !g)}>
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2">
+            <line x1="4" y1="4" x2="4" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/><line x1="20" y1="4" x2="20" y2="20"/>
+            <line x1="4" y1="4" x2="20" y2="4"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="20" x2="20" y2="20"/>
+          </svg>
+        </div>
         {[1, 1.5, 2].map(z => (
           <div key={z} className={`zoom-btn ${Math.abs(zoom - z) < 0.05 ? 'zoom-btn--active' : ''}`}
             onClick={() => { setZoom(z); if (panLayerRef.current) panLayerRef.current.style.transform = `translate(${panOffset.x}px, ${panOffset.y}px) scale(${z})`; }}>
