@@ -146,7 +146,7 @@ export default function TracePiece({ piece, selected, onDone, onResetDone, onDel
 
   function setupIcons() {
     const ol = overlayRef.current; if (!ol) return;
-    const targetSvg = `<svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="16" fill="none" stroke="rgba(255,235,80,0.8)" stroke-width="3"/><circle cx="20" cy="20" r="6" fill="rgba(255,235,80,0.9)"/></svg>`;
+    const targetSvg = `<svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="16" fill="none" stroke="rgba(255,235,80,0.8)" stroke-width="3"/><circle cx="20" cy="20" r="6" fill="rgba(255,235,80,0.9)"/><circle cx="20" cy="20" r="18" fill="none" stroke="rgba(255,235,80,0.3)" stroke-width="1.5" stroke-dasharray="4 3"/></svg>`;
     ol.innerHTML = `<div class="target-icon free-target">${targetSvg}</div><img class="character-handler" src="${getIconImageUrl(piece.char)}" onerror="this.src='${DEFAULT_ICON}'">`;
     updateIcons();
   }
@@ -262,11 +262,14 @@ export default function TracePiece({ piece, selected, onDone, onResetDone, onDel
         const cPos = getPos(e);
         engineRef.current.move(cPos.x, cPos.y);
         particleRef.current.emit(cPos.x, cPos.y); renderTrace(); updateIcons();
-        // 경로 이탈 감지 → 크레센도 위글 + 불안 효과음 + 제자리 복귀
+        // 경로 이탈 감지 → 즉시 크레센도 위글 + 불안 효과음 + 제자리 복귀
         const opc = engineRef.current.offPathCount || 0;
         const h = overlayRef.current?.querySelector('.character-handler');
-        if (opc > 5) {
-          const intensity = Math.min((opc - 5) / 25, 1); // 5~30 프레임에 걸쳐 0→1
+        const target = overlayRef.current?.querySelector('.target-icon');
+        // 드래그 중 도착지점 항상 강조
+        if (target) target.classList.add('target-calling');
+        if (opc > 0) {
+          const intensity = Math.min(opc / 30, 1); // 0~30 프레임에 걸쳐 0→1
           if (h) {
             h.classList.add('handler-wobble');
             const deg = 4 + intensity * 12; // 4~16도
@@ -292,6 +295,7 @@ export default function TracePiece({ piece, selected, onDone, onResetDone, onDel
           }
         } else {
           if (h) h.classList.remove('handler-wobble');
+          if (target) target.classList.remove('target-calling');
           stopWobbleSound();
         }
         return;
@@ -324,7 +328,9 @@ export default function TracePiece({ piece, selected, onDone, onResetDone, onDel
       if (engineRef.current?.isTracing) {
         stopWobbleSound();
         const h = overlayRef.current?.querySelector('.character-handler');
+        const tgt = overlayRef.current?.querySelector('.target-icon');
         if (h) { h.classList.remove('handler-wobble'); h.style.transform = 'translate(-50%,-50%)'; }
+        if (tgt) tgt.classList.remove('target-calling');
         if (engineRef.current.end()) {
           playComplete(); particleRef.current.burst(engineRef.current.getTargetPos().x, engineRef.current.getTargetPos().y, 15);
           completeStroke();

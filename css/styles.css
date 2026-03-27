@@ -231,6 +231,16 @@ main {
   0%, 100% { transform: translate(-50%, -50%) translateY(0) rotate(-3deg); }
   50% { transform: translate(-50%, -50%) translateY(-12px) rotate(3deg); }
 }
+/* 드래그 중 도착지점 강조 — "이쪽이야~" */
+.target-calling {
+  width: 120px !important;
+  animation: targetCall 0.6s infinite ease-in-out !important;
+  filter: drop-shadow(0 0 16px rgba(255,235,80,0.8)) drop-shadow(0 0 32px rgba(255,235,80,0.4)) !important;
+}
+@keyframes targetCall {
+  0%, 100% { transform: translate(-50%, -50%) scale(1); }
+  50% { transform: translate(-50%, -50%) scale(1.3); }
+}
 @keyframes successPulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
 .success-anim { animation: successPulse 0.4s ease-out; }
 
