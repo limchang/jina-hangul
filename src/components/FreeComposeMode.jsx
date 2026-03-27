@@ -137,9 +137,7 @@ export default function FreeComposeMode() {
 
   const placeNewPiece = useCallback((char, x, y, focus = true) => {
     const newId = nextId++;
-    // 배율에 따라 글자 크기 자연스럽게 조정 (확대 시 작게, 축소 시 크게)
-    const baseScale = pieces.length > 0 ? pieces[pieces.length - 1].scale : 0.5;
-    const scale = baseScale / zoom;
+    const scale = pieces.length > 0 ? pieces[pieces.length - 1].scale : 0.5;
     setPieces(prev => [...prev, { id: newId, char, x, y, scale, done: false }]);
     setSelectedId(newId);
     if (focus) {
@@ -150,8 +148,7 @@ export default function FreeComposeMode() {
   }, [pieces, zoom]);
 
   const placeAll = useCallback((items) => {
-    const baseScale = pieces.length > 0 ? pieces[pieces.length - 1].scale : 0.5;
-    const scale = baseScale / zoom;
+    const scale = pieces.length > 0 ? pieces[pieces.length - 1].scale : 0.5;
     const gap = 500 * scale * 0.8;
     const screenCX = window.innerWidth / 2;
     const screenCY = window.innerHeight / 2;
@@ -332,17 +329,66 @@ export default function FreeComposeMode() {
     nextId = Math.max(...snap.pieces.map(p => p.id), 0) + 1;
   }, []);
 
+  const editingCardRef = useRef(null);
+
   const startCardEdit = useCallback(() => {
+    editingCardRef.current = null;
     resetAll(); setCardEditMode(true);
   }, [resetAll]);
 
+  const startEditExistingCard = useCallback((word, cardIdx) => {
+    editingCardRef.current = { word, cardIdx };
+    // 현재 pieces 백업 후 클리어
+    setPieces([]);
+    nextId = 1;
+    setSelectedId(null);
+    setPanOffset({ x: 0, y: 0 });
+    Object.keys(pieceOverrides).forEach(k => delete pieceOverrides[k]);
+    // 저장된 레이아웃 로드
+    const saved = loadWordLayout(word);
+    const chars = word.split('');
+    const screenCX = window.innerWidth / 2;
+    const screenCY = window.innerHeight / 2;
+    let newPieces;
+    if (saved && saved.length > 0 && saved[0].char) {
+      const avgX = saved.reduce((s, p) => s + p.x, 0) / saved.length;
+      const avgY = saved.reduce((s, p) => s + p.y, 0) / saved.length;
+      newPieces = saved.map(s => ({ id: nextId++, char: s.char, x: s.x - avgX + screenCX, y: s.y - avgY + screenCY, scale: s.scale, done: false }));
+    } else if (saved && saved.length === chars.length) {
+      const avgX = saved.reduce((s, p) => s + p.x, 0) / saved.length;
+      const avgY = saved.reduce((s, p) => s + p.y, 0) / saved.length;
+      newPieces = chars.map((char, i) => ({ id: nextId++, char, x: saved[i].x - avgX + screenCX, y: saved[i].y - avgY + screenCY, scale: saved[i].scale, done: false }));
+    } else {
+      const scale = 0.5;
+      const gap = 500 * scale * 0.8;
+      const totalW = (chars.length - 1) * gap;
+      newPieces = chars.map((char, i) => ({ id: nextId++, char, x: screenCX - totalW / 2 + i * gap, y: screenCY, scale, done: false }));
+    }
+    setPieces(newPieces);
+    if (newPieces.length > 0) setSelectedId(newPieces[0].id);
+    setCardEditMode(true);
+  }, []);
+
   const finishCardEdit = useCallback(() => {
-    if (pieces.length === 0) { setCardEditMode(false); return; }
+    if (pieces.length === 0) {
+      // 편집 중 기존 카드 삭제 (글자 다 지운 경우)
+      if (editingCardRef.current && wordCardsRef.current) {
+        wordCardsRef.current.removeCardByName(editingCardRef.current.word);
+      }
+      editingCardRef.current = null;
+      setCardEditMode(false);
+      return;
+    }
     const cardName = pieces.map(p => p.char).join('');
     const previewPieces = pieces.map(p => ({ ...p, done: false, source: getSource(p.char, p.id) }));
     const img = renderLayoutPreview(previewPieces);
     saveWordLayout(cardName, pieces.map(p => ({ char: p.char, x: p.x, y: p.y, scale: p.scale })));
+    // 기존 카드 수정이면 이전 카드 제거
+    if (editingCardRef.current && wordCardsRef.current) {
+      wordCardsRef.current.removeCardByName(editingCardRef.current.word);
+    }
     if (wordCardsRef.current) wordCardsRef.current.addCardDirect(cardName, img);
+    editingCardRef.current = null;
     setPieces([]); nextId = 1; setSelectedId(null); setPanOffset({ x: 0, y: 0 });
     Object.keys(pieceOverrides).forEach(k => delete pieceOverrides[k]);
     setCardEditMode(false);
@@ -410,7 +456,7 @@ export default function FreeComposeMode() {
       </div>
 
       <div style={{ display: cardEditMode ? 'none' : undefined }}>
-        <WordCards ref={wordCardsRef} onDeploy={deployWord} isOverTrash={isOverTrash} setTrashHover={setTrashHover} onNewCard={startCardEdit} onPlaceAll={placeAll} />
+        <WordCards ref={wordCardsRef} onDeploy={deployWord} isOverTrash={isOverTrash} setTrashHover={setTrashHover} onNewCard={startCardEdit} onEditCard={startEditExistingCard} onPlaceAll={placeAll} />
       </div>
 
       {cardEditMode && <button className="card-edit-done-btn" onClick={finishCardEdit}>완료</button>}

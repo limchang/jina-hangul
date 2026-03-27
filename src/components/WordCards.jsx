@@ -101,11 +101,12 @@ export function renderLayoutPreview(pieces) {
   return canvas.toDataURL();
 }
 
-const WordCards = forwardRef(function WordCards({ onDeploy, isOverTrash, setTrashHover, onNewCard, onPlaceAll }, ref) {
+const WordCards = forwardRef(function WordCards({ onDeploy, isOverTrash, setTrashHover, onNewCard, onEditCard, onPlaceAll }, ref) {
   const [cards, setCards] = useState(loadCards);
   const [previews, setPreviews] = useState(loadPreviews);
   const dragRef = useRef(null);
   const [dragCard, setDragCard] = useState(null);
+  const longPressRef = useRef(null);
 
   // 부모(FreeComposeMode)에서 직접 카드 추가할 수 있게 expose
   useImperativeHandle(ref, () => ({
@@ -126,6 +127,21 @@ const WordCards = forwardRef(function WordCards({ onDeploy, isOverTrash, setTras
         const next = { ...prev, [word]: dataUrl };
         savePreviews(next);
         return next;
+      });
+    },
+    removeCardByName(word) {
+      setCards(prev => {
+        const idx = prev.indexOf(word);
+        if (idx < 0) return prev;
+        const next = prev.filter((_, i) => i !== idx);
+        saveCards(next);
+        return next;
+      });
+      setPreviews(prev => {
+        const np = { ...prev };
+        delete np[word];
+        savePreviews(np);
+        return np;
       });
     }
   }), [cards]);
@@ -162,7 +178,17 @@ const WordCards = forwardRef(function WordCards({ onDeploy, isOverTrash, setTras
     else { x = e.clientX; y = e.clientY; }
     dragRef.current = { word, idx, startX: x, startY: y, moved: false, ...opts };
     setDragCard({ word, x, y });
-  }, []);
+    // 사용자 카드 길게 누르기 → 카드 편집 모드
+    if (longPressRef.current) clearTimeout(longPressRef.current);
+    if (!opts.isDefault && idx >= 0 && onEditCard) {
+      longPressRef.current = setTimeout(() => {
+        longPressRef.current = null;
+        dragRef.current = null;
+        setDragCard(null);
+        onEditCard(word, idx);
+      }, 600);
+    }
+  }, [onEditCard]);
 
   const CARD_ZONE_W = 130; // 카드존 너비 (사이드)
 
@@ -175,12 +201,16 @@ const WordCards = forwardRef(function WordCards({ onDeploy, isOverTrash, setTras
       if (dragRef.current) {
         const dx = Math.abs(x - dragRef.current.startX);
         const dy = Math.abs(y - dragRef.current.startY);
-        if (dx > 10 || dy > 10) dragRef.current.moved = true;
+        if (dx > 10 || dy > 10) {
+          dragRef.current.moved = true;
+          if (longPressRef.current) { clearTimeout(longPressRef.current); longPressRef.current = null; }
+        }
       }
       setDragCard(prev => prev ? { ...prev, x, y } : null);
       if (setTrashHover && isOverTrash) setTrashHover(isOverTrash(x, y));
     }
     function onEnd(e) {
+      if (longPressRef.current) { clearTimeout(longPressRef.current); longPressRef.current = null; }
       if (!dragRef.current) return;
       const d = dragRef.current;
       dragRef.current = null;
