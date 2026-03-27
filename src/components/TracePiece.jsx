@@ -4,7 +4,7 @@ import { APP_CONFIG } from '../data.js';
 import { TracingEngine, samplePath } from '../TracingEngine.js';
 import { ParticleSystem } from '../particles.js';
 
-import { playStart, playComplete, playCelebrate, playFail, playSlam, playFloat, playLand } from '../sound.js';
+import { playStart, playComplete, playCelebrate, playFail, playSlam, playFloat, playLand, startWobbleSound, stopWobbleSound } from '../sound.js';
 import { ICON_MAP } from '../icon-map.js';
 import { getSource } from '../sourceOverrides.js';
 import VertexEditor from './VertexEditor.jsx';
@@ -246,6 +246,15 @@ export default function TracePiece({ piece, selected, onDone, onResetDone, onDel
         const cPos = getPos(e);
         engineRef.current.move(cPos.x, cPos.y);
         particleRef.current.emit(cPos.x, cPos.y); renderTrace(); updateIcons();
+        // 경로 이탈 감지 → 위글 + 불안 효과음
+        const h = overlayRef.current?.querySelector('.character-handler');
+        if (engineRef.current.offPathCount > 5) {
+          if (h) h.classList.add('handler-wobble');
+          startWobbleSound();
+        } else {
+          if (h) h.classList.remove('handler-wobble');
+          stopWobbleSound();
+        }
         return;
       }
       if (!moveStartRef.current) return;
@@ -274,8 +283,9 @@ export default function TracePiece({ piece, selected, onDone, onResetDone, onDel
       }
 
       if (engineRef.current?.isTracing) {
+        stopWobbleSound();
         const h = overlayRef.current?.querySelector('.character-handler');
-        if (h) h.style.transform = 'translate(-50%,-50%)';
+        if (h) { h.classList.remove('handler-wobble'); h.style.transform = 'translate(-50%,-50%)'; }
         if (engineRef.current.end()) {
           playComplete(); particleRef.current.burst(engineRef.current.getTargetPos().x, engineRef.current.getTargetPos().y, 15);
           completeStroke();
