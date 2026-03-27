@@ -4,7 +4,7 @@ import { APP_CONFIG } from '../data.js';
 import { TracingEngine, samplePath } from '../TracingEngine.js';
 import { ParticleSystem } from '../particles.js';
 
-import { playStart, playComplete, playCelebrate, playFail, playSlam, playFloat, playLand } from '../sound.js';
+import { playStart, playComplete, playCelebrate, playFail, playSlam, playFloat, playLand, playFallSound } from '../sound.js';
 import { ICON_MAP } from '../icon-map.js';
 import { getSource } from '../sourceOverrides.js';
 import VertexEditor from './VertexEditor.jsx';
@@ -159,7 +159,16 @@ export default function TracePiece({ piece, selected, inputLocked, onDone, onRes
     const target = ol.querySelector('.target-icon');
     if (!handler || !target) return;
     const hp = engineRef.current.getHandlerPos(), tp = engineRef.current.getTargetPos();
+    const dist = Math.hypot(hp.x - tp.x, hp.y - tp.y);
     handler.style.left = `${(hp.x/SIZE)*100}%`; handler.style.top = `${(hp.y/SIZE)*100}%`;
+    // 도착지점 근처 → 골인 느낌 (자석 효과)
+    if (dist < 80 && engineRef.current.isTracing) {
+      handler.classList.add('handler-near-goal');
+      target.classList.add('target-near-goal');
+    } else {
+      handler.classList.remove('handler-near-goal');
+      target.classList.remove('target-near-goal');
+    }
     target.style.left = `${(tp.x/SIZE)*100}%`; target.style.top = `${(tp.y/SIZE)*100}%`;
   }
 
@@ -278,9 +287,9 @@ export default function TracePiece({ piece, selected, inputLocked, onDone, onRes
           engineRef.current.maxReachedIdx = 0;
           engineRef.current.isTracing = false;
           failCountRef.current++;
-          playFail();
+          playFallSound();
           stopPLoop();
-          // 캐릭터 날아가는 애니메이션
+          // 캐릭터 캔버스로 수직 낙하
           setFlyAway(true);
           setTimeout(() => {
             setFlyAway(false);
