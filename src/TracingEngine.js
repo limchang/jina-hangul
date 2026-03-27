@@ -79,8 +79,10 @@ export class TracingEngine {
     if (bestDist < 140) {
       this.maxReachedIdx = Math.max(this.maxReachedIdx, bestIdx);
     }
-    // 흰색 가이드 밖으로 1px만 나가도 즉시 offPath (가이드 반지름 ~51px)
-    if (bestDist < 52) {
+    // offPath 판정 — 도착지 근처일수록 후하게
+    const progress = this.pts.length > 1 ? this.maxReachedIdx / (this.pts.length - 1) : 0;
+    const offThreshold = progress > 0.7 ? 100 : 52; // 70% 이상 진행 시 판정 넓힘
+    if (bestDist < offThreshold) {
       this.offPathCount = 0;
     } else {
       this.offPathCount = (this.offPathCount || 0) + 1;
