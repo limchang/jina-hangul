@@ -223,7 +223,9 @@ export default function FreeComposeMode() {
           if (p.y > maxY) maxY = p.y;
         });
       });
-      cache[item.char] = { minX, maxX, minY, maxY, w: maxX - minX, h: maxY - minY, cx: (minX + maxX) / 2, cy: (minY + maxY) / 2 };
+      // 흰색 가이드 배경선 두께 반영 (GUIDE_STROKE_WIDTH+28)/2 = 51
+      const guideR = 51;
+      cache[item.char] = { minX: minX - guideR, maxX: maxX + guideR, minY: minY - guideR, maxY: maxY + guideR, w: maxX - minX + guideR * 2, h: maxY - minY + guideR * 2 };
     });
     return cache;
   }, []);
