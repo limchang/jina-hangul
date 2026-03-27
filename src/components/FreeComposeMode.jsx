@@ -116,7 +116,7 @@ export default function FreeComposeMode() {
   const getNextPlacePos = useCallback(() => {
     const screenCX = window.innerWidth / 2;
     const screenCY = window.innerHeight / 2;
-    if (pieces.length === 0) return { x: screenCX - panOffset.x, y: screenCY - panOffset.y };
+    if (pieces.length === 0) return { x: (screenCX - panOffset.x) / zoom, y: (screenCY - panOffset.y) / zoom };
     const last = pieces[pieces.length - 1];
     const gap = 500 * last.scale * 0.8;
     return { x: last.x + gap, y: last.y };
@@ -130,9 +130,9 @@ export default function FreeComposeMode() {
     if (focus) {
       const screenCX = window.innerWidth / 2;
       const screenCY = window.innerHeight / 2;
-      setPanOffset({ x: screenCX - x, y: screenCY - y });
+      setPanOffset({ x: screenCX - x * zoom, y: screenCY - y * zoom });
     }
-  }, [pieces]);
+  }, [pieces, zoom]);
 
   const placeAll = useCallback((items) => {
     const scale = pieces.length > 0 ? pieces[pieces.length - 1].scale : 0.5;
@@ -141,20 +141,20 @@ export default function FreeComposeMode() {
     const screenCY = window.innerHeight / 2;
     let startX, startY;
     if (pieces.length > 0) { const last = pieces[pieces.length - 1]; startX = last.x + gap; startY = last.y; }
-    else { startX = screenCX; startY = screenCY; }
+    else { startX = screenCX / zoom; startY = screenCY / zoom; }
     const newPieces = items.map((item, i) => ({ id: nextId++, char: item.char, x: startX + i * gap, y: startY, scale, done: false }));
     const firstPiece = newPieces[0];
     setPieces(prev => [...prev, ...newPieces]);
     setSelectedId(firstPiece.id);
-    setPanOffset({ x: screenCX - firstPiece.x, y: screenCY - firstPiece.y });
+    setPanOffset({ x: screenCX - firstPiece.x * zoom, y: screenCY - firstPiece.y * zoom });
   }, [pieces]);
 
   // ── 낱말카드에서 자모 배치 ──
   const deployWord = useCallback((jamos, word, updatePreview, dropX, dropY) => {
     const screenCX = window.innerWidth / 2;
     const screenCY = window.innerHeight / 2;
-    const cx = (dropX || screenCX) - panOffset.x;
-    const cy = (dropY || screenCY) - panOffset.y;
+    const cx = ((dropX || screenCX) - panOffset.x) / zoom;
+    const cy = ((dropY || screenCY) - panOffset.y) / zoom;
     const saved = loadWordLayout(word);
     let newPieces;
     if (saved && saved.length > 0 && saved[0].char) {
@@ -216,7 +216,7 @@ export default function FreeComposeMode() {
       if (!dragMovedRef.current) {
         const pos = getNextPlacePos(); placeNewPiece(d.char, pos.x, pos.y);
       } else {
-        placeNewPiece(d.char, ex - panOffset.x, ey - panOffset.y, false);
+        placeNewPiece(d.char, (ex - panOffset.x) / zoom, (ey - panOffset.y) / zoom, false);
       }
     }
     window.addEventListener('touchmove', onMove, { passive: false });
@@ -340,17 +340,23 @@ export default function FreeComposeMode() {
       const next = donePiece ? findNextPiece(donePiece, candidates) : null;
       if (next) {
         const screenCX = window.innerWidth / 2, screenCY = window.innerHeight / 2;
-        const nsx = next.x + panOffset.x, nsy = next.y + panOffset.y;
-        const inView = nsx > 150 && nsx < window.innerWidth - 150 && nsy > 150 && nsy < window.innerHeight - 150;
+        // zoom 반영: 화면좌표 = 월드좌표 * zoom + panOffset
+        const nsx = next.x * zoom + panOffset.x, nsy = next.y * zoom + panOffset.y;
+        const margin = 150;
+        const inView = nsx > margin && nsx < window.innerWidth - margin && nsy > margin && nsy < window.innerHeight - margin;
         if (inView) { setTimeout(() => setSelectedId(next.id), 500); }
         else {
-          setTimeout(() => { setPanSmooth(true); setPanOffset({ x: screenCX - next.x, y: screenCY - next.y }); setSelectedId(next.id); }, 500);
+          setTimeout(() => {
+            setPanSmooth(true);
+            setPanOffset({ x: screenCX - next.x * zoom, y: screenCY - next.y * zoom });
+            setSelectedId(next.id);
+          }, 500);
           setTimeout(() => setPanSmooth(false), 1100);
         }
       }
       return updated;
     });
-  }, [findNextPiece, panOffset]);
+  }, [findNextPiece, panOffset, zoom]);
 
   const selectPiece = useCallback((id) => setSelectedId(id), []);
 
