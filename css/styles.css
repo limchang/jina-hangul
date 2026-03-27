@@ -525,6 +525,13 @@ main {
   background: rgba(255,255,255,0.1);
   backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
   padding: 6px 18px; border-radius: 20px;
+}
+.free-center-hint {
+  position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+  z-index: 9000;
+  font-size: 1.1rem; font-weight: 800; color: rgba(255,255,255,0.6);
+  text-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  pointer-events: none;
   border: 1px solid rgba(255,255,255,0.2);
   pointer-events: none;
 }

@@ -863,7 +863,7 @@ export default function FreeComposeMode() {
         </div>
       </DraggableRemote>
 
-      {cardEditMode && <div className="free-top-hint">카드 만들기 · 글자를 배치하고 완료를 누르세요</div>}
+      {cardEditMode && pieces.length === 0 && <div className="free-center-hint">카드 만들기 · 글자를 배치하고 완료를 누르세요</div>}
 
       <div style={{ display: cardEditMode ? 'none' : undefined }}>
         <WordCards ref={wordCardsRef} onDeploy={deployWord} isOverTrash={isOverTrash} setTrashHover={setTrashHover} onNewCard={startCardEdit} onEditCard={startEditExistingCard} onPlaceAll={placeAll} />
