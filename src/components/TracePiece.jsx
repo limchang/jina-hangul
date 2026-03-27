@@ -72,9 +72,15 @@ export default function TracePiece({ piece, selected, onDone, onDelete, onSelect
     if (!gCtx || !src) return;
     const S = stateRef.current;
     gCtx.clearRect(0, 0, SIZE, SIZE);
+    // 흰색 배경선 (두꺼운 밑선)
+    gCtx.strokeStyle = 'rgba(255,255,255,0.25)';
+    gCtx.lineWidth = APP_CONFIG.GUIDE_STROKE_WIDTH + 28;
+    gCtx.lineCap = 'round'; gCtx.lineJoin = 'round';
+    gCtx.setLineDash([]);
+    src.strokes.forEach(s => gCtx.stroke(new Path2D(s.path)));
+    // 노란 점선 가이드
     gCtx.strokeStyle = 'rgba(255,200,0,0.55)';
     gCtx.lineWidth = 6;
-    gCtx.lineCap = 'round'; gCtx.lineJoin = 'round';
     gCtx.setLineDash([18, 14]);
     src.strokes.forEach(s => gCtx.stroke(new Path2D(s.path)));
     gCtx.setLineDash([]);

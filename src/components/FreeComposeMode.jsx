@@ -32,9 +32,14 @@ function renderJamoImage(source) {
   const canvas = document.createElement('canvas');
   canvas.width = SIZE; canvas.height = SIZE;
   const ctx = canvas.getContext('2d');
+  // 흰색 배경선
+  ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+  ctx.lineWidth = APP_CONFIG.GUIDE_STROKE_WIDTH + 28;
+  ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  source.strokes.forEach(s => ctx.stroke(new Path2D(s.path)));
+  // 노란 점선 가이드
   ctx.strokeStyle = 'rgba(255,200,0,0.55)';
   ctx.lineWidth = 6;
-  ctx.lineCap = 'round'; ctx.lineJoin = 'round';
   ctx.setLineDash([18, 14]);
   source.strokes.forEach(s => ctx.stroke(new Path2D(s.path)));
   ctx.setLineDash([]);
