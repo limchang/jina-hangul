@@ -205,24 +205,34 @@ export default function FreeComposeMode() {
     if (kbMode && kbInputRef.current) {
       kbInputRef.current.focus();
       kbPrevRef.current = '';
+      syllableCursorRef.current = null; // 커서 리셋
     }
   }, [kbMode]);
 
-  // 음절 구조에 맞게 자모 배치 (초성/중성/종성 위치 자동 계산)
-  const VERT_VOWELS = new Set(['ㅏ','ㅑ','ㅓ','ㅕ','ㅣ']); // 세로 모음
+  // 음절 커서 — 키보드 입력 시 가로 진행 위치 관리
+  const syllableCursorRef = useRef(null); // { x, y, scale }
+  const VERT_VOWELS = new Set(['ㅏ','ㅑ','ㅓ','ㅕ','ㅣ']);
+
   const placeSyllable = useCallback((syllable) => {
     const parts = decompose(syllable);
     const validParts = parts.filter(j => allChars[j]);
     if (validParts.length === 0) return;
 
-    const pos = getNextPlacePosRef.current();
     const scale = 0.5;
-    const cellSize = 500 * scale; // 글자 하나의 월드 크기
-    const cx = pos.x, cy = pos.y;
+    const cellSize = 500 * scale;
+    const syllableWidth = cellSize * 1.1; // 음절 간격
+
+    // 커서 초기화 (첫 음절이면 화면 중앙에서 시작)
+    if (!syllableCursorRef.current) {
+      const pos = getNextPlacePosRef.current();
+      syllableCursorRef.current = { x: pos.x, y: pos.y, scale };
+    }
+    const cx = syllableCursorRef.current.x;
+    const cy = syllableCursorRef.current.y; // 초성 기준 높이 고정
 
     if (validParts.length === 1) {
-      // 단독 자모
-      placeNewPieceRef.current(validParts[0], cx, cy);
+      placeNewPieceRef.current(validParts[0], cx, cy, false);
+      syllableCursorRef.current.x += syllableWidth;
       return;
     }
 
@@ -233,20 +243,20 @@ export default function FreeComposeMode() {
     const hasJong = !!jong;
 
     if (isVert) {
-      // 세로 모음: 초성 왼쪽, 중성 오른쪽, 종성 아래 중앙
       const gap = cellSize * 0.45;
       const yOff = hasJong ? -cellSize * 0.2 : 0;
       placeNewPieceRef.current(cho, cx - gap, cy + yOff, false);
       placeNewPieceRef.current(jung, cx + gap, cy + yOff, false);
       if (hasJong) placeNewPieceRef.current(jong, cx, cy + cellSize * 0.5, false);
     } else {
-      // 가로 모음: 초성 위, 중성 아래, 종성 맨 아래
       const gap = cellSize * 0.4;
       const yStart = hasJong ? -cellSize * 0.25 : -gap * 0.5;
       placeNewPieceRef.current(cho, cx, cy + yStart, false);
       placeNewPieceRef.current(jung, cx, cy + yStart + gap, false);
       if (hasJong) placeNewPieceRef.current(jong, cx, cy + yStart + gap * 2, false);
     }
+    // 다음 음절 위치로 커서 이동
+    syllableCursorRef.current.x += syllableWidth;
   }, [allChars]);
 
   const handleKbInput = useCallback((e) => {
