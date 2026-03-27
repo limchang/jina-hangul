@@ -609,6 +609,21 @@ main {
   background: rgba(255,255,255,0.2);
   flex-shrink: 0;
 }
+/* 키보드 입력 모드 — 숨겨진 input */
+.kb-hidden-input {
+  position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
+  width: 280px; padding: 12px 16px;
+  font-size: 1.3rem; font-weight: 700;
+  font-family: 'Noto Sans KR', sans-serif;
+  background: rgba(255,255,255,0.95);
+  border: 2px solid rgba(100,180,255,0.6);
+  border-radius: 16px;
+  outline: none;
+  text-align: center;
+  z-index: 9300;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+  color: #333;
+}
 
 /* 곱셈 퀴즈 오버레이 */
 .quiz-overlay {

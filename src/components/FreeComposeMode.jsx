@@ -7,6 +7,7 @@ import { initSvgHelper } from '../TracingEngine.js';
 import { getSource, pieceOverrides } from '../sourceOverrides.js';
 import TracePiece from './TracePiece.jsx';
 import WordCards, { renderLayoutPreview } from './WordCards.jsx';
+import { decomposeWord } from '../utils/jamo.js';
 
 let nextId = 1;
 
@@ -129,7 +130,10 @@ export default function FreeComposeMode() {
     }
   }, [mathQuiz]);
   const [gridOn, setGridOn] = useState(false);
-  const GRID_SIZE = 100; // 스냅 그리드 간격
+  const [kbMode, setKbMode] = useState(false); // 키보드 조합 입력 모드
+  const kbInputRef = useRef(null);
+  const kbPrevRef = useRef(''); // 이전 입력값 추적
+  const GRID_SIZE = 100;
   const [cardEditMode, setCardEditMode] = useState(false);
   const wordCardsRef = useRef(null);
   const dragNewRef = useRef(null);
@@ -177,9 +181,52 @@ export default function FreeComposeMode() {
         placeNewPiece(char, pos.x, pos.y);
       }
     }
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
+    if (!kbMode) {
+      window.addEventListener('keydown', onKeyDown);
+      return () => window.removeEventListener('keydown', onKeyDown);
+    }
   });
+
+  // ── 키보드 조합 모드 — 숨겨진 input으로 한글 조합 입력 ──
+  useEffect(() => {
+    if (kbMode && kbInputRef.current) {
+      kbInputRef.current.focus();
+      kbPrevRef.current = '';
+    }
+  }, [kbMode]);
+
+  const handleKbInput = useCallback((e) => {
+    const val = e.target.value;
+    const prev = kbPrevRef.current;
+    // 새로 확정된 글자 감지 (이전보다 길어진 부분)
+    if (val.length > prev.length) {
+      const newChars = val.slice(prev.length);
+      // 마지막 글자는 아직 조합 중일 수 있으므로, 확정된 글자만 (마지막 제외)
+      for (let i = 0; i < newChars.length - 1; i++) {
+        const jamos = decomposeWord(newChars[i]);
+        jamos.forEach(char => {
+          const pos = getNextPlacePos();
+          placeNewPiece(char, pos.x, pos.y);
+        });
+      }
+    }
+    kbPrevRef.current = val;
+  }, [getNextPlacePos, placeNewPiece]);
+
+  // 조합 완료 (compositionend) 시 마지막 글자 배치
+  const handleCompositionEnd = useCallback((e) => {
+    const val = kbInputRef.current?.value || '';
+    if (val.length === 0) return;
+    const lastChar = val[val.length - 1];
+    const jamos = decomposeWord(lastChar);
+    jamos.forEach(char => {
+      const pos = getNextPlacePos();
+      placeNewPiece(char, pos.x, pos.y);
+    });
+    // 입력 초기화
+    if (kbInputRef.current) kbInputRef.current.value = '';
+    kbPrevRef.current = '';
+  }, [getNextPlacePos, placeNewPiece]);
 
   // ── 휠 줌 (마우스 위치 기준) ──
   useEffect(() => {
@@ -663,7 +710,28 @@ export default function FreeComposeMode() {
             x{z === 1.5 ? '1.5' : z}
           </div>
         ))}
+        <div className="ctrl-divider" />
+        <div className={`zoom-btn ${kbMode ? 'zoom-btn--active' : ''}`}
+          onClick={() => setKbMode(k => !k)} title="키보드 입력 모드">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="2" y="4" width="20" height="16" rx="2"/><line x1="6" y1="8" x2="6" y2="8"/><line x1="10" y1="8" x2="10" y2="8"/><line x1="14" y1="8" x2="14" y2="8"/><line x1="18" y1="8" x2="18" y2="8"/>
+            <line x1="6" y1="12" x2="6" y2="12"/><line x1="10" y1="12" x2="10" y2="12"/><line x1="14" y1="12" x2="14" y2="12"/><line x1="18" y1="12" x2="18" y2="12"/>
+            <line x1="8" y1="16" x2="16" y2="16"/>
+          </svg>
+        </div>
       </div>
+
+      {/* 키보드 조합 입력 모드 — 숨겨진 input */}
+      {kbMode && (
+        <input
+          ref={kbInputRef}
+          className="kb-hidden-input"
+          autoFocus
+          onInput={handleKbInput}
+          onCompositionEnd={handleCompositionEnd}
+          onBlur={() => { if (kbMode && kbInputRef.current) setTimeout(() => kbInputRef.current?.focus(), 100); }}
+        />
+      )}
 
       {dragNew && jamoImages[dragNew.char] && (
         <img className="drag-ghost-img" src={jamoImages[dragNew.char]} style={{ left: dragNew.x, top: dragNew.y }} draggable={false} />
