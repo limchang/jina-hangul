@@ -16,7 +16,7 @@ function getIconImageUrl(char) {
   return DEFAULT_ICON;
 }
 
-export default function TracePiece({ piece, selected, inputLocked, onDone, onResetDone, onDelete, onSelect, isOverTrash, setTrashHover, onNearGoal, onSourceUpdate, onMoved }) {
+export default function TracePiece({ piece, selected, inputLocked, onDone, onResetDone, onDelete, onSelect, onUngroup, isOverTrash, setTrashHover, onNearGoal, onSourceUpdate, onMoved }) {
   const source = getSource(piece.char, piece.id);
   const [editMode, setEditMode] = useState(false);
   const guideRef = useRef(null);
@@ -278,6 +278,8 @@ export default function TracePiece({ piece, selected, inputLocked, onDone, onRes
         longPressRef.current = setTimeout(() => {
           playFloat();
           longPressRef.current = null;
+          // 그룹 해제 우선
+          if (piece.groupId && onUngroup) { onUngroup(); return; }
           // 완료된 글자도 편집 가능 — done 리셋 후 편집 모드 진입
           if (piece.done && onResetDone) onResetDone();
           setEditMode(true);

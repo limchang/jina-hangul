@@ -52,6 +52,8 @@ export default function FreeComposeMode() {
   const [pieces, setPieces] = useState([]);
   const [dragNew, setDragNew] = useState(null);
   const [selectedId, setSelectedId] = useState(null);
+  const [selectedGroup, setSelectedGroup] = useState(null); // 그룹 선택
+  let groupIdCounter = useRef(1);
   const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [panLocked, setPanLocked] = useState(false);
@@ -209,6 +211,7 @@ export default function FreeComposeMode() {
       kbPlacedLenRef.current = 0;
       kbComposingRef.current = false;
       syllableCursorRef.current = null;
+      typingGroupRef.current = groupIdCounter.current++;
     }
   }, [kbMode]);
 
@@ -234,6 +237,7 @@ export default function FreeComposeMode() {
   }, []);
 
   const syllableCursorRef = useRef(null);
+  const typingGroupRef = useRef(null); // 현재 타이핑 세션의 groupId
   const VERT_VOWELS = new Set(['ㅏ','ㅑ','ㅓ','ㅕ','ㅣ']);
   const C = 250; // 캔버스 중심 (글자 원점)
 
@@ -265,7 +269,7 @@ export default function FreeComposeMode() {
 
     if (validParts.length === 1) {
       const bb = bboxCache[validParts[0]];
-      placeNewPieceRef.current(validParts[0], ox, topAlignY(bb), false);
+      placeNewPieceRef.current(validParts[0], ox, topAlignY(bb), false, typingGroupRef.current);
       syllableCursorRef.current.x += (bb.maxX - C) * S + SYLLABLE_GAP;
       return;
     }
@@ -291,12 +295,12 @@ export default function FreeComposeMode() {
         const jongX = ox + dx * 0.5;
         const jongY = choY + dyJong;
 
-        placeNewPieceRef.current(cho, choX, choY, false);
-        placeNewPieceRef.current(jung, jungX, jungY, false);
-        placeNewPieceRef.current(jong, jongX, jongY, false);
+        placeNewPieceRef.current(cho, choX, choY, false, typingGroupRef.current);
+        placeNewPieceRef.current(jung, jungX, jungY, false, typingGroupRef.current);
+        placeNewPieceRef.current(jong, jongX, jongY, false, typingGroupRef.current);
       } else {
-        placeNewPieceRef.current(cho, choX, topAlignY(bc), false);
-        placeNewPieceRef.current(jung, jungX, topAlignY(bj), false);
+        placeNewPieceRef.current(cho, choX, topAlignY(bc), false, typingGroupRef.current);
+        placeNewPieceRef.current(jung, jungX, topAlignY(bj), false, typingGroupRef.current);
       }
       rightmost = jungX + (bj.maxX - C) * S;
     } else {
@@ -306,12 +310,12 @@ export default function FreeComposeMode() {
       const choY = topAlignY(bc);
       if (hasJong) {
         const dy2 = distY(bj, bk, S, PAD);
-        placeNewPieceRef.current(cho, ox, choY, false);
-        placeNewPieceRef.current(jung, ox, choY + dy1, false);
-        placeNewPieceRef.current(jong, ox, choY + dy1 + dy2, false);
+        placeNewPieceRef.current(cho, ox, choY, false, typingGroupRef.current);
+        placeNewPieceRef.current(jung, ox, choY + dy1, false, typingGroupRef.current);
+        placeNewPieceRef.current(jong, ox, choY + dy1 + dy2, false, typingGroupRef.current);
       } else {
-        placeNewPieceRef.current(cho, ox, choY, false);
-        placeNewPieceRef.current(jung, ox, choY + dy1, false);
+        placeNewPieceRef.current(cho, ox, choY, false, typingGroupRef.current);
+        placeNewPieceRef.current(jung, ox, choY + dy1, false, typingGroupRef.current);
       }
       const maxW = Math.max(bc.maxX - C, bj.maxX - C, bk ? bk.maxX - C : 0);
       rightmost = ox + maxW * S;
@@ -345,12 +349,17 @@ export default function FreeComposeMode() {
 
   const handleKbInput = useCallback((e) => {
     const val = e.target.value;
-    // 확정된 글자 즉시 배치 (마지막 글자는 아직 조합 중일 수 있음)
     const confirmed = kbComposingRef.current ? val.length - 1 : val.length;
     for (let i = kbPlacedLenRef.current; i < confirmed; i++) {
       placeSyllable(val[i]);
     }
-    kbPlacedLenRef.current = confirmed;
+    if (confirmed > 0 && !kbComposingRef.current) {
+      // 조합 중이 아니면 즉시 비우기
+      if (kbInputRef.current) kbInputRef.current.value = '';
+      kbPlacedLenRef.current = 0;
+    } else {
+      kbPlacedLenRef.current = confirmed;
+    }
     resetKbTimer();
   }, [placeSyllable, resetKbTimer]);
 
@@ -466,10 +475,10 @@ export default function FreeComposeMode() {
     return { x: last.x + gap, y: last.y };
   }, [pieces, panOffset]);
 
-  const placeNewPiece = useCallback((char, x, y, focus = true) => {
+  const placeNewPiece = useCallback((char, x, y, focus = true, groupId = null) => {
     const newId = nextId++;
     const scale = pieces.length > 0 ? pieces[pieces.length - 1].scale : 0.5;
-    setPieces(prev => [...prev, { id: newId, char, x, y, scale, done: false }]);
+    setPieces(prev => [...prev, { id: newId, char, x, y, scale, done: false, groupId }]);
     setSelectedId(newId);
     if (focus) {
       const screenCX = window.innerWidth / 2;
@@ -777,6 +786,19 @@ export default function FreeComposeMode() {
     <div className="free-fullscreen" onMouseDown={startPan} onTouchStart={startPan}>
       <div ref={panLayerRef} className={`free-pan-layer ${panSmooth ? 'free-pan-layer--smooth' : ''}`} style={{ transform: `translate(${panOffset.x}px, ${panOffset.y}px) scale(${zoom})`, transformOrigin: '0 0' }}>
         {gridOn && <div className="grid-overlay" style={{ backgroundSize: `${GRID_SIZE}px ${GRID_SIZE}px` }} />}
+        {/* 그룹 테두리 */}
+        {(() => {
+          const groups = {};
+          pieces.forEach(p => { if (p.groupId) { if (!groups[p.groupId]) groups[p.groupId] = []; groups[p.groupId].push(p); } });
+          return Object.entries(groups).map(([gid, gpieces]) => {
+            const s = gpieces[0].scale;
+            const half = 250 * s;
+            let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+            gpieces.forEach(p => { minX = Math.min(minX, p.x - half); maxX = Math.max(maxX, p.x + half); minY = Math.min(minY, p.y - half); maxY = Math.max(maxY, p.y + half); });
+            const pad = 10;
+            return <div key={`g${gid}`} className="group-outline" style={{ left: minX - pad, top: minY - pad, width: maxX - minX + pad * 2, height: maxY - minY + pad * 2 }} />;
+          });
+        })()}
         {pieces.map(piece => (
           <TracePiece
             key={piece.id} piece={piece} selected={piece.id === selectedId}
@@ -786,12 +808,21 @@ export default function FreeComposeMode() {
             onDelete={() => { delete pieceOverrides[piece.id]; setPieces(prev => prev.filter(p => p.id !== piece.id)); }}
             isOverTrash={isOverTrash} setTrashHover={setTrashHover}
             onSelect={() => selectPiece(piece.id)}
+            onUngroup={piece.groupId ? () => setPieces(prev => prev.map(p => p.groupId === piece.groupId ? { ...p, groupId: null } : p)) : null}
             onNearGoal={(near) => onNearGoal(near, piece)}
             onSourceUpdate={(ns) => updateSource(piece.id, piece.char, ns)}
             onMoved={(nx, ny) => {
               const sx = gridOn ? Math.round(nx / GRID_SIZE) * GRID_SIZE : nx;
               const sy = gridOn ? Math.round(ny / GRID_SIZE) * GRID_SIZE : ny;
-              setPieces(prev => prev.map(p => p.id === piece.id ? { ...p, x: sx, y: sy } : p));
+              setPieces(prev => {
+                const target = prev.find(p => p.id === piece.id);
+                if (!target) return prev;
+                const dx = sx - target.x, dy = sy - target.y;
+                if (target.groupId) {
+                  return prev.map(p => p.groupId === target.groupId ? { ...p, x: p.x + dx, y: p.y + dy } : p);
+                }
+                return prev.map(p => p.id === piece.id ? { ...p, x: sx, y: sy } : p);
+              });
             }}
           />
         ))}
