@@ -926,7 +926,7 @@ export default function FreeComposeMode() {
           onInput={handleKbInput}
           onCompositionStart={handleCompositionStart}
           onCompositionEnd={handleCompositionEnd}
-          onBlur={() => { if (kbMode && kbInputRef.current) setTimeout(() => kbInputRef.current?.focus(), 100); }}
+          onBlur={() => setKbMode(false)}
         />
       )}
 
