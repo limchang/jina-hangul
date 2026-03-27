@@ -676,11 +676,6 @@ main {
   pointer-events: none;
   border-radius: 6px;
 }
-/* 기본 카드(자음/모음 공부)는 넓게 */
-.word-card--default .word-card-preview {
-  max-width: none;
-  height: 40px;
-}
 .word-card-placeholder {
   font-family: 'Noto Sans KR', sans-serif;
   font-size: 0.7rem; font-weight: 800;
@@ -701,23 +696,10 @@ main {
   background: rgba(255,255,255,0.95);
   border-color: #fff;
 }
-/* 큰 기본 카드 (자음공부 / 모음공부) */
-.word-card--big {
-  padding: 10px 8px 8px;
-  max-width: 100px;
-}
-.word-card-title {
-  font-family: 'Noto Sans KR', sans-serif;
-  font-size: 0.6rem; font-weight: 800;
-  color: rgba(80,80,80,0.6);
-  letter-spacing: 1px;
-}
-.word-card-chars-big {
-  font-family: 'Noto Sans KR', sans-serif;
-  font-size: 1.1rem; font-weight: 900;
-  color: rgba(60,60,60,0.85);
-  letter-spacing: 2px;
-  white-space: nowrap;
+/* 기본 카드 미리보기 (가이드 글자) */
+.word-card--default .word-card-preview {
+  max-width: none;
+  height: 44px;
 }
 .word-card-label {
   font-family: 'Noto Sans KR', sans-serif;

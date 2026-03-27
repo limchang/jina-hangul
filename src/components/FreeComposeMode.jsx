@@ -75,12 +75,18 @@ export default function FreeComposeMode() {
     return () => window.removeEventListener('wheel', onWheel);
   }, []);
 
-  // ── 핀치 줌 ──
+  // ── 핀치 줌 (ref 기반 — zoom deps 제거) ──
+  const zoomRef = useRef(zoom);
+  useEffect(() => { zoomRef.current = zoom; }, [zoom]);
+
   useEffect(() => {
     function onTouchStart(e) {
       if (e.touches.length === 2) {
+        // 핀치 시작 — 패닝 중단
+        panStart.current = null;
+        if (panRafRef.current) { cancelAnimationFrame(panRafRef.current); panRafRef.current = null; }
         const d = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
-        pinchRef.current = { startDist: d, startZoom: zoom };
+        pinchRef.current = { startDist: d, startZoom: zoomRef.current };
       }
     }
     function onTouchMove(e) {
@@ -88,10 +94,17 @@ export default function FreeComposeMode() {
         e.preventDefault();
         const d = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
         const scale = d / pinchRef.current.startDist;
-        setZoom(Math.min(3, Math.max(0.3, pinchRef.current.startZoom * scale)));
+        const newZoom = Math.min(3, Math.max(0.3, pinchRef.current.startZoom * scale));
+        setZoom(newZoom);
+        // DOM 직접 갱신 (리렌더 대기 없이 부드럽게)
+        if (panLayerRef.current) {
+          panLayerRef.current.style.transform = `translate(${panOffset.x}px, ${panOffset.y}px) scale(${newZoom})`;
+        }
       }
     }
-    function onTouchEnd() { pinchRef.current = null; }
+    function onTouchEnd(e) {
+      if (e.touches.length < 2) pinchRef.current = null;
+    }
     window.addEventListener('touchstart', onTouchStart, { passive: false });
     window.addEventListener('touchmove', onTouchMove, { passive: false });
     window.addEventListener('touchend', onTouchEnd);
@@ -100,7 +113,7 @@ export default function FreeComposeMode() {
       window.removeEventListener('touchmove', onTouchMove);
       window.removeEventListener('touchend', onTouchEnd);
     };
-  }, [zoom]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const updateSource = useCallback((pieceId, char, newStrokes) => {
     pieceOverrides[pieceId] = { char, strokes: newStrokes };
@@ -230,6 +243,8 @@ export default function FreeComposeMode() {
   const startPan = useCallback((e) => {
     if (e.target.closest('.free-trace-wrap') || e.target.closest('.remote') || e.target.closest('.trash-zone') || e.target.closest('.word-tray') || e.target.closest('.word-card') || e.target.closest('.canvas-lock')) return;
     if (dragNewRef.current || panLocked) return;
+    // 2손가락 이상이면 패닝 안 함 (핀치 줌 우선)
+    if (e.touches && e.touches.length >= 2) return;
     e.preventDefault();
     let x, y;
     if (e.touches) { x = e.touches[0].clientX; y = e.touches[0].clientY; } else { x = e.clientX; y = e.clientY; }
@@ -239,7 +254,8 @@ export default function FreeComposeMode() {
 
   useEffect(() => {
     function onMove(e) {
-      if (!panStart.current) return;
+      if (!panStart.current || pinchRef.current) return;
+      if (e.touches && e.touches.length >= 2) { panStart.current = null; return; }
       e.preventDefault();
       let x, y;
       if (e.touches) { x = e.touches[0].clientX; y = e.touches[0].clientY; } else { x = e.clientX; y = e.clientY; }
