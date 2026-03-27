@@ -16,7 +16,7 @@ function getIconImageUrl(char) {
   return DEFAULT_ICON;
 }
 
-export default function TracePiece({ piece, selected, onDone, onDelete, onSelect, isOverTrash, setTrashHover, onSourceUpdate, onMoved }) {
+export default function TracePiece({ piece, selected, onDone, onResetDone, onDelete, onSelect, isOverTrash, setTrashHover, onSourceUpdate, onMoved }) {
   const source = getSource(piece.char, piece.id);
   const [editMode, setEditMode] = useState(false);
   const guideRef = useRef(null);
@@ -37,12 +37,23 @@ export default function TracePiece({ piece, selected, onDone, onDelete, onSelect
   const [localPos, setLocalPos] = useState({ x: piece.x, y: piece.y });
 
   useEffect(() => {
-    if (!selected || piece.done) setEditMode(false);
-  }, [selected, piece.done]);
+    if (!selected) setEditMode(false);
+  }, [selected]);
 
   const prevEditMode = useRef(false);
   useEffect(() => {
+    if (!prevEditMode.current && editMode && stateRef.current.inited) {
+      // 편집 모드 진입 — 따라쓰기 기록 초기화, 캔버스 클리어
+      stateRef.current.completed = [];
+      stateRef.current.strokeIdx = 0;
+      const tCtx = traceRef.current?.getContext('2d');
+      if (tCtx) tCtx.clearRect(0, 0, SIZE, SIZE);
+      // 가이드도 초기 상태로 다시 그리기 (completed 없이)
+      const src = getSource(piece.char, piece.id);
+      if (src) drawGuideWith(src, true);
+    }
     if (prevEditMode.current && !editMode && stateRef.current.inited) {
+      // 편집 모드 종료 — 처음부터 다시 따라쓰기
       stateRef.current.completed = [];
       stateRef.current.strokeIdx = 0;
       const src = getSource(piece.char, piece.id);
@@ -220,6 +231,8 @@ export default function TracePiece({ piece, selected, onDone, onDelete, onSelect
         longPressRef.current = setTimeout(() => {
           playFloat();
           longPressRef.current = null;
+          // 완료된 글자도 편집 가능 — done 리셋 후 편집 모드 진입
+          if (piece.done && onResetDone) onResetDone();
           setEditMode(true);
         }, 500);
         moveStartRef.current = { startX: cx, startY: cy, origX: localPos.x, origY: localPos.y };

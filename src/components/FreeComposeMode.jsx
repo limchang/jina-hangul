@@ -320,6 +320,7 @@ export default function FreeComposeMode() {
           <TracePiece
             key={piece.id} piece={piece} selected={piece.id === selectedId}
             onDone={() => markDone(piece.id)}
+            onResetDone={() => setPieces(prev => prev.map(p => p.id === piece.id ? { ...p, done: false } : p))}
             onDelete={() => { delete pieceOverrides[piece.id]; setPieces(prev => prev.filter(p => p.id !== piece.id)); }}
             isOverTrash={isOverTrash} setTrashHover={setTrashHover}
             onSelect={() => selectPiece(piece.id)}
