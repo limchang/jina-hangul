@@ -253,7 +253,22 @@ export default function TracePiece({ piece, selected, inputLocked, onDone, onRes
       if (e.touches?.length > 1) return;
       if (editMode || inputLocked) return;
       const cPos = getPos(e);
-      if (!isOnGlyph(cPos)) return; // 글자 밖이면 무시 (이벤트 통과)
+      if (!isOnGlyph(cPos)) {
+        // 글자 밖 → pointer-events 끄고 아래 요소에 이벤트 재전달
+        const hit = hitRef.current;
+        if (hit) {
+          hit.style.pointerEvents = 'none';
+          let cx, cy;
+          if (e.touches?.length > 0) { cx = e.touches[0].clientX; cy = e.touches[0].clientY; }
+          else { cx = e.clientX; cy = e.clientY; }
+          const below = document.elementFromPoint(cx, cy);
+          if (below && below !== hit) {
+            below.dispatchEvent(new e.constructor(e.type, e));
+          }
+          setTimeout(() => { if (hit) hit.style.pointerEvents = 'auto'; }, 50);
+        }
+        return;
+      }
       e.stopPropagation();
       e.preventDefault();
       onSelect();
