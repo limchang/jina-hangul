@@ -6,7 +6,7 @@ import { decomposeWord } from '../utils/jamo.js';
 const STORAGE_KEY = 'jina-word-cards';
 const PREVIEW_KEY = 'jina-word-previews';
 
-// 기본 카드용 미리보기 — 가이드 스트로크로 ㄱㄴㄷ / ㅏㅑ 렌더링
+// 기본 카드용 미리보기 — 노란색 두꺼운 실선 (따라쓰기 완료 느낌)
 function renderDefaultCardPreview(items) {
   const show = items.slice(0, 3); // ㄱㄴㄷ / ㅏㅑㅓ 만 표시
   const CELL = 50;
@@ -22,12 +22,10 @@ function renderDefaultCardPreview(items) {
     const s = CELL / 500;
     ctx.scale(s, s);
     ctx.translate(-250, -250);
-    ctx.strokeStyle = 'rgba(255,200,0,0.55)';
-    ctx.lineWidth = 5;
+    ctx.strokeStyle = '#ffeb3b';
+    ctx.lineWidth = 74;
     ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-    ctx.setLineDash([14, 10]);
     item.strokes.forEach(st => ctx.stroke(new Path2D(st.path)));
-    ctx.setLineDash([]);
     ctx.restore();
   });
   return canvas.toDataURL();
@@ -88,12 +86,10 @@ export function renderLayoutPreview(pieces) {
     ctx.translate((p.x - minX + PAD) * PREVIEW_SCALE, (p.y - minY + PAD) * PREVIEW_SCALE);
     ctx.scale(p.scale * PREVIEW_SCALE, p.scale * PREVIEW_SCALE);
     ctx.translate(-250, -250);
-    ctx.strokeStyle = 'rgba(255,200,0,0.55)';
-    ctx.lineWidth = 5;
+    ctx.strokeStyle = '#ffeb3b';
+    ctx.lineWidth = 74;
     ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-    ctx.setLineDash([14, 10]);
     src.strokes.forEach(st => ctx.stroke(new Path2D(st.path)));
-    ctx.setLineDash([]);
     ctx.restore();
   });
   return canvas.toDataURL();
