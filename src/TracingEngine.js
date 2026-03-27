@@ -121,13 +121,19 @@ export class TracingEngine {
 
     if (this.isTracing && this.pointerX !== undefined) {
       const px = this.pointerX, py = this.pointerY;
-      const grad = ctx.createRadialGradient(px, py, 2, px, py, 40);
-      grad.addColorStop(0, 'rgba(255,255,240,0.5)');
-      grad.addColorStop(0.5, 'rgba(255,240,200,0.15)');
+      // 외곽 글로우
+      const grad = ctx.createRadialGradient(px, py, 4, px, py, 70);
+      grad.addColorStop(0, 'rgba(255,255,255,0.7)');
+      grad.addColorStop(0.3, 'rgba(255,235,80,0.3)');
       grad.addColorStop(1, 'rgba(255,230,150,0)');
       ctx.beginPath();
-      ctx.arc(px, py, 40, 0, Math.PI * 2);
+      ctx.arc(px, py, 70, 0, Math.PI * 2);
       ctx.fillStyle = grad;
+      ctx.fill();
+      // 중심 점
+      ctx.beginPath();
+      ctx.arc(px, py, 8, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(255,255,255,0.9)';
       ctx.fill();
     }
   }
