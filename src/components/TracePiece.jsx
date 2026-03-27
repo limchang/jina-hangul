@@ -217,7 +217,7 @@ export default function TracePiece({ piece, selected, inputLocked, onDone, onRes
   }
 
   useEffect(() => {
-    const wrap = wrapRef.current; if (!wrap) return;
+    const wrap = guideRef.current; if (!wrap) return;
 
     function getPos(e) {
       let cx, cy;
@@ -407,11 +407,11 @@ export default function TracePiece({ piece, selected, inputLocked, onDone, onRes
     <div
       ref={wrapRef}
       className={`free-trace-wrap ${justDone ? 'free-trace-wrap--slam' : piece.done ? 'free-trace-wrap--done' : ''} ${selected ? 'free-trace-wrap--selected' : ''} ${unlocked ? 'free-trace-wrap--unlocked' : ''} ${editMode ? 'free-trace-wrap--editing' : ''}`}
-      style={{ left: localPos.x, top: localPos.y, width: pixelSize, height: pixelSize }}
+      style={{ left: localPos.x, top: localPos.y, width: 0, height: 0 }}
     >
-      <canvas ref={guideRef} className="free-trace-layer" />
-      <canvas ref={traceRef} className="free-trace-layer" style={{ zIndex: 3, display: editMode ? 'none' : undefined }} />
-      <div ref={overlayRef} className={`free-trace-layer free-trace-overlay ${flyAway ? 'overlay-fly-away' : ''}`} style={{ zIndex: 4, display: editMode ? 'none' : undefined }} />
+      <canvas ref={guideRef} className="free-trace-layer" style={{ width: pixelSize, height: pixelSize, pointerEvents: 'auto' }} />
+      <canvas ref={traceRef} className="free-trace-layer" style={{ width: pixelSize, height: pixelSize, zIndex: 3, display: editMode ? 'none' : undefined }} />
+      <div ref={overlayRef} className={`free-trace-layer free-trace-overlay ${flyAway ? 'overlay-fly-away' : ''}`} style={{ width: pixelSize, height: pixelSize, zIndex: 4, display: editMode ? 'none' : undefined }} />
       {editMode && (
         <VertexEditor
           source={getSource(piece.char, piece.id)}

@@ -532,16 +532,16 @@ main {
 /* 개별 글자 따라쓰기 래퍼 — 네모 영역 없이 글자만 */
 .free-trace-wrap {
   position: absolute;
-  transform: translate(-50%, -50%);
-  pointer-events: auto;
+  pointer-events: none;
   cursor: grab;
-  transition: filter 0.2s, transform 0.2s;
   overflow: visible;
 }
 .free-trace-wrap:active { cursor: grabbing; }
 .free-trace-wrap--selected {
-  filter: drop-shadow(0 0 28px rgba(255,255,100,0.7)) drop-shadow(0 0 8px rgba(255,235,80,0.4));
   z-index: 8000 !important;
+}
+.free-trace-wrap--selected .free-trace-layer {
+  filter: drop-shadow(0 0 28px rgba(255,255,100,0.7)) drop-shadow(0 0 8px rgba(255,235,80,0.4));
 }
 /* 완성 — 쾅 애니메이션 (justDone 중에만) */
 .free-trace-wrap--slam {
@@ -563,7 +563,8 @@ main {
   100% { transform: translate(-50%, -50%) scale(1); filter: drop-shadow(0 2px 3px rgba(0,0,0,0.3)); }
 }
 .free-trace-layer {
-  position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+  position: absolute; top: 0; left: 0;
+  transform: translate(-50%, -50%);
   pointer-events: none;
   overflow: visible;
 }
