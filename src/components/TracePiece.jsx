@@ -162,9 +162,13 @@ export default function TracePiece({ piece, selected, inputLocked, onDone, onRes
     const dist = Math.hypot(hp.x - tp.x, hp.y - tp.y);
     handler.style.left = `${(hp.x/SIZE)*100}%`; handler.style.top = `${(hp.y/SIZE)*100}%`;
     // 거리에 비례해서 도착지 원 크기 연속 변화 (가까울수록 큼)
-    const maxDist = 450; // 이 거리부터 반응 시작 (일찍)
+    const maxDist = 450;
     const isTracing = engineRef.current.isTracing;
-    const proximity = isTracing ? Math.max(0, 1 - dist / maxDist) : 0; // 0(멀리)~1(도착)
+    // ㅇ,ㅁ 등 닫힌 도형: 시작=끝이므로 진행률 70% 이상일 때만 반응
+    const progress = engineRef.current.pts?.length > 0 ? engineRef.current.maxReachedIdx / (engineRef.current.pts.length - 1) : 0;
+    const isClosed = engineRef.current.isClosedLoop;
+    const allowNear = isClosed ? progress > 0.7 : true;
+    const proximity = (isTracing && allowNear) ? Math.max(0, 1 - dist / maxDist) : 0;
     const baseSize = 220;
     const maxSize = 700;
     const curSize = baseSize + proximity * (maxSize - baseSize);
