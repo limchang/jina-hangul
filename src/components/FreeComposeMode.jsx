@@ -239,12 +239,16 @@ export default function FreeComposeMode() {
 
   // ── 패널에서 클릭 or 드래그 ──
   const dragMovedRef = useRef(false);
+  const lastTouchTimeRef = useRef(0);
   const startDragNew = useCallback((char, type, e) => {
     e.preventDefault(); e.stopPropagation();
+    const isTouch = !!e.touches;
+    // 터치 직후 synthesized mousedown 무시 (300ms 이내)
+    if (!isTouch && Date.now() - lastTouchTimeRef.current < 300) return;
+    if (isTouch) lastTouchTimeRef.current = Date.now();
     let x, y;
     if (e.touches) { x = e.touches[0].clientX; y = e.touches[0].clientY; } else { x = e.clientX; y = e.clientY; }
-    const wasTouch = !!e.touches;
-    dragNewRef.current = { char, type, x, y, startX: x, startY: y, wasTouch };
+    dragNewRef.current = { char, type, x, y, startX: x, startY: y, wasTouch: isTouch };
     dragMovedRef.current = false;
     setDragNew({ char, type, x, y });
   }, []);
