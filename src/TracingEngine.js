@@ -67,7 +67,9 @@ export class TracingEngine {
 
     let bestDist = Infinity;
     let bestIdx = this.maxReachedIdx;
-    const searchLimit = Math.min(this.pts.length, this.maxReachedIdx + 50);
+    // 닫힌 도형: 진행률 낮을 때 끝점 근처 점프 방지 (앞으로 15개만 탐색)
+    const searchAhead = this.isClosedLoop && this.maxReachedIdx < this.pts.length * 0.5 ? 15 : 50;
+    const searchLimit = Math.min(this.pts.length, this.maxReachedIdx + searchAhead);
     for (let i = this.maxReachedIdx; i < searchLimit; i++) {
       const d = Math.hypot(x - this.pts[i].x, y - this.pts[i].y);
       if (d < bestDist) {
@@ -93,7 +95,9 @@ export class TracingEngine {
     this.isTracing = false;
     if (!this.pts || this.pts.length === 0) return false;
     const percent = this.maxReachedIdx / (this.pts.length - 1);
-    if (percent > 0.85) return true;
+    // 닫힌 도형은 90% 이상 필요 (시작=끝이라 쉽게 완료되는 것 방지)
+    const threshold = this.isClosedLoop ? 0.9 : 0.85;
+    if (percent > threshold) return true;
     this.maxReachedIdx = 0;
     return false;
   }
