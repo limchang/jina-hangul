@@ -273,7 +273,7 @@ export default function FreeComposeMode() {
     if (validParts.length === 1) {
       const bb = bboxCache[validParts[0]];
       placeNewPieceRef.current(validParts[0], ox, topAlignY(bb), false, syllableGroupId);
-      syllableCursorRef.current.x += (bb.maxX - C) * S + SYLLABLE_GAP;
+      syllableCursorRef.current.x += (bb.w / 2) * S + SYLLABLE_GAP;
       return;
     }
 
@@ -282,22 +282,23 @@ export default function FreeComposeMode() {
     const isVert = VERT_VOWELS.has(jung);
     const hasJong = !!jong;
 
-    // 음절 내 자모 최우측/최하단 추적
-    let rightmost = ox;
-
     if (isVert) {
-      // 초성(좌) + 중성(우)
       const dx = distX(bc, bj, S, PAD);
-      const choX = ox;
-      const jungX = ox + dx;
+      // 음절 총 너비: 초성 왼쪽 끝 ~ 중성 오른쪽 끝
+      const leftEdge = (C - bc.minX) * S;
+      const rightEdge = dx + (bj.maxX - C) * S;
+      const totalW = leftEdge + rightEdge;
+      const startX = ox - totalW / 2 + leftEdge; // 초성 중심
+
+      const choX = startX;
+      const jungX = startX + dx;
 
       if (hasJong) {
         const choY = topAlignY(bc);
         const jungY = topAlignY(bj);
         const dyJong = distY(bc, bk, S, PAD);
-        const jongX = ox + dx * 0.5;
+        const jongX = startX + dx * 0.5;
         const jongY = choY + dyJong;
-
         placeNewPieceRef.current(cho, choX, choY, false, syllableGroupId);
         placeNewPieceRef.current(jung, jungX, jungY, false, syllableGroupId);
         placeNewPieceRef.current(jong, jongX, jongY, false, syllableGroupId);
@@ -305,11 +306,9 @@ export default function FreeComposeMode() {
         placeNewPieceRef.current(cho, choX, topAlignY(bc), false, syllableGroupId);
         placeNewPieceRef.current(jung, jungX, topAlignY(bj), false, syllableGroupId);
       }
-      rightmost = jungX + (bj.maxX - C) * S;
+      syllableCursorRef.current.x += totalW / 2 + SYLLABLE_GAP;
     } else {
-      // 초성(위) + 중성(아래)
       const dy1 = distY(bc, bj, S, PAD);
-
       const choY = topAlignY(bc);
       if (hasJong) {
         const dy2 = distY(bj, bk, S, PAD);
@@ -320,8 +319,8 @@ export default function FreeComposeMode() {
         placeNewPieceRef.current(cho, ox, choY, false, syllableGroupId);
         placeNewPieceRef.current(jung, ox, choY + dy1, false, syllableGroupId);
       }
-      const maxW = Math.max(bc.maxX - C, bj.maxX - C, bk ? bk.maxX - C : 0);
-      rightmost = ox + maxW * S;
+      const maxW = Math.max(bc.w, bj.w, bk ? bk.w : 0) * S;
+      syllableCursorRef.current.x += maxW / 2 + SYLLABLE_GAP;
     }
 
     // 다음 음절 커서: 이 음절의 오른쪽 끝 + 음절 간 여백
