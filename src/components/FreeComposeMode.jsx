@@ -277,15 +277,17 @@ export default function FreeComposeMode() {
       if (e.type === 'mouseup' && d.wasTouch) return;
       let ex, ey;
       if (e.changedTouches) { ex = e.changedTouches[0].clientX; ey = e.changedTouches[0].clientY; } else { ex = e.clientX; ey = e.clientY; }
-      const remoteEl = document.querySelector('.remote');
-      if (remoteEl) {
-        const r = remoteEl.getBoundingClientRect();
-        if (ex >= r.left && ex <= r.right && ey >= r.top && ey <= r.bottom) return;
-      }
       const po = panOffsetRef.current, z = zoomValRef.current;
       if (!dragMovedRef.current) {
+        // 클릭만 → 다음 위치에 자동 배치
         const pos = getNextPlacePosRef.current(); placeNewPieceRef.current(d.char, pos.x, pos.y);
       } else {
+        // 드래그 → 리모컨 위에 놓으면 취소
+        const remoteEl = document.querySelector('.remote');
+        if (remoteEl) {
+          const r = remoteEl.getBoundingClientRect();
+          if (ex >= r.left && ex <= r.right && ey >= r.top && ey <= r.bottom) return;
+        }
         placeNewPieceRef.current(d.char, (ex - po.x) / z, (ey - po.y) / z, false);
       }
     }
