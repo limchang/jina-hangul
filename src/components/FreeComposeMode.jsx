@@ -65,17 +65,39 @@ export default function FreeComposeMode() {
     if (near && !focusZoomActiveRef.current) {
       focusZoomActiveRef.current = true;
       savedZoomRef.current = zoomRef.current;
-      const targetZoom = Math.min(zoomRef.current * 1.5, 3);
-      // 확대만 — panOffset 변경 없음 (드래그 안 풀림)
-      setPanSmooth(true);
-      setZoom(targetZoom);
-      setTimeout(() => setPanSmooth(false), 400);
+      const oldZ = zoomRef.current;
+      const newZ = Math.min(oldZ * 1.5, 3);
+      // 목적지 중심으로 확대 — pan 보정
+      const po = panOffsetRef.current;
+      const cx = piece.x * oldZ + po.x; // 목적지의 현재 화면 좌표
+      const cy = piece.y * oldZ + po.y;
+      const newPanX = cx - piece.x * newZ;
+      const newPanY = cy - piece.y * newZ;
+      // DOM 직접 조작 (smooth) — 드래그 안 풀림
+      if (panLayerRef.current) {
+        panLayerRef.current.style.transition = 'transform 0.35s ease-out';
+        panLayerRef.current.style.transform = `translate(${newPanX}px, ${newPanY}px) scale(${newZ})`;
+        setTimeout(() => { if (panLayerRef.current) panLayerRef.current.style.transition = ''; }, 400);
+      }
+      setZoom(newZ);
+      setPanOffset({ x: newPanX, y: newPanY });
     } else if (!near && focusZoomActiveRef.current) {
       focusZoomActiveRef.current = false;
       if (savedZoomRef.current !== null) {
-        setPanSmooth(true);
-        setZoom(savedZoomRef.current);
-        setTimeout(() => setPanSmooth(false), 400);
+        const oldZ = zoomRef.current;
+        const newZ = savedZoomRef.current;
+        // 화면 중앙 기준 복귀
+        const screenCX = window.innerWidth / 2, screenCY = window.innerHeight / 2;
+        const po = panOffsetRef.current;
+        const newPanX = screenCX - (screenCX - po.x) * (newZ / oldZ);
+        const newPanY = screenCY - (screenCY - po.y) * (newZ / oldZ);
+        if (panLayerRef.current) {
+          panLayerRef.current.style.transition = 'transform 0.35s ease-out';
+          panLayerRef.current.style.transform = `translate(${newPanX}px, ${newPanY}px) scale(${newZ})`;
+          setTimeout(() => { if (panLayerRef.current) panLayerRef.current.style.transition = ''; }, 400);
+        }
+        setZoom(newZ);
+        setPanOffset({ x: newPanX, y: newPanY });
         savedZoomRef.current = null;
       }
     }
