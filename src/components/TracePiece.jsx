@@ -149,8 +149,8 @@ export default function TracePiece({ piece, selected, inputLocked, onDone, onRes
 
   function setupIcons() {
     const ol = overlayRef.current; if (!ol) return;
-    const targetSvg = `<svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="16" fill="none" stroke="rgba(255,235,80,0.8)" stroke-width="3"/><circle cx="20" cy="20" r="6" fill="rgba(255,235,80,0.9)"/><circle cx="20" cy="20" r="18" fill="none" stroke="rgba(255,235,80,0.3)" stroke-width="1.5" stroke-dasharray="4 3"/></svg>`;
-    ol.innerHTML = `<div class="target-icon free-target">${targetSvg}</div><img class="character-handler" src="${getIconImageUrl(piece.char)}" onerror="this.src='${DEFAULT_ICON}'">`;
+    const targetSvg = `<svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="16" fill="none" stroke="rgba(255,235,80,0.8)" stroke-width="3"/><circle cx="20" cy="20" r="6" fill="rgba(255,235,80,0.9)"/></svg>`;
+    ol.innerHTML = `<div class="target-icon free-target"><div class="target-echo"></div><div class="target-echo target-echo--delay"></div>${targetSvg}</div><img class="character-handler" src="${getIconImageUrl(piece.char)}" onerror="this.src='${DEFAULT_ICON}'">`;
     updateIcons();
   }
   function updateIcons() {
