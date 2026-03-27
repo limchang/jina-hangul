@@ -241,25 +241,25 @@ main {
 }
 
 .target-icon {
-  position: absolute; width: 140px; z-index: 50; pointer-events: none;
+  position: absolute; width: 220px; z-index: 50; pointer-events: none;
   filter: drop-shadow(0 8px 12px rgba(0,0,0,0.15)); transform: translate(-50%, -50%);
-  animation: float 2.5s infinite ease-in-out;
+  animation: none;
 }
-/* 에코 링 — 바깥에서 가운데로 빨려들어가는 효과 */
+/* 에코 링 — 바깥 큰 원이 중심으로 수축하며 중심점 강조 */
 .target-echo {
   position: absolute; top: 50%; left: 50%;
   width: 100%; height: 100%;
-  border: 2.5px solid rgba(255,235,80,0.5);
+  border: 2px solid rgba(255,235,80,0.45);
   border-radius: 50%;
-  animation: echoShrink 1.5s infinite ease-in;
+  animation: echoShrink 2s infinite ease-in;
 }
 .target-echo--delay {
-  animation-delay: 0.75s;
+  animation-delay: 1s;
 }
 @keyframes echoShrink {
   0% { transform: translate(-50%,-50%) scale(1); opacity: 0; }
-  20% { opacity: 0.6; }
-  100% { transform: translate(-50%,-50%) scale(0.25); opacity: 0; }
+  15% { opacity: 0.5; }
+  100% { transform: translate(-50%,-50%) scale(0.15); opacity: 0; }
 }
 .target-icon > svg, .target-icon > img { width: 100%; height: 100%; }
 
