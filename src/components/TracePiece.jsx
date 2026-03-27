@@ -171,7 +171,7 @@ export default function TracePiece({ piece, selected, inputLocked, onDone, onRes
     if (!handler || !target) return;
     const hp = engineRef.current.getHandlerPos(), tp = engineRef.current.getTargetPos();
     const dist = Math.hypot(hp.x - tp.x, hp.y - tp.y);
-    handler.style.left = `${((hp.x + PAD)/SIZE)*100}%`; handler.style.top = `${((hp.y + PAD)/SIZE)*100}%`;
+    handler.style.left = `${(hp.x + PAD) * piece.scale}px`; handler.style.top = `${(hp.y + PAD) * piece.scale}px`;
     // 거리에 비례해서 도착지 원 크기 연속 변화 (가까울수록 큼)
     const maxDist = 450;
     const isTracing = engineRef.current.isTracing;
@@ -196,7 +196,7 @@ export default function TracePiece({ piece, selected, inputLocked, onDone, onRes
     const echos = target.querySelectorAll('.target-echo');
     echos.forEach(e => { e.style.opacity = proximity > 0.2 ? '1' : '0'; e.style.animation = proximity > 0.2 ? `echoShrink ${0.5 + (1 - proximity) * 1.5}s infinite ease-in` : 'none'; });
     if (onNearGoal) onNearGoal(isNear);
-    target.style.left = `${((tp.x + PAD)/SIZE)*100}%`; target.style.top = `${((tp.y + PAD)/SIZE)*100}%`;
+    target.style.left = `${(tp.x + PAD) * piece.scale}px`; target.style.top = `${(tp.y + PAD) * piece.scale}px`;
   }
 
   function startPLoop() {
@@ -418,7 +418,7 @@ export default function TracePiece({ piece, selected, inputLocked, onDone, onRes
     >
       <canvas ref={guideRef} className="free-trace-layer" style={{ width: pixelSize, height: pixelSize, pointerEvents: 'auto' }} />
       <canvas ref={traceRef} className="free-trace-layer" style={{ width: pixelSize, height: pixelSize, zIndex: 3, display: editMode ? 'none' : undefined }} />
-      <div ref={overlayRef} className={`free-trace-layer free-trace-overlay ${flyAway ? 'overlay-fly-away' : ''}`} style={{ width: pixelSize, height: pixelSize, zIndex: 4, display: editMode ? 'none' : undefined }} />
+      <div ref={overlayRef} className={`free-trace-layer free-trace-overlay ${flyAway ? 'overlay-fly-away' : ''}`} style={{ zIndex: 4, display: editMode ? 'none' : undefined }} />
       {editMode && (
         <VertexEditor
           source={getSource(piece.char, piece.id)}

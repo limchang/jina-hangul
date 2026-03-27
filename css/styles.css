@@ -571,6 +571,8 @@ main {
 .free-trace-overlay {
   pointer-events: none;
   overflow: visible;
+  width: 0 !important; height: 0 !important;
+  transform: none !important;
 }
 /* 타겟 아이콘 — 모던 동그라미 */
 .free-target {
