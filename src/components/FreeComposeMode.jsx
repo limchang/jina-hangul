@@ -53,7 +53,47 @@ export default function FreeComposeMode() {
   const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [panLocked, setPanLocked] = useState(false);
+  const [mathQuiz, setMathQuiz] = useState(null); // { a, b, answer, options }
   const spaceHeldRef = useRef(false);
+
+  const handleLockClick = useCallback(() => {
+    if (!panLocked) {
+      // 잠금: 바로
+      setPanLocked(true);
+    } else {
+      // 해제: 곱셈 문제
+      const a = 2 + Math.floor(Math.random() * 8); // 2~9
+      const b = 2 + Math.floor(Math.random() * 8);
+      const answer = a * b;
+      // 오답 3개 생성 (중복 방지)
+      const wrongs = new Set();
+      while (wrongs.size < 3) {
+        const w = answer + (Math.floor(Math.random() * 21) - 10);
+        if (w !== answer && w > 0) wrongs.add(w);
+      }
+      const options = [...wrongs, answer].sort(() => Math.random() - 0.5);
+      setMathQuiz({ a, b, answer, options });
+    }
+  }, [panLocked]);
+
+  const handleQuizAnswer = useCallback((val) => {
+    if (val === mathQuiz?.answer) {
+      setPanLocked(false);
+      setMathQuiz(null);
+    } else {
+      // 틀림 — 새 문제
+      const a = 2 + Math.floor(Math.random() * 8);
+      const b = 2 + Math.floor(Math.random() * 8);
+      const answer = a * b;
+      const wrongs = new Set();
+      while (wrongs.size < 3) {
+        const w = answer + (Math.floor(Math.random() * 21) - 10);
+        if (w !== answer && w > 0) wrongs.add(w);
+      }
+      const options = [...wrongs, answer].sort(() => Math.random() - 0.5);
+      setMathQuiz({ a, b, answer, options });
+    }
+  }, [mathQuiz]);
   const [gridOn, setGridOn] = useState(false);
   const GRID_SIZE = 100; // 스냅 그리드 간격
   const [cardEditMode, setCardEditMode] = useState(false);
@@ -548,7 +588,7 @@ export default function FreeComposeMode() {
       {/* 상단 중앙 컨트롤 바 */}
       <div className="left-controls">
         <TrashZone trashHover={trashHover} onClearAll={resetAll} onUndo={undoReset} />
-        <div className={`zoom-btn ${panLocked ? 'zoom-btn--active' : ''}`} onClick={() => setPanLocked(l => !l)}>
+        <div className={`zoom-btn ${panLocked ? 'zoom-btn--active' : ''}`} onClick={handleLockClick}>
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             {panLocked
               ? <><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></>
@@ -578,6 +618,19 @@ export default function FreeComposeMode() {
 
       {dragNew && jamoImages[dragNew.char] && (
         <img className="drag-ghost-img" src={jamoImages[dragNew.char]} style={{ left: dragNew.x, top: dragNew.y }} draggable={false} />
+      )}
+
+      {mathQuiz && (
+        <div className="quiz-overlay" onClick={() => setMathQuiz(null)}>
+          <div className="quiz-card" onClick={(e) => e.stopPropagation()}>
+            <div className="quiz-question">{mathQuiz.a} × {mathQuiz.b} = ?</div>
+            <div className="quiz-options">
+              {mathQuiz.options.map((opt, i) => (
+                <div key={i} className="quiz-option" onClick={() => handleQuizAnswer(opt)}>{opt}</div>
+              ))}
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
