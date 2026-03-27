@@ -66,25 +66,15 @@ export default function FreeComposeMode() {
       focusZoomActiveRef.current = true;
       savedZoomRef.current = zoomRef.current;
       const targetZoom = Math.min(zoomRef.current * 1.5, 3);
-      const screenCX = window.innerWidth / 2, screenCY = window.innerHeight / 2;
-      // 도착지점 기준으로 확대
-      const tp = piece;
-      const newPanX = screenCX - tp.x * targetZoom;
-      const newPanY = screenCY - tp.y * targetZoom;
+      // 확대만 — panOffset 변경 없음 (드래그 안 풀림)
       setPanSmooth(true);
       setZoom(targetZoom);
-      setPanOffset({ x: newPanX, y: newPanY });
       setTimeout(() => setPanSmooth(false), 400);
     } else if (!near && focusZoomActiveRef.current) {
       focusZoomActiveRef.current = false;
       if (savedZoomRef.current !== null) {
-        const oldZoom = savedZoomRef.current;
-        const screenCX = window.innerWidth / 2, screenCY = window.innerHeight / 2;
-        const newPanX = screenCX - (screenCX - panOffsetRef.current.x) * (oldZoom / zoomRef.current);
-        const newPanY = screenCY - (screenCY - panOffsetRef.current.y) * (oldZoom / zoomRef.current);
         setPanSmooth(true);
-        setZoom(oldZoom);
-        setPanOffset({ x: newPanX, y: newPanY });
+        setZoom(savedZoomRef.current);
         setTimeout(() => setPanSmooth(false), 400);
         savedZoomRef.current = null;
       }
