@@ -348,9 +348,9 @@ export default function FreeComposeMode() {
 
       {cardEditMode && <button className="card-edit-done-btn" onClick={finishCardEdit}>완료</button>}
 
-      {/* 캔버스 잠금 버튼 (좌하단) */}
+      {/* 캔버스 잠금 버튼 (좌하단) — 휴지통과 동일 디자인 */}
       <div className={`canvas-lock ${panLocked ? 'canvas-lock--on' : ''}`} onClick={() => setPanLocked(l => !l)}>
-        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           {panLocked
             ? <><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></>
             : <><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 019.9-1"/></>
@@ -409,7 +409,7 @@ function TrashZone({ trashHover, onClearAll }) {
     <>
       <div id="trash-zone" className={`trash-zone ${trashHover ? 'trash-zone--hover' : ''}`}
         onMouseDown={onDown} onMouseUp={onUp} onMouseLeave={onUp} onTouchStart={onDown} onTouchEnd={onUp}>
-        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <polyline points="3 6 5 6 21 6"></polyline>
           <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
         </svg>

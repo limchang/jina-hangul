@@ -248,6 +248,7 @@ const WordCards = forwardRef(function WordCards({ onDeploy, isOverTrash, setTras
           onTouchStart={(e) => startDrag('자음', -1, e, { type: 'consonants', isDefault: true })}
           onMouseDown={(e) => startDrag('자음', -1, e, { type: 'consonants', isDefault: true })}>
           <img className="word-card-preview" src={getDefaultPreviews().consonants} draggable={false} />
+          <span className="word-card-label">ㄱㄴㄷ</span>
         </div>
         {leftCards.map((word, li) => {
           const origIdx = leftIndices[li];
@@ -266,6 +267,7 @@ const WordCards = forwardRef(function WordCards({ onDeploy, isOverTrash, setTras
           onTouchStart={(e) => startDrag('모음', -1, e, { type: 'vowels', isDefault: true })}
           onMouseDown={(e) => startDrag('모음', -1, e, { type: 'vowels', isDefault: true })}>
           <img className="word-card-preview" src={getDefaultPreviews().vowels} draggable={false} />
+          <span className="word-card-label">ㅏㅑㅓ</span>
         </div>
         {rightCards.map((word, ri) => {
           const origIdx = rightIndices[ri];
