@@ -53,6 +53,7 @@ export default function FreeComposeMode() {
   const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [panLocked, setPanLocked] = useState(false);
+  const spaceHeldRef = useRef(false);
   const [gridOn, setGridOn] = useState(false);
   const GRID_SIZE = 100; // 스냅 그리드 간격
   const [cardEditMode, setCardEditMode] = useState(false);
@@ -64,6 +65,15 @@ export default function FreeComposeMode() {
   const panRafRef = useRef(null);
 
   useEffect(() => { initSvgHelper(); }, []);
+
+  // ── 스페이스 키 = 패닝 모드 ──
+  useEffect(() => {
+    function onKeyDown(e) { if (e.code === 'Space' && !e.repeat) { e.preventDefault(); spaceHeldRef.current = true; } }
+    function onKeyUp(e) { if (e.code === 'Space') { spaceHeldRef.current = false; } }
+    window.addEventListener('keydown', onKeyDown);
+    window.addEventListener('keyup', onKeyUp);
+    return () => { window.removeEventListener('keydown', onKeyDown); window.removeEventListener('keyup', onKeyUp); };
+  }, []);
 
   // ── 키보드 입력 → 글자 배치 ──
   const allChars = useMemo(() => {
@@ -133,10 +143,15 @@ export default function FreeComposeMode() {
         const d = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
         const scale = d / pinchRef.current.startDist;
         const newZoom = Math.min(3, Math.max(0.3, pinchRef.current.startZoom * scale));
-        // 두 손가락 중앙 기준으로 pan 보정
+        // 현재 두 손가락 중앙
+        const curCX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+        const curCY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+        // 줌 보정 + 2손가락 이동(패닝)
         const { cx, cy, startPan, startZoom } = pinchRef.current;
-        const newPanX = cx - (cx - startPan.x) * (newZoom / startZoom);
-        const newPanY = cy - (cy - startPan.y) * (newZoom / startZoom);
+        const zoomPanX = cx - (cx - startPan.x) * (newZoom / startZoom);
+        const zoomPanY = cy - (cy - startPan.y) * (newZoom / startZoom);
+        const newPanX = zoomPanX + (curCX - cx);
+        const newPanY = zoomPanY + (curCY - cy);
         setZoom(newZoom);
         setPanOffset({ x: newPanX, y: newPanY });
         if (panLayerRef.current) {
@@ -302,15 +317,24 @@ export default function FreeComposeMode() {
     return () => { window.removeEventListener('touchmove', onMove); window.removeEventListener('mousemove', onMove); window.removeEventListener('touchend', onEnd); window.removeEventListener('mouseup', onEnd); };
   }, []); // 한 번만 등록
 
-  // ── 빈 공간 드래그 = 캔버스 패닝 (DOM 직접 조작으로 최적화) ──
+  // ── 캔버스 패닝: 2손가락 터치 or 스페이스+마우스 ──
   const startPan = useCallback((e) => {
-    if (e.target.closest('.free-trace-wrap') || e.target.closest('.remote') || e.target.closest('.trash-zone') || e.target.closest('.word-tray') || e.target.closest('.word-card') || e.target.closest('.canvas-lock')) return;
+    if (e.target.closest('.remote') || e.target.closest('.trash-zone') || e.target.closest('.word-tray') || e.target.closest('.word-card') || e.target.closest('.left-controls')) return;
     if (dragNewRef.current || panLocked) return;
-    // 2손가락 이상이면 패닝 안 함 (핀치 줌 우선)
-    if (e.touches && e.touches.length >= 2) return;
+    // 마우스: 스페이스 눌린 상태에서만 패닝
+    if (!e.touches && !spaceHeldRef.current) return;
+    // 터치: 2손가락에서만 패닝 (1손가락은 무시)
+    if (e.touches && e.touches.length < 2) return;
     e.preventDefault();
     let x, y;
-    if (e.touches) { x = e.touches[0].clientX; y = e.touches[0].clientY; } else { x = e.clientX; y = e.clientY; }
+    if (e.touches && e.touches.length >= 2) {
+      x = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+      y = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+    } else if (e.touches) {
+      x = e.touches[0].clientX; y = e.touches[0].clientY;
+    } else {
+      x = e.clientX; y = e.clientY;
+    }
     panStart.current = { startX: x, startY: y, origX: panOffset.x, origY: panOffset.y };
     setSelectedId(null);
   }, [panOffset, panLocked]);
@@ -318,10 +342,18 @@ export default function FreeComposeMode() {
   useEffect(() => {
     function onMove(e) {
       if (!panStart.current || pinchRef.current) return;
-      if (e.touches && e.touches.length >= 2) { panStart.current = null; return; }
+      // 마우스: 스페이스 떼면 패닝 중단
+      if (!e.touches && !spaceHeldRef.current) { panStart.current = null; return; }
       e.preventDefault();
       let x, y;
-      if (e.touches) { x = e.touches[0].clientX; y = e.touches[0].clientY; } else { x = e.clientX; y = e.clientY; }
+      if (e.touches && e.touches.length >= 2) {
+        x = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+        y = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+      } else if (e.touches) {
+        x = e.touches[0].clientX; y = e.touches[0].clientY;
+      } else {
+        x = e.clientX; y = e.clientY;
+      }
       const ps = panStart.current;
       const nx = ps.origX + (x - ps.startX);
       const ny = ps.origY + (y - ps.startY);
@@ -474,7 +506,7 @@ export default function FreeComposeMode() {
         {pieces.map(piece => (
           <TracePiece
             key={piece.id} piece={piece} selected={piece.id === selectedId}
-            inputLocked={panSmooth}
+            inputLocked={panSmooth || panLocked}
             onDone={() => markDone(piece.id)}
             onResetDone={() => setPieces(prev => prev.map(p => p.id === piece.id ? { ...p, done: false } : p))}
             onDelete={() => { delete pieceOverrides[piece.id]; setPieces(prev => prev.filter(p => p.id !== piece.id)); }}
@@ -516,6 +548,14 @@ export default function FreeComposeMode() {
       {/* 상단 중앙 컨트롤 바 */}
       <div className="left-controls">
         <TrashZone trashHover={trashHover} onClearAll={resetAll} onUndo={undoReset} />
+        <div className={`zoom-btn ${panLocked ? 'zoom-btn--active' : ''}`} onClick={() => setPanLocked(l => !l)}>
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            {panLocked
+              ? <><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></>
+              : <><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 019.9-1"/></>
+            }
+          </svg>
+        </div>
         <div className="ctrl-divider" />
         <div className={`zoom-btn ${gridOn ? 'zoom-btn--active' : ''}`} onClick={() => setGridOn(g => !g)}>
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2">
@@ -534,15 +574,6 @@ export default function FreeComposeMode() {
             x{z === 1.5 ? '1.5' : z}
           </div>
         ))}
-        <div className="ctrl-divider" />
-        <div className={`zoom-btn ${panLocked ? 'zoom-btn--active' : ''}`} onClick={() => setPanLocked(l => !l)}>
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            {panLocked
-              ? <><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></>
-              : <><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 019.9-1"/></>
-            }
-          </svg>
-        </div>
       </div>
 
       {dragNew && jamoImages[dragNew.char] && (
