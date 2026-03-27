@@ -252,6 +252,9 @@ export default function FreeComposeMode() {
     const validParts = parts.filter(j => allChars[j]);
     if (validParts.length === 0) return;
 
+    // 음절마다 새 groupId (한 글자 = 한 그룹)
+    const syllableGroupId = groupIdCounter.current++;
+
     const scale = 0.5;
     const S = scale;
     const PAD = 5;
@@ -269,7 +272,7 @@ export default function FreeComposeMode() {
 
     if (validParts.length === 1) {
       const bb = bboxCache[validParts[0]];
-      placeNewPieceRef.current(validParts[0], ox, topAlignY(bb), false, typingGroupRef.current);
+      placeNewPieceRef.current(validParts[0], ox, topAlignY(bb), false, syllableGroupId);
       syllableCursorRef.current.x += (bb.maxX - C) * S + SYLLABLE_GAP;
       return;
     }
@@ -295,12 +298,12 @@ export default function FreeComposeMode() {
         const jongX = ox + dx * 0.5;
         const jongY = choY + dyJong;
 
-        placeNewPieceRef.current(cho, choX, choY, false, typingGroupRef.current);
-        placeNewPieceRef.current(jung, jungX, jungY, false, typingGroupRef.current);
-        placeNewPieceRef.current(jong, jongX, jongY, false, typingGroupRef.current);
+        placeNewPieceRef.current(cho, choX, choY, false, syllableGroupId);
+        placeNewPieceRef.current(jung, jungX, jungY, false, syllableGroupId);
+        placeNewPieceRef.current(jong, jongX, jongY, false, syllableGroupId);
       } else {
-        placeNewPieceRef.current(cho, choX, topAlignY(bc), false, typingGroupRef.current);
-        placeNewPieceRef.current(jung, jungX, topAlignY(bj), false, typingGroupRef.current);
+        placeNewPieceRef.current(cho, choX, topAlignY(bc), false, syllableGroupId);
+        placeNewPieceRef.current(jung, jungX, topAlignY(bj), false, syllableGroupId);
       }
       rightmost = jungX + (bj.maxX - C) * S;
     } else {
@@ -310,12 +313,12 @@ export default function FreeComposeMode() {
       const choY = topAlignY(bc);
       if (hasJong) {
         const dy2 = distY(bj, bk, S, PAD);
-        placeNewPieceRef.current(cho, ox, choY, false, typingGroupRef.current);
-        placeNewPieceRef.current(jung, ox, choY + dy1, false, typingGroupRef.current);
-        placeNewPieceRef.current(jong, ox, choY + dy1 + dy2, false, typingGroupRef.current);
+        placeNewPieceRef.current(cho, ox, choY, false, syllableGroupId);
+        placeNewPieceRef.current(jung, ox, choY + dy1, false, syllableGroupId);
+        placeNewPieceRef.current(jong, ox, choY + dy1 + dy2, false, syllableGroupId);
       } else {
-        placeNewPieceRef.current(cho, ox, choY, false, typingGroupRef.current);
-        placeNewPieceRef.current(jung, ox, choY + dy1, false, typingGroupRef.current);
+        placeNewPieceRef.current(cho, ox, choY, false, syllableGroupId);
+        placeNewPieceRef.current(jung, ox, choY + dy1, false, syllableGroupId);
       }
       const maxW = Math.max(bc.maxX - C, bj.maxX - C, bk ? bk.maxX - C : 0);
       rightmost = ox + maxW * S;
@@ -348,20 +351,10 @@ export default function FreeComposeMode() {
   }, [placeSyllable]);
 
   const handleKbInput = useCallback((e) => {
-    const val = e.target.value;
-    const confirmed = kbComposingRef.current ? val.length - 1 : val.length;
-    for (let i = kbPlacedLenRef.current; i < confirmed; i++) {
-      placeSyllable(val[i]);
-    }
-    if (confirmed > 0 && !kbComposingRef.current) {
-      // 조합 중이 아니면 즉시 비우기
-      if (kbInputRef.current) kbInputRef.current.value = '';
-      kbPlacedLenRef.current = 0;
-    } else {
-      kbPlacedLenRef.current = confirmed;
-    }
+    // compositionEnd 직후 input 이벤트는 무시 (이미 배치됨)
+    if (!kbComposingRef.current && kbInputRef.current?.value === '') return;
     resetKbTimer();
-  }, [placeSyllable, resetKbTimer]);
+  }, [resetKbTimer]);
 
   const handleCompositionStart = useCallback(() => {
     kbComposingRef.current = true;
@@ -369,17 +362,16 @@ export default function FreeComposeMode() {
 
   const handleCompositionEnd = useCallback((e) => {
     kbComposingRef.current = false;
+    if (kbTimerRef.current) clearTimeout(kbTimerRef.current);
     const val = kbInputRef.current?.value || '';
-    // 조합 완료 → 마지막 글자 배치
-    for (let i = kbPlacedLenRef.current; i < val.length; i++) {
-      placeSyllable(val[i]);
+    if (val.length > 0) {
+      // 완성된 글자 배치
+      placeSyllable(val[val.length - 1]);
     }
-    kbPlacedLenRef.current = val.length;
-    // 입력 초기화
+    // 즉시 비우기
     if (kbInputRef.current) kbInputRef.current.value = '';
     kbPlacedLenRef.current = 0;
     kbPrevRef.current = '';
-    if (kbTimerRef.current) clearTimeout(kbTimerRef.current);
   }, [placeSyllable]);
 
   // ── 휠 줌 (마우스 위치 기준) ──
