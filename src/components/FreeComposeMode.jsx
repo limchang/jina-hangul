@@ -198,35 +198,31 @@ export default function FreeComposeMode() {
   const handleKbInput = useCallback((e) => {
     const val = e.target.value;
     const prev = kbPrevRef.current;
-    // 새로 확정된 글자 감지 (이전보다 길어진 부분)
     if (val.length > prev.length) {
       const newChars = val.slice(prev.length);
-      // 마지막 글자는 아직 조합 중일 수 있으므로, 확정된 글자만 (마지막 제외)
       for (let i = 0; i < newChars.length - 1; i++) {
         const jamos = decomposeWord(newChars[i]);
         jamos.forEach(char => {
-          const pos = getNextPlacePos();
-          placeNewPiece(char, pos.x, pos.y);
+          const pos = getNextPlacePosRef.current();
+          placeNewPieceRef.current(char, pos.x, pos.y);
         });
       }
     }
     kbPrevRef.current = val;
-  }, [getNextPlacePos, placeNewPiece]);
+  }, []);
 
-  // 조합 완료 (compositionend) 시 마지막 글자 배치
   const handleCompositionEnd = useCallback((e) => {
     const val = kbInputRef.current?.value || '';
     if (val.length === 0) return;
     const lastChar = val[val.length - 1];
     const jamos = decomposeWord(lastChar);
     jamos.forEach(char => {
-      const pos = getNextPlacePos();
-      placeNewPiece(char, pos.x, pos.y);
+      const pos = getNextPlacePosRef.current();
+      placeNewPieceRef.current(char, pos.x, pos.y);
     });
-    // 입력 초기화
     if (kbInputRef.current) kbInputRef.current.value = '';
     kbPrevRef.current = '';
-  }, [getNextPlacePos, placeNewPiece]);
+  }, []);
 
   // ── 휠 줌 (마우스 위치 기준) ──
   useEffect(() => {
@@ -402,8 +398,8 @@ export default function FreeComposeMode() {
   const zoomValRef = useRef(zoom);
   useEffect(() => { panOffsetRef.current = panOffset; }, [panOffset]);
   useEffect(() => { zoomValRef.current = zoom; }, [zoom]);
-  const getNextPlacePosRef = useRef(getNextPlacePos);
-  const placeNewPieceRef = useRef(placeNewPiece);
+  const getNextPlacePosRef = useRef(null);
+  const placeNewPieceRef = useRef(null);
   useEffect(() => { getNextPlacePosRef.current = getNextPlacePos; }, [getNextPlacePos]);
   useEffect(() => { placeNewPieceRef.current = placeNewPiece; }, [placeNewPiece]);
 
