@@ -222,7 +222,8 @@ main {
   transition: width 0.3s ease-out !important;
 }
 .target-near-goal .target-echo {
-  animation-duration: 0.7s !important;
+  opacity: 1;
+  animation: echoShrink 0.7s infinite ease-in !important;
   border-color: rgba(255,235,80,0.8) !important;
   border-width: 3px !important;
 }
@@ -253,7 +254,8 @@ main {
   width: 100%; height: 100%;
   border: 2px solid rgba(255,235,80,0.45);
   border-radius: 50%;
-  animation: echoShrink 2s infinite ease-in;
+  animation: none;
+  opacity: 0;
 }
 .target-echo--delay {
   animation-delay: 1s;
