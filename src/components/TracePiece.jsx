@@ -16,7 +16,7 @@ function getIconImageUrl(char) {
   return DEFAULT_ICON;
 }
 
-export default function TracePiece({ piece, selected, onDone, onResetDone, onDelete, onSelect, isOverTrash, setTrashHover, onSourceUpdate, onMoved }) {
+export default function TracePiece({ piece, selected, inputLocked, onDone, onResetDone, onDelete, onSelect, isOverTrash, setTrashHover, onSourceUpdate, onMoved }) {
   const source = getSource(piece.char, piece.id);
   const [editMode, setEditMode] = useState(false);
   const guideRef = useRef(null);
@@ -207,7 +207,7 @@ export default function TracePiece({ piece, selected, onDone, onResetDone, onDel
 
     function onDown(e) {
       if (e.touches?.length > 1) return;
-      if (editMode) return;
+      if (editMode || inputLocked) return;
       e.stopPropagation();
       const cPos = getPos(e);
       if (!isOnGlyph(cPos)) return;

@@ -471,7 +471,7 @@ main {
   transform: translate(-50%, -50%);
   pointer-events: auto;
   cursor: grab;
-  transition: filter 0.2s, transform 0.2s;
+  transition: filter 0.2s, transform 0.2s, left 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), top 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
   overflow: visible;
 }
 .free-trace-wrap:active { cursor: grabbing; }
@@ -515,11 +515,38 @@ main {
   0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.8; }
   50% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
 }
-/* 캔버스 잠금 — 왼쪽 아래, 휴지통과 동일 디자인 */
-.canvas-lock {
+/* 좌하단 컨트롤 그룹 */
+.left-controls {
   position: fixed; bottom: 20px; left: 20px;
   z-index: 9200;
-  width: 56px; height: 56px;
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+}
+.zoom-btn {
+  width: 44px; height: 44px;
+  background: rgba(255,255,255,0.12);
+  backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+  border: 1.5px solid rgba(255,255,255,0.25);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  color: rgba(255,255,255,0.5);
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 0.7rem; font-weight: 800;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+}
+.zoom-btn:hover {
+  background: rgba(255,255,255,0.2);
+  color: rgba(255,255,255,0.8);
+}
+.zoom-btn--active {
+  background: rgba(100,180,255,0.25);
+  border-color: rgba(100,180,255,0.5);
+  color: white;
+  box-shadow: 0 0 12px rgba(100,180,255,0.3);
+}
+.canvas-lock {
+  width: 44px; height: 44px;
   background: rgba(255,255,255,0.12);
   backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
   border: 1.5px solid rgba(255,255,255,0.25);

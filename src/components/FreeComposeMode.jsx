@@ -137,7 +137,9 @@ export default function FreeComposeMode() {
 
   const placeNewPiece = useCallback((char, x, y, focus = true) => {
     const newId = nextId++;
-    const scale = pieces.length > 0 ? pieces[pieces.length - 1].scale : 0.5;
+    // 배율에 따라 글자 크기 자연스럽게 조정 (확대 시 작게, 축소 시 크게)
+    const baseScale = pieces.length > 0 ? pieces[pieces.length - 1].scale : 0.5;
+    const scale = baseScale / zoom;
     setPieces(prev => [...prev, { id: newId, char, x, y, scale, done: false }]);
     setSelectedId(newId);
     if (focus) {
@@ -148,19 +150,36 @@ export default function FreeComposeMode() {
   }, [pieces, zoom]);
 
   const placeAll = useCallback((items) => {
-    const scale = pieces.length > 0 ? pieces[pieces.length - 1].scale : 0.5;
+    const baseScale = pieces.length > 0 ? pieces[pieces.length - 1].scale : 0.5;
+    const scale = baseScale / zoom;
     const gap = 500 * scale * 0.8;
     const screenCX = window.innerWidth / 2;
     const screenCY = window.innerHeight / 2;
-    let startX, startY;
-    if (pieces.length > 0) { const last = pieces[pieces.length - 1]; startX = last.x + gap; startY = last.y; }
-    else { startX = screenCX / zoom; startY = screenCY / zoom; }
-    const newPieces = items.map((item, i) => ({ id: nextId++, char: item.char, x: startX + i * gap, y: startY, scale, done: false }));
-    const firstPiece = newPieces[0];
+    // 화면 중앙에서 착~ 뿌려지는 효과
+    const centerX = (screenCX - panOffset.x) / zoom;
+    const centerY = (screenCY - panOffset.y) / zoom;
+    const totalW = (items.length - 1) * gap;
+    const startX = centerX - totalW / 2;
+    // 처음엔 모두 중앙에 모아놓고
+    const newPieces = items.map((item, i) => ({
+      id: nextId++, char: item.char,
+      x: centerX, y: centerY, // 시작: 중앙
+      _targetX: startX + i * gap, _targetY: centerY, // 목표 위치
+      scale, done: false
+    }));
     setPieces(prev => [...prev, ...newPieces]);
-    setSelectedId(firstPiece.id);
-    setPanOffset({ x: screenCX - firstPiece.x * zoom, y: screenCY - firstPiece.y * zoom });
-  }, [pieces]);
+    setSelectedId(newPieces[0].id);
+    // stagger로 하나씩 퍼져나가기
+    newPieces.forEach((p, i) => {
+      setTimeout(() => {
+        setPieces(prev => prev.map(pp => pp.id === p.id ? { ...pp, x: p._targetX, y: p._targetY } : pp));
+      }, 50 + i * 60);
+    });
+    // 첫 글자 위치로 포커스
+    setTimeout(() => {
+      setPanOffset({ x: screenCX - newPieces[0]._targetX * zoom, y: screenCY - newPieces[0]._targetY * zoom });
+    }, 50);
+  }, [pieces, zoom, panOffset]);
 
   // ── 낱말카드에서 자모 배치 ──
   const deployWord = useCallback((jamos, word, updatePreview, dropX, dropY) => {
@@ -349,30 +368,8 @@ export default function FreeComposeMode() {
   }, []);
 
   const markDone = useCallback((id) => {
-    setPieces(prev => {
-      const updated = prev.map(p => p.id === id ? { ...p, done: true } : p);
-      const donePiece = updated.find(p => p.id === id);
-      const candidates = updated.filter(p => !p.done);
-      const next = donePiece ? findNextPiece(donePiece, candidates) : null;
-      if (next) {
-        const screenCX = window.innerWidth / 2, screenCY = window.innerHeight / 2;
-        // zoom 반영: 화면좌표 = 월드좌표 * zoom + panOffset
-        const nsx = next.x * zoom + panOffset.x, nsy = next.y * zoom + panOffset.y;
-        const margin = 150;
-        const inView = nsx > margin && nsx < window.innerWidth - margin && nsy > margin && nsy < window.innerHeight - margin;
-        if (inView) { setTimeout(() => setSelectedId(next.id), 500); }
-        else {
-          setTimeout(() => {
-            setPanSmooth(true);
-            setPanOffset({ x: screenCX - next.x * zoom, y: screenCY - next.y * zoom });
-            setSelectedId(next.id);
-          }, 500);
-          setTimeout(() => setPanSmooth(false), 1100);
-        }
-      }
-      return updated;
-    });
-  }, [findNextPiece, panOffset, zoom]);
+    setPieces(prev => prev.map(p => p.id === id ? { ...p, done: true } : p));
+  }, []);
 
   const selectPiece = useCallback((id) => setSelectedId(id), []);
 
@@ -382,6 +379,7 @@ export default function FreeComposeMode() {
         {pieces.map(piece => (
           <TracePiece
             key={piece.id} piece={piece} selected={piece.id === selectedId}
+            inputLocked={panSmooth}
             onDone={() => markDone(piece.id)}
             onResetDone={() => setPieces(prev => prev.map(p => p.id === piece.id ? { ...p, done: false } : p))}
             onDelete={() => { delete pieceOverrides[piece.id]; setPieces(prev => prev.filter(p => p.id !== piece.id)); }}
@@ -417,14 +415,22 @@ export default function FreeComposeMode() {
 
       {cardEditMode && <button className="card-edit-done-btn" onClick={finishCardEdit}>완료</button>}
 
-      {/* 캔버스 잠금 버튼 (좌하단) — 휴지통과 동일 디자인 */}
-      <div className={`canvas-lock ${panLocked ? 'canvas-lock--on' : ''}`} onClick={() => setPanLocked(l => !l)}>
-        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          {panLocked
-            ? <><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></>
-            : <><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 019.9-1"/></>
-          }
-        </svg>
+      {/* 좌하단 컨트롤 — 배율 버튼 + 잠금 (세로 쌓기) */}
+      <div className="left-controls">
+        {[1, 1.5, 2].map(z => (
+          <div key={z} className={`zoom-btn ${Math.abs(zoom - z) < 0.05 ? 'zoom-btn--active' : ''}`}
+            onClick={() => { setZoom(z); if (panLayerRef.current) panLayerRef.current.style.transform = `translate(${panOffset.x}px, ${panOffset.y}px) scale(${z})`; }}>
+            x{z === 1.5 ? '1.5' : z}
+          </div>
+        ))}
+        <div className={`canvas-lock ${panLocked ? 'canvas-lock--on' : ''}`} onClick={() => setPanLocked(l => !l)}>
+          <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            {panLocked
+              ? <><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></>
+              : <><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 019.9-1"/></>
+            }
+          </svg>
+        </div>
       </div>
 
       <TrashZone trashHover={trashHover} onClearAll={resetAll} onUndo={undoReset} />
