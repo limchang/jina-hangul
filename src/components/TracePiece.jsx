@@ -72,7 +72,8 @@ export default function TracePiece({ piece, selected, inputLocked, onDone, onRes
     prevEditMode.current = editMode;
   }, [editMode]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const SIZE = 500;
+  const SIZE = 700; // 가이드 두께까지 담을 수 있도록 여유
+  const PAD = 100; // 캔버스 패딩 (양쪽)
   const pixelSize = SIZE * piece.scale;
 
   useEffect(() => {
@@ -91,6 +92,8 @@ export default function TracePiece({ piece, selected, inputLocked, onDone, onRes
     if (!gCtx || !src) return;
     const S = stateRef.current;
     gCtx.clearRect(0, 0, SIZE, SIZE);
+    gCtx.save();
+    gCtx.translate(PAD, PAD);
     // 흰색 배경선 (두꺼운 밑선)
     gCtx.strokeStyle = 'rgba(255,255,255,0.25)';
     gCtx.lineWidth = APP_CONFIG.GUIDE_STROKE_WIDTH + 28;
@@ -119,6 +122,7 @@ export default function TracePiece({ piece, selected, inputLocked, onDone, onRes
         gCtx.strokeStyle = '#fff'; gCtx.lineWidth = 3; gCtx.stroke();
       }
     }
+    gCtx.restore();
   }
 
   function drawGuide() { drawGuideWith(getSource(piece.char, piece.id)); }
@@ -147,8 +151,11 @@ export default function TracePiece({ piece, selected, inputLocked, onDone, onRes
   function renderTrace() {
     const tCtx = traceRef.current.getContext('2d');
     tCtx.clearRect(0, 0, SIZE, SIZE);
+    tCtx.save();
+    tCtx.translate(PAD, PAD);
     engineRef.current.draw();
     particleRef.current.draw(tCtx);
+    tCtx.restore();
   }
 
   function setupIcons() {
@@ -164,7 +171,7 @@ export default function TracePiece({ piece, selected, inputLocked, onDone, onRes
     if (!handler || !target) return;
     const hp = engineRef.current.getHandlerPos(), tp = engineRef.current.getTargetPos();
     const dist = Math.hypot(hp.x - tp.x, hp.y - tp.y);
-    handler.style.left = `${(hp.x/SIZE)*100}%`; handler.style.top = `${(hp.y/SIZE)*100}%`;
+    handler.style.left = `${((hp.x + PAD)/SIZE)*100}%`; handler.style.top = `${((hp.y + PAD)/SIZE)*100}%`;
     // 거리에 비례해서 도착지 원 크기 연속 변화 (가까울수록 큼)
     const maxDist = 450;
     const isTracing = engineRef.current.isTracing;
@@ -189,7 +196,7 @@ export default function TracePiece({ piece, selected, inputLocked, onDone, onRes
     const echos = target.querySelectorAll('.target-echo');
     echos.forEach(e => { e.style.opacity = proximity > 0.2 ? '1' : '0'; e.style.animation = proximity > 0.2 ? `echoShrink ${0.5 + (1 - proximity) * 1.5}s infinite ease-in` : 'none'; });
     if (onNearGoal) onNearGoal(isNear);
-    target.style.left = `${(tp.x/SIZE)*100}%`; target.style.top = `${(tp.y/SIZE)*100}%`;
+    target.style.left = `${((tp.x + PAD)/SIZE)*100}%`; target.style.top = `${((tp.y + PAD)/SIZE)*100}%`;
   }
 
   function startPLoop() {
@@ -224,8 +231,8 @@ export default function TracePiece({ piece, selected, inputLocked, onDone, onRes
       if (e.touches?.length > 0) { cx = e.touches[0].clientX; cy = e.touches[0].clientY; }
       else if (e.changedTouches) { cx = e.changedTouches[0].clientX; cy = e.changedTouches[0].clientY; }
       else { cx = e.clientX; cy = e.clientY; }
-      const rect = traceRef.current.getBoundingClientRect();
-      return { x: (cx-rect.left)*(SIZE/rect.width), y: (cy-rect.top)*(SIZE/rect.height) };
+      const rect = guideRef.current.getBoundingClientRect();
+      return { x: (cx-rect.left)*(SIZE/rect.width) - PAD, y: (cy-rect.top)*(SIZE/rect.height) - PAD };
     }
 
     function isOnGlyph(canvasPos) {
