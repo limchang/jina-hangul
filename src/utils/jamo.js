@@ -37,7 +37,14 @@ export function decompose(syllable) {
   const cho = CHO_LIST[Math.floor(offset / (21 * 28))];
   const jung = JUNG_LIST[Math.floor((offset % (21 * 28)) / 28)];
   const jong = JONG_LIST[offset % 28];
-  const result = [cho, jung];
+  // 복합 모음 → 기본 자모로 분해
+  const COMPOUND_VOWEL = {
+    'ㅐ': ['ㅏ','ㅣ'], 'ㅒ': ['ㅑ','ㅣ'], 'ㅔ': ['ㅓ','ㅣ'], 'ㅖ': ['ㅕ','ㅣ'],
+    'ㅘ': ['ㅗ','ㅏ'], 'ㅙ': ['ㅗ','ㅏ','ㅣ'], 'ㅚ': ['ㅗ','ㅣ'],
+    'ㅝ': ['ㅜ','ㅓ'], 'ㅞ': ['ㅜ','ㅓ','ㅣ'], 'ㅟ': ['ㅜ','ㅣ'], 'ㅢ': ['ㅡ','ㅣ'],
+  };
+  const jungParts = COMPOUND_VOWEL[jung] || [jung];
+  const result = [cho, ...jungParts];
   if (jong) result.push(jong);
   return result;
 }

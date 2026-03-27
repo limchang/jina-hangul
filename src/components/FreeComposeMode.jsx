@@ -254,7 +254,7 @@ export default function FreeComposeMode() {
       syllableCursorRef.current = { x: pos.x, y: pos.y };
     }
 
-    const SYLLABLE_GAP = 30; // 음절 간 추가 여백
+    const SYLLABLE_GAP = 80; // 음절 간 추가 여백 (과하게)
     const ox = syllableCursorRef.current.x;
     const topY = syllableCursorRef.current.y; // 윗선 기준 (상단 정렬)
     // 자모 중심 Y = 윗선 + (캔버스중심 - bb상단) * scale → 상단 정렬
