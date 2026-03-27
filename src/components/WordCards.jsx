@@ -6,45 +6,6 @@ import { decomposeWord } from '../utils/jamo.js';
 const STORAGE_KEY = 'jina-word-cards';
 const PREVIEW_KEY = 'jina-word-previews';
 
-// 카드용 가이드 미리보기 렌더링 (흰색 배경선 + 노란 점선)
-function renderCardPreview(items) {
-  const CELL = 56;
-  const PAD = 8;
-  const W = items.length * CELL + PAD * 2;
-  const H = CELL + PAD * 2;
-  const canvas = document.createElement('canvas');
-  canvas.width = W; canvas.height = H;
-  const ctx = canvas.getContext('2d');
-  items.forEach((item, i) => {
-    ctx.save();
-    ctx.translate(PAD + i * CELL + CELL / 2, PAD + CELL / 2);
-    const s = CELL / 500;
-    ctx.scale(s, s);
-    ctx.translate(-250, -250);
-    // 그림자 (시인성)
-    ctx.shadowColor = 'rgba(200,160,0,0.4)';
-    ctx.shadowBlur = 12;
-    // 노란 실선 (두꺼운 가이드)
-    ctx.strokeStyle = '#f0c830';
-    ctx.lineWidth = 50;
-    ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-    item.strokes.forEach(st => ctx.stroke(new Path2D(st.path)));
-    ctx.shadowBlur = 0;
-    ctx.restore();
-  });
-  return canvas.toDataURL();
-}
-
-let _cardPreviews = null;
-function getCardPreviews() {
-  if (!_cardPreviews) {
-    _cardPreviews = {
-      consonants: renderCardPreview(CONSONANTS.slice(0, 3)), // ㄱㄴㄷ
-      vowels: renderCardPreview(VOWELS.slice(0, 4)),          // ㅏㅑㅓㅕ
-    };
-  }
-  return _cardPreviews;
-}
 
 function loadCards() {
   try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); } catch { return []; }
@@ -141,6 +102,24 @@ const WordCards = forwardRef(function WordCards({ onDeploy, isOverTrash, setTras
       setPreviews(prev => {
         const np = { ...prev };
         delete np[word];
+        savePreviews(np);
+        return np;
+      });
+    },
+    // 기존 카드를 갱신 (이름 변경 + 미리보기 교체)
+    updateCard(oldName, newName, previewImg) {
+      setCards(prev => {
+        const idx = prev.indexOf(oldName);
+        if (idx < 0) return [...prev, newName]; // 못 찾으면 추가
+        const next = [...prev];
+        next[idx] = newName;
+        saveCards(next);
+        return next;
+      });
+      setPreviews(prev => {
+        const np = { ...prev };
+        if (oldName !== newName) delete np[oldName];
+        if (previewImg) np[newName] = previewImg;
         savePreviews(np);
         return np;
       });
@@ -275,17 +254,12 @@ const WordCards = forwardRef(function WordCards({ onDeploy, isOverTrash, setTras
 
   return (
     <>
-      {/* 왼쪽 카드존 — 기본 카드(자음) + 사용자 카드 */}
+      {/* 왼쪽 카드존 — 사용자 카드 */}
       <div className="word-tray word-tray--left">
-        <div className="word-card word-card--default" style={sideCardStyle(0, leftCards.length + 1)}
-          onTouchStart={(e) => startDrag('자음', -1, e, { type: 'consonants', isDefault: true })}
-          onMouseDown={(e) => startDrag('자음', -1, e, { type: 'consonants', isDefault: true })}>
-          <img className="word-card-preview" src={getCardPreviews().consonants} draggable={false} />
-        </div>
         {leftCards.map((word, li) => {
           const origIdx = leftIndices[li];
           return (
-            <div key={`${word}-${origIdx}`} className="word-card" style={sideCardStyle(li + 1, leftCards.length + 1)}
+            <div key={`${word}-${origIdx}`} className="word-card" style={sideCardStyle(li, leftCards.length)}
               onTouchStart={(e) => startDrag(word, origIdx, e)} onMouseDown={(e) => startDrag(word, origIdx, e)}>
               {previews[word] ? <img className="word-card-preview" src={previews[word]} draggable={false} />
                 : <span className="word-card-placeholder">{word}</span>}
@@ -293,24 +267,19 @@ const WordCards = forwardRef(function WordCards({ onDeploy, isOverTrash, setTras
           );
         })}
       </div>
-      {/* 오른쪽 카드존 — 기본 카드(모음) + 사용자 카드 + 추가 버튼 */}
+      {/* 오른쪽 카드존 — 사용자 카드 + 추가 버튼 */}
       <div className="word-tray word-tray--right">
-        <div className="word-card word-card--default" style={sideCardStyle(0, rightCards.length + 2)}
-          onTouchStart={(e) => startDrag('모음', -1, e, { type: 'vowels', isDefault: true })}
-          onMouseDown={(e) => startDrag('모음', -1, e, { type: 'vowels', isDefault: true })}>
-          <img className="word-card-preview" src={getCardPreviews().vowels} draggable={false} />
-        </div>
         {rightCards.map((word, ri) => {
           const origIdx = rightIndices[ri];
           return (
-            <div key={`${word}-${origIdx}`} className="word-card" style={sideCardStyle(ri + 1, rightCards.length + 2)}
+            <div key={`${word}-${origIdx}`} className="word-card" style={sideCardStyle(ri, rightCards.length + 1)}
               onTouchStart={(e) => startDrag(word, origIdx, e)} onMouseDown={(e) => startDrag(word, origIdx, e)}>
               {previews[word] ? <img className="word-card-preview" src={previews[word]} draggable={false} />
                 : <span className="word-card-placeholder">{word}</span>}
             </div>
           );
         })}
-        <div className="word-card word-card--add" style={sideCardStyle(rightCards.length + 1, rightCards.length + 2)} onClick={onNewCard}>
+        <div className="word-card word-card--add" style={sideCardStyle(rightCards.length, rightCards.length + 1)} onClick={onNewCard}>
           <span style={{ fontSize: '1.3rem', color: 'rgba(255,255,255,0.7)' }}>+</span>
         </div>
       </div>

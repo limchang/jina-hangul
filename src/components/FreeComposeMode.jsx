@@ -54,7 +54,7 @@ export default function FreeComposeMode() {
   const [zoom, setZoom] = useState(1);
   const [panLocked, setPanLocked] = useState(false);
   const [gridOn, setGridOn] = useState(false);
-  const GRID_SIZE = 200; // 스냅 그리드 간격
+  const GRID_SIZE = 100; // 스냅 그리드 간격
   const [cardEditMode, setCardEditMode] = useState(false);
   const wordCardsRef = useRef(null);
   const dragNewRef = useRef(null);
@@ -89,13 +89,23 @@ export default function FreeComposeMode() {
     return () => window.removeEventListener('keydown', onKeyDown);
   });
 
-  // ── 휠 줌 ──
+  // ── 휠 줌 (마우스 위치 기준) ──
   useEffect(() => {
     function onWheel(e) {
-      if (e.target.closest('.remote') || e.target.closest('.word-tray')) return;
+      if (e.target.closest('.remote') || e.target.closest('.word-tray') || e.target.closest('.left-controls')) return;
       e.preventDefault();
-      const delta = e.deltaY > 0 ? 0.95 : 1.05;
-      setZoom(z => Math.min(3, Math.max(0.3, z * delta)));
+      const factor = e.deltaY > 0 ? 0.95 : 1.05;
+      const oldZ = zoomRef.current;
+      const newZ = Math.min(3, Math.max(0.3, oldZ * factor));
+      const po = panOffsetRef.current;
+      const cx = e.clientX, cy = e.clientY;
+      const newPanX = cx - (cx - po.x) * (newZ / oldZ);
+      const newPanY = cy - (cy - po.y) * (newZ / oldZ);
+      setZoom(newZ);
+      setPanOffset({ x: newPanX, y: newPanY });
+      if (panLayerRef.current) {
+        panLayerRef.current.style.transform = `translate(${newPanX}px, ${newPanY}px) scale(${newZ})`;
+      }
     }
     window.addEventListener('wheel', onWheel, { passive: false });
     return () => window.removeEventListener('wheel', onWheel);
@@ -112,7 +122,9 @@ export default function FreeComposeMode() {
         panStart.current = null;
         if (panRafRef.current) { cancelAnimationFrame(panRafRef.current); panRafRef.current = null; }
         const d = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
-        pinchRef.current = { startDist: d, startZoom: zoomRef.current };
+        const cx = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+        const cy = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+        pinchRef.current = { startDist: d, startZoom: zoomRef.current, startPan: { ...panOffsetRef.current }, cx, cy };
       }
     }
     function onTouchMove(e) {
@@ -121,10 +133,14 @@ export default function FreeComposeMode() {
         const d = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
         const scale = d / pinchRef.current.startDist;
         const newZoom = Math.min(3, Math.max(0.3, pinchRef.current.startZoom * scale));
+        // 두 손가락 중앙 기준으로 pan 보정
+        const { cx, cy, startPan, startZoom } = pinchRef.current;
+        const newPanX = cx - (cx - startPan.x) * (newZoom / startZoom);
+        const newPanY = cy - (cy - startPan.y) * (newZoom / startZoom);
         setZoom(newZoom);
-        // DOM 직접 갱신 (리렌더 대기 없이 부드럽게)
+        setPanOffset({ x: newPanX, y: newPanY });
         if (panLayerRef.current) {
-          panLayerRef.current.style.transform = `translate(${panOffset.x}px, ${panOffset.y}px) scale(${newZoom})`;
+          panLayerRef.current.style.transform = `translate(${newPanX}px, ${newPanY}px) scale(${newZoom})`;
         }
       }
     }
@@ -309,7 +325,7 @@ export default function FreeComposeMode() {
         panRafRef.current = requestAnimationFrame(() => {
           panRafRef.current = null;
           if (panLayerRef.current && panStart.current) {
-            panLayerRef.current.style.transform = `translate(${panStart.current.lastX}px, ${panStart.current.lastY}px) scale(${zoom})`;
+            panLayerRef.current.style.transform = `translate(${panStart.current.lastX}px, ${panStart.current.lastY}px) scale(${zoomRef.current})`;
           }
         });
       }
@@ -329,7 +345,7 @@ export default function FreeComposeMode() {
     window.addEventListener('touchend', onEnd);
     window.addEventListener('mouseup', onEnd);
     return () => { window.removeEventListener('touchmove', onMove); window.removeEventListener('mousemove', onMove); window.removeEventListener('touchend', onEnd); window.removeEventListener('mouseup', onEnd); };
-  }, [zoom]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const undoRef = useRef(null);
 
@@ -339,7 +355,7 @@ export default function FreeComposeMode() {
       undoRef.current = { pieces: prev, panOffset, selectedId, overrides: { ...pieceOverrides } };
       return [];
     });
-    nextId = 1; setSelectedId(null); setPanOffset({ x: 0, y: 0 });
+    nextId = Date.now(); setSelectedId(null); setPanOffset({ x: 0, y: 0 });
     Object.keys(pieceOverrides).forEach(k => delete pieceOverrides[k]);
   }, [panOffset, selectedId]);
 
@@ -365,8 +381,7 @@ export default function FreeComposeMode() {
     editingCardRef.current = { word, cardIdx };
     // 현재 pieces 백업 후 클리어
     setPieces([]);
-    nextId = 1;
-    setSelectedId(null);
+        setSelectedId(null);
     setPanOffset({ x: 0, y: 0 });
     Object.keys(pieceOverrides).forEach(k => delete pieceOverrides[k]);
     // 저장된 레이아웃 로드
@@ -408,13 +423,15 @@ export default function FreeComposeMode() {
     const previewPieces = pieces.map(p => ({ ...p, done: false, source: getSource(p.char, p.id) }));
     const img = renderLayoutPreview(previewPieces);
     saveWordLayout(cardName, pieces.map(p => ({ char: p.char, x: p.x, y: p.y, scale: p.scale })));
-    // 기존 카드 수정이면 이전 카드 제거
     if (editingCardRef.current && wordCardsRef.current) {
-      wordCardsRef.current.removeCardByName(editingCardRef.current.word);
+      // 기존 카드 갱신
+      wordCardsRef.current.updateCard(editingCardRef.current.word, cardName, img);
+    } else if (wordCardsRef.current) {
+      // 새 카드 추가
+      wordCardsRef.current.addCardDirect(cardName, img);
     }
-    if (wordCardsRef.current) wordCardsRef.current.addCardDirect(cardName, img);
     editingCardRef.current = null;
-    setPieces([]); nextId = 1; setSelectedId(null); setPanOffset({ x: 0, y: 0 });
+    setPieces([]); nextId = Date.now(); setSelectedId(null); setPanOffset({ x: 0, y: 0 });
     Object.keys(pieceOverrides).forEach(k => delete pieceOverrides[k]);
     setCardEditMode(false);
   }, [pieces]);
@@ -501,7 +518,12 @@ export default function FreeComposeMode() {
         </div>
         {[1, 1.5, 2].map(z => (
           <div key={z} className={`zoom-btn ${Math.abs(zoom - z) < 0.05 ? 'zoom-btn--active' : ''}`}
-            onClick={() => { setZoom(z); if (panLayerRef.current) panLayerRef.current.style.transform = `translate(${panOffset.x}px, ${panOffset.y}px) scale(${z})`; }}>
+            onClick={() => {
+              const cx = window.innerWidth / 2, cy = window.innerHeight / 2;
+              const newPanX = cx - (cx - panOffset.x) * (z / zoom);
+              const newPanY = cy - (cy - panOffset.y) * (z / zoom);
+              setZoom(z); setPanOffset({ x: newPanX, y: newPanY });
+            }}>
             x{z === 1.5 ? '1.5' : z}
           </div>
         ))}
