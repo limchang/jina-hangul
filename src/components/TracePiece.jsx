@@ -275,14 +275,20 @@ export default function TracePiece({ piece, selected, onDone, onResetDone, onDel
           }
           startWobbleSound();
           setWobbleIntensity(intensity);
-          // 최대 이탈 → 제자리 스냅백
+          // 최대 이탈 → 드래그 강제 해제 + 시작점 복귀
           if (opc > 35) {
             engineRef.current.offPathCount = 0;
+            engineRef.current.maxReachedIdx = 0;
             engineRef.current.isTracing = false;
             if (h) { h.classList.remove('handler-wobble'); h.style.transform = 'translate(-50%,-50%)'; }
             stopWobbleSound();
             playFail();
-            stopPLoop(); renderTrace(); updateIcons();
+            stopPLoop();
+            // 트레이스 캔버스 클리어 + 가이드 다시 그리기 (시작점 표시)
+            const tCtx = traceRef.current?.getContext('2d');
+            if (tCtx) tCtx.clearRect(0, 0, SIZE, SIZE);
+            drawGuide();
+            setupIcons();
           }
         } else {
           if (h) h.classList.remove('handler-wobble');
