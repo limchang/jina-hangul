@@ -216,10 +216,8 @@ main {
   transition: transform 0.15s, filter 0.15s !important;
 }
 .target-near-goal {
-  width: 600px !important;
   animation: targetGoal 0.5s infinite ease-in-out !important;
   filter: drop-shadow(0 0 30px rgba(255,235,80,1)) drop-shadow(0 0 60px rgba(255,200,0,0.5)) !important;
-  transition: width 0.3s ease-out !important;
 }
 .target-near-goal .target-echo {
   opacity: 1;
@@ -246,7 +244,7 @@ main {
 .target-icon {
   position: absolute; width: 220px; z-index: 50; pointer-events: none;
   filter: drop-shadow(0 8px 12px rgba(0,0,0,0.15)); transform: translate(-50%, -50%);
-  animation: none;
+  transition: width 0.1s ease-out, filter 0.2s;
 }
 /* 에코 링 — 바깥 큰 원이 중심으로 수축하며 중심점 강조 */
 .target-echo {

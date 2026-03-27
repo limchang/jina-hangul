@@ -161,8 +161,15 @@ export default function TracePiece({ piece, selected, inputLocked, onDone, onRes
     const hp = engineRef.current.getHandlerPos(), tp = engineRef.current.getTargetPos();
     const dist = Math.hypot(hp.x - tp.x, hp.y - tp.y);
     handler.style.left = `${(hp.x/SIZE)*100}%`; handler.style.top = `${(hp.y/SIZE)*100}%`;
-    // 도착지점 근처 → 골인 느낌 (자석 효과)
-    const isNear = dist < 80 && engineRef.current.isTracing;
+    // 거리에 비례해서 도착지 원 크기 연속 변화 (가까울수록 큼)
+    const maxDist = 250; // 이 거리부터 반응 시작
+    const isTracing = engineRef.current.isTracing;
+    const proximity = isTracing ? Math.max(0, 1 - dist / maxDist) : 0; // 0(멀리)~1(도착)
+    const baseSize = 220;
+    const maxSize = 700;
+    const curSize = baseSize + proximity * (maxSize - baseSize);
+    target.style.width = `${curSize}px`;
+    const isNear = dist < 80 && isTracing;
     if (isNear) {
       handler.classList.add('handler-near-goal');
       target.classList.add('target-near-goal');
@@ -170,6 +177,9 @@ export default function TracePiece({ piece, selected, inputLocked, onDone, onRes
       handler.classList.remove('handler-near-goal');
       target.classList.remove('target-near-goal');
     }
+    // 에코 링: 근접 시에만
+    const echos = target.querySelectorAll('.target-echo');
+    echos.forEach(e => { e.style.opacity = proximity > 0.5 ? '1' : '0'; e.style.animation = proximity > 0.5 ? `echoShrink ${0.5 + (1 - proximity) * 1}s infinite ease-in` : 'none'; });
     if (onNearGoal) onNearGoal(isNear);
     target.style.left = `${(tp.x/SIZE)*100}%`; target.style.top = `${(tp.y/SIZE)*100}%`;
   }
