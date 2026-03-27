@@ -53,8 +53,42 @@ export default function FreeComposeMode() {
   const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [panLocked, setPanLocked] = useState(false);
-  const [mathQuiz, setMathQuiz] = useState(null); // { a, b, answer, options }
+  const [mathQuiz, setMathQuiz] = useState(null);
+  const [focusZoom, setFocusZoom] = useState(true); // 도착지 근접 시 확대
+  const focusZoomActiveRef = useRef(false);
+  const savedZoomRef = useRef(null);
   const spaceHeldRef = useRef(false);
+
+  const onNearGoal = useCallback((near, piece) => {
+    if (!focusZoom) return;
+    if (near && !focusZoomActiveRef.current) {
+      focusZoomActiveRef.current = true;
+      savedZoomRef.current = zoomRef.current;
+      const targetZoom = Math.min(zoomRef.current * 1.5, 3);
+      const screenCX = window.innerWidth / 2, screenCY = window.innerHeight / 2;
+      // 도착지점 기준으로 확대
+      const tp = piece;
+      const newPanX = screenCX - tp.x * targetZoom;
+      const newPanY = screenCY - tp.y * targetZoom;
+      setPanSmooth(true);
+      setZoom(targetZoom);
+      setPanOffset({ x: newPanX, y: newPanY });
+      setTimeout(() => setPanSmooth(false), 400);
+    } else if (!near && focusZoomActiveRef.current) {
+      focusZoomActiveRef.current = false;
+      if (savedZoomRef.current !== null) {
+        const oldZoom = savedZoomRef.current;
+        const screenCX = window.innerWidth / 2, screenCY = window.innerHeight / 2;
+        const newPanX = screenCX - (screenCX - panOffsetRef.current.x) * (oldZoom / zoomRef.current);
+        const newPanY = screenCY - (screenCY - panOffsetRef.current.y) * (oldZoom / zoomRef.current);
+        setPanSmooth(true);
+        setZoom(oldZoom);
+        setPanOffset({ x: newPanX, y: newPanY });
+        setTimeout(() => setPanSmooth(false), 400);
+        savedZoomRef.current = null;
+      }
+    }
+  }, [focusZoom]);
 
   const handleLockClick = useCallback(() => {
     if (!panLocked) {
@@ -552,6 +586,7 @@ export default function FreeComposeMode() {
             onDelete={() => { delete pieceOverrides[piece.id]; setPieces(prev => prev.filter(p => p.id !== piece.id)); }}
             isOverTrash={isOverTrash} setTrashHover={setTrashHover}
             onSelect={() => selectPiece(piece.id)}
+            onNearGoal={(near) => onNearGoal(near, piece)}
             onSourceUpdate={(ns) => updateSource(piece.id, piece.char, ns)}
             onMoved={(nx, ny) => {
               const sx = gridOn ? Math.round(nx / GRID_SIZE) * GRID_SIZE : nx;
@@ -601,6 +636,12 @@ export default function FreeComposeMode() {
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2">
             <line x1="4" y1="4" x2="4" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/><line x1="20" y1="4" x2="20" y2="20"/>
             <line x1="4" y1="4" x2="20" y2="4"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="20" x2="20" y2="20"/>
+          </svg>
+        </div>
+        <div className={`zoom-btn ${focusZoom ? 'zoom-btn--active' : ''}`} onClick={() => setFocusZoom(f => !f)} title="도착지 자동 확대">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            <line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/>
           </svg>
         </div>
         {[1, 1.5, 2].map(z => (

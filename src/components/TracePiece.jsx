@@ -16,7 +16,7 @@ function getIconImageUrl(char) {
   return DEFAULT_ICON;
 }
 
-export default function TracePiece({ piece, selected, inputLocked, onDone, onResetDone, onDelete, onSelect, isOverTrash, setTrashHover, onSourceUpdate, onMoved }) {
+export default function TracePiece({ piece, selected, inputLocked, onDone, onResetDone, onDelete, onSelect, isOverTrash, setTrashHover, onNearGoal, onSourceUpdate, onMoved }) {
   const source = getSource(piece.char, piece.id);
   const [editMode, setEditMode] = useState(false);
   const guideRef = useRef(null);
@@ -162,13 +162,15 @@ export default function TracePiece({ piece, selected, inputLocked, onDone, onRes
     const dist = Math.hypot(hp.x - tp.x, hp.y - tp.y);
     handler.style.left = `${(hp.x/SIZE)*100}%`; handler.style.top = `${(hp.y/SIZE)*100}%`;
     // 도착지점 근처 → 골인 느낌 (자석 효과)
-    if (dist < 80 && engineRef.current.isTracing) {
+    const isNear = dist < 80 && engineRef.current.isTracing;
+    if (isNear) {
       handler.classList.add('handler-near-goal');
       target.classList.add('target-near-goal');
     } else {
       handler.classList.remove('handler-near-goal');
       target.classList.remove('target-near-goal');
     }
+    if (onNearGoal) onNearGoal(isNear);
     target.style.left = `${(tp.x/SIZE)*100}%`; target.style.top = `${(tp.y/SIZE)*100}%`;
   }
 
@@ -289,6 +291,7 @@ export default function TracePiece({ piece, selected, inputLocked, onDone, onRes
           failCountRef.current++;
           playFallSound();
           stopPLoop();
+          if (onNearGoal) onNearGoal(false);
           // 캐릭터 캔버스로 수직 낙하
           setFlyAway(true);
           setTimeout(() => {
@@ -335,8 +338,9 @@ export default function TracePiece({ piece, selected, inputLocked, onDone, onRes
       if (engineRef.current?.isTracing) {
         const h = overlayRef.current?.querySelector('.character-handler');
         const tgt = overlayRef.current?.querySelector('.target-icon');
-        if (h) h.style.transform = 'translate(-50%,-50%)';
-        if (tgt) tgt.classList.remove('target-calling');
+        if (h) { h.style.transform = 'translate(-50%,-50%)'; h.classList.remove('handler-near-goal'); }
+        if (tgt) { tgt.classList.remove('target-calling'); tgt.classList.remove('target-near-goal'); }
+        if (onNearGoal) onNearGoal(false);
         if (engineRef.current.end()) {
           playComplete(); particleRef.current.burst(engineRef.current.getTargetPos().x, engineRef.current.getTargetPos().y, 15);
           completeStroke();
