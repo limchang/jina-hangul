@@ -210,12 +210,14 @@ main {
 }
 .character-handler:active { transform: translate(-50%, -50%) scale(1.15) rotate(5deg); pointer-events: none; }
 .handler-wobble {
-  animation: handlerWobble 0.15s infinite ease-in-out !important;
+  --wobble-deg: 6deg;
+  --wobble-speed: 0.15s;
+  animation: handlerWobble var(--wobble-speed) infinite ease-in-out !important;
   filter: drop-shadow(0 10px 18px rgba(0,0,0,0.25)) drop-shadow(0 0 8px rgba(255,80,80,0.5)) !important;
 }
 @keyframes handlerWobble {
-  0%, 100% { transform: translate(-50%, -50%) rotate(-6deg); }
-  50% { transform: translate(-50%, -50%) rotate(6deg); }
+  0%, 100% { transform: translate(-50%, -50%) rotate(calc(-1 * var(--wobble-deg))); }
+  50% { transform: translate(-50%, -50%) rotate(var(--wobble-deg)); }
 }
 
 .target-icon {

@@ -4,7 +4,7 @@ import { APP_CONFIG } from '../data.js';
 import { TracingEngine, samplePath } from '../TracingEngine.js';
 import { ParticleSystem } from '../particles.js';
 
-import { playStart, playComplete, playCelebrate, playFail, playSlam, playFloat, playLand, startWobbleSound, stopWobbleSound } from '../sound.js';
+import { playStart, playComplete, playCelebrate, playFail, playSlam, playFloat, playLand, startWobbleSound, stopWobbleSound, setWobbleIntensity } from '../sound.js';
 import { ICON_MAP } from '../icon-map.js';
 import { getSource } from '../sourceOverrides.js';
 import VertexEditor from './VertexEditor.jsx';
@@ -262,11 +262,28 @@ export default function TracePiece({ piece, selected, onDone, onResetDone, onDel
         const cPos = getPos(e);
         engineRef.current.move(cPos.x, cPos.y);
         particleRef.current.emit(cPos.x, cPos.y); renderTrace(); updateIcons();
-        // 경로 이탈 감지 → 위글 + 불안 효과음
+        // 경로 이탈 감지 → 크레센도 위글 + 불안 효과음 + 제자리 복귀
+        const opc = engineRef.current.offPathCount || 0;
         const h = overlayRef.current?.querySelector('.character-handler');
-        if (engineRef.current.offPathCount > 5) {
-          if (h) h.classList.add('handler-wobble');
+        if (opc > 5) {
+          const intensity = Math.min((opc - 5) / 25, 1); // 5~30 프레임에 걸쳐 0→1
+          if (h) {
+            h.classList.add('handler-wobble');
+            const deg = 4 + intensity * 12; // 4~16도
+            h.style.setProperty('--wobble-deg', `${deg}deg`);
+            h.style.setProperty('--wobble-speed', `${0.15 - intensity * 0.08}s`); // 0.15→0.07s
+          }
           startWobbleSound();
+          setWobbleIntensity(intensity);
+          // 최대 이탈 → 제자리 스냅백
+          if (opc > 35) {
+            engineRef.current.offPathCount = 0;
+            engineRef.current.isTracing = false;
+            if (h) { h.classList.remove('handler-wobble'); h.style.transform = 'translate(-50%,-50%)'; }
+            stopWobbleSound();
+            playFail();
+            stopPLoop(); renderTrace(); updateIcons();
+          }
         } else {
           if (h) h.classList.remove('handler-wobble');
           stopWobbleSound();

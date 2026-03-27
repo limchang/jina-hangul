@@ -131,21 +131,23 @@ export function playLand() {
   osc.stop(ctx.currentTime + 0.12);
 }
 
-// 경로 이탈 — 불안한 떨림 사운드 (반복 호출 방지 내장)
+// 경로 이탈 — 크레센도 떨림 사운드
 let _wobbleOsc = null;
 let _wobbleGain = null;
+let _wobbleLfoGain = null;
+let _wobbleLfo = null;
+
 export function startWobbleSound() {
-  if (_wobbleOsc) return; // 이미 재생 중
+  if (_wobbleOsc) return;
   const ctx = getCtx();
   const osc = ctx.createOscillator();
   const gain = ctx.createGain();
   const lfo = ctx.createOscillator();
   const lfoGain = ctx.createGain();
 
-  // LFO로 주파수 떨림
   lfo.type = 'sine';
-  lfo.frequency.setValueAtTime(8, ctx.currentTime); // 8Hz 떨림
-  lfoGain.gain.setValueAtTime(30, ctx.currentTime);
+  lfo.frequency.setValueAtTime(6, ctx.currentTime);
+  lfoGain.gain.setValueAtTime(15, ctx.currentTime);
   lfo.connect(lfoGain);
   lfoGain.connect(osc.frequency);
 
@@ -153,25 +155,39 @@ export function startWobbleSound() {
   osc.frequency.setValueAtTime(280, ctx.currentTime);
   osc.connect(gain);
   gain.connect(ctx.destination);
-  gain.gain.setValueAtTime(0, ctx.currentTime);
-  gain.gain.linearRampToValueAtTime(0.08, ctx.currentTime + 0.05);
+  gain.gain.setValueAtTime(0.02, ctx.currentTime);
 
   osc.start(ctx.currentTime);
   lfo.start(ctx.currentTime);
   _wobbleOsc = osc;
   _wobbleGain = gain;
-  _wobbleOsc._lfo = lfo;
+  _wobbleLfo = lfo;
+  _wobbleLfoGain = lfoGain;
+}
+
+// intensity: 0~1 (0=약, 1=최대)
+export function setWobbleIntensity(intensity) {
+  if (!_wobbleOsc) return;
+  const ctx = getCtx();
+  const t = ctx.currentTime;
+  // 볼륨 크레센도: 0.02 → 0.15
+  _wobbleGain.gain.linearRampToValueAtTime(0.02 + intensity * 0.13, t + 0.05);
+  // LFO 속도 증가: 6Hz → 16Hz
+  _wobbleLfo.frequency.linearRampToValueAtTime(6 + intensity * 10, t + 0.05);
+  // LFO 깊이 증가: 15 → 60
+  _wobbleLfoGain.gain.linearRampToValueAtTime(15 + intensity * 45, t + 0.05);
 }
 
 export function stopWobbleSound() {
   if (!_wobbleOsc) return;
   const ctx = getCtx();
   _wobbleGain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.1);
-  const osc = _wobbleOsc;
-  const lfo = osc._lfo;
+  const osc = _wobbleOsc, lfo = _wobbleLfo;
   setTimeout(() => { try { osc.stop(); lfo.stop(); } catch {} }, 150);
   _wobbleOsc = null;
   _wobbleGain = null;
+  _wobbleLfo = null;
+  _wobbleLfoGain = null;
 }
 
 // 실패 (놓았는데 완성 안 됨) — 낮은 붕 사운드
