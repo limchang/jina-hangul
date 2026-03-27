@@ -149,7 +149,15 @@ export default function FreeComposeMode() {
     return () => { window.removeEventListener('keydown', onKeyDown); window.removeEventListener('keyup', onKeyUp); };
   }, []);
 
-  // ── 키보드 입력 → 글자 배치 ──
+  // ── 키보드 입력 → 글자 배치 (키코드 매핑) ──
+  const keyCharMap = useMemo(() => ({
+    'KeyR': 'ㄱ', 'KeyS': 'ㄴ', 'KeyE': 'ㄷ', 'KeyF': 'ㄹ', 'KeyA': 'ㅁ',
+    'KeyQ': 'ㅂ', 'KeyT': 'ㅅ', 'KeyD': 'ㅇ', 'KeyW': 'ㅈ', 'KeyC': 'ㅊ',
+    'KeyZ': 'ㅋ', 'KeyX': 'ㅌ', 'KeyV': 'ㅍ', 'KeyG': 'ㅎ',
+    'KeyK': 'ㅏ', 'KeyI': 'ㅑ', 'KeyJ': 'ㅓ', 'KeyU': 'ㅕ', 'KeyH': 'ㅗ',
+    'KeyY': 'ㅛ', 'KeyN': 'ㅜ', 'KeyB': 'ㅠ', 'KeyM': 'ㅡ', 'KeyL': 'ㅣ',
+  }), []);
+
   const allChars = useMemo(() => {
     const map = {};
     CONSONANTS.forEach(c => { map[c.char] = c; });
@@ -160,9 +168,9 @@ export default function FreeComposeMode() {
   useEffect(() => {
     function onKeyDown(e) {
       if (cardEditMode || e.ctrlKey || e.metaKey || e.altKey) return;
-      // 입력 필드 안이면 무시
       if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
-      const char = e.key;
+      if (e.code === 'Space') return; // 스페이스는 패닝용
+      const char = keyCharMap[e.code] || e.key;
       if (allChars[char]) {
         e.preventDefault();
         const pos = getNextPlacePos();

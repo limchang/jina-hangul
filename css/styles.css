@@ -533,8 +533,8 @@ main {
 }
 .free-trace-wrap:active { cursor: grabbing; }
 .free-trace-wrap--selected {
-  filter: drop-shadow(0 0 20px rgba(255,255,100,0.5));
-  z-index: 6000 !important;
+  filter: drop-shadow(0 0 28px rgba(255,255,100,0.7)) drop-shadow(0 0 8px rgba(255,235,80,0.4));
+  z-index: 8000 !important;
 }
 /* 완성 — 쾅 애니메이션 (justDone 중에만) */
 .free-trace-wrap--slam {
