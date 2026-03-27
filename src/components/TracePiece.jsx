@@ -239,9 +239,9 @@ export default function TracePiece({ piece, selected, inputLocked, onDone, onRes
     function onDown(e) {
       if (e.touches?.length > 1) return;
       if (editMode || inputLocked) return;
-      e.stopPropagation();
       const cPos = getPos(e);
-      if (!isOnGlyph(cPos)) return;
+      if (!isOnGlyph(cPos)) return; // 글자 밖이면 무시 (이벤트 통과)
+      e.stopPropagation();
       e.preventDefault();
       onSelect();
       movedRef.current = false;
