@@ -63,6 +63,30 @@ export default function FreeComposeMode() {
 
   useEffect(() => { initSvgHelper(); }, []);
 
+  // ── 키보드 입력 → 글자 배치 ──
+  const allChars = useMemo(() => {
+    const map = {};
+    CONSONANTS.forEach(c => { map[c.char] = c; });
+    VOWELS.forEach(v => { map[v.char] = v; });
+    return map;
+  }, []);
+
+  useEffect(() => {
+    function onKeyDown(e) {
+      if (cardEditMode || e.ctrlKey || e.metaKey || e.altKey) return;
+      // 입력 필드 안이면 무시
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+      const char = e.key;
+      if (allChars[char]) {
+        e.preventDefault();
+        const pos = getNextPlacePos();
+        placeNewPiece(char, pos.x, pos.y);
+      }
+    }
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  });
+
   // ── 휠 줌 ──
   useEffect(() => {
     function onWheel(e) {
