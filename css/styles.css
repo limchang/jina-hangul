@@ -688,21 +688,20 @@ main {
 .word-card {
   position: absolute;
   display: flex; flex-direction: column; align-items: center; gap: 2px;
-  padding: 6px 8px 5px;
+  padding: 8px 10px 7px;
   background: #fff;
-  border: 1.5px solid rgba(220,220,220,0.8);
-  border-radius: 14px;
+  border: none;
+  border-radius: 16px;
   cursor: grab;
   user-select: none;
-  transition: transform 0.2s, box-shadow 0.2s, filter 0.2s;
-  box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+  transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 3px 12px rgba(0,0,0,0.12), 0 1px 3px rgba(0,0,0,0.08);
   pointer-events: auto;
 }
 .word-card:hover {
-  transform: scale(1.1) !important;
-  box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+  transform: scale(1.08) !important;
+  box-shadow: 0 6px 24px rgba(0,0,0,0.18), 0 2px 6px rgba(0,0,0,0.1);
   z-index: 10;
-  filter: brightness(1.1);
 }
 .word-card:active { cursor: grabbing; }
 .word-card--add {
@@ -733,22 +732,6 @@ main {
   padding: 2px 0;
 }
 /* 기본 카드 (자음, 모음) — 확실한 흰색 배경 */
-.word-card--default {
-  background: #fff;
-  border-color: rgba(220,220,220,0.8);
-  padding: 8px 6px;
-  max-width: 90px;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.1);
-}
-.word-card--default:hover {
-  background: rgba(255,255,255,0.95);
-  border-color: #fff;
-}
-/* 기본 카드 미리보기 (가이드 글자) */
-.word-card--default .word-card-preview {
-  max-width: none;
-  height: 44px;
-}
 .word-card-label {
   font-family: 'Noto Sans KR', sans-serif;
   font-size: 0.75rem; font-weight: 800;

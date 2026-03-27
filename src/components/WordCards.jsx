@@ -51,13 +51,24 @@ export function renderLayoutPreview(pieces) {
     ctx.translate((p.x - minX + PAD) * PREVIEW_SCALE, (p.y - minY + PAD) * PREVIEW_SCALE);
     ctx.scale(p.scale * PREVIEW_SCALE, p.scale * PREVIEW_SCALE);
     ctx.translate(-250, -250);
-    ctx.shadowColor = 'rgba(200,160,0,0.4)';
-    ctx.shadowBlur = 8;
-    ctx.strokeStyle = '#f0c830';
+    // 외곽 그림자
+    ctx.shadowColor = 'rgba(0,0,0,0.15)';
+    ctx.shadowBlur = 6;
+    ctx.shadowOffsetY = 2;
+    // 안 칠한 글자 — 연한 회색 가이드
+    ctx.strokeStyle = 'rgba(200,200,200,0.7)';
     ctx.lineWidth = 74;
     ctx.lineCap = 'round'; ctx.lineJoin = 'round';
     src.strokes.forEach(st => ctx.stroke(new Path2D(st.path)));
+    ctx.shadowColor = 'transparent';
     ctx.shadowBlur = 0;
+    ctx.shadowOffsetY = 0;
+    // 노란 점선 가이드 (안쪽)
+    ctx.strokeStyle = 'rgba(255,200,0,0.4)';
+    ctx.lineWidth = 4;
+    ctx.setLineDash([10, 8]);
+    src.strokes.forEach(st => ctx.stroke(new Path2D(st.path)));
+    ctx.setLineDash([]);
     ctx.restore();
   });
   return canvas.toDataURL();

@@ -269,17 +269,17 @@ export default function TracePiece({ piece, selected, inputLocked, onDone, onRes
         // 드래그 중 도착지점 항상 강조
         if (target) target.classList.add('target-calling');
         if (opc > 0) {
-          const intensity = Math.min(opc / 30, 1); // 0~30 프레임에 걸쳐 0→1
+          const intensity = Math.min(opc / 15, 1); // 0~15 프레임에 걸쳐 0→1 (빠른 크레센도)
           if (h) {
             h.classList.add('handler-wobble');
-            const deg = 4 + intensity * 12; // 4~16도
+            const deg = 6 + intensity * 18; // 6~24도
             h.style.setProperty('--wobble-deg', `${deg}deg`);
-            h.style.setProperty('--wobble-speed', `${0.15 - intensity * 0.08}s`); // 0.15→0.07s
+            h.style.setProperty('--wobble-speed', `${0.12 - intensity * 0.07}s`); // 0.12→0.05s
           }
           startWobbleSound();
           setWobbleIntensity(intensity);
-          // 최대 이탈 → 드래그 강제 해제 + 시작점 복귀
-          if (opc > 35) {
+          // 빠른 스냅백 → 도착지점으로 도망
+          if (opc > 18) {
             engineRef.current.offPathCount = 0;
             engineRef.current.maxReachedIdx = 0;
             engineRef.current.isTracing = false;

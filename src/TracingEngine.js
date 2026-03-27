@@ -79,8 +79,8 @@ export class TracingEngine {
     if (bestDist < 140) {
       this.maxReachedIdx = Math.max(this.maxReachedIdx, bestIdx);
     }
-    // 흰색 가이드 밖으로 나가면 즉시 offPath (가이드 반지름 ~55px)
-    if (bestDist < 60) {
+    // 흰색 가이드 밖으로 1px만 나가도 즉시 offPath (가이드 반지름 ~51px)
+    if (bestDist < 52) {
       this.offPathCount = 0;
     } else {
       this.offPathCount = (this.offPathCount || 0) + 1;
