@@ -7,7 +7,8 @@ import { initSvgHelper } from '../TracingEngine.js';
 import { getSource, pieceOverrides } from '../sourceOverrides.js';
 import TracePiece from './TracePiece.jsx';
 import WordCards, { renderLayoutPreview } from './WordCards.jsx';
-import { decomposeWord } from '../utils/jamo.js';
+import { decompose, decomposeWord } from '../utils/jamo.js';
+import { isVowel } from '../utils/jamo.js';
 
 let nextId = 1;
 
@@ -207,34 +208,67 @@ export default function FreeComposeMode() {
     }
   }, [kbMode]);
 
+  // 음절 구조에 맞게 자모 배치 (초성/중성/종성 위치 자동 계산)
+  const VERT_VOWELS = new Set(['ㅏ','ㅑ','ㅓ','ㅕ','ㅣ']); // 세로 모음
+  const placeSyllable = useCallback((syllable) => {
+    const parts = decompose(syllable);
+    const validParts = parts.filter(j => allChars[j]);
+    if (validParts.length === 0) return;
+
+    const pos = getNextPlacePosRef.current();
+    const scale = 0.5;
+    const cellSize = 500 * scale; // 글자 하나의 월드 크기
+    const cx = pos.x, cy = pos.y;
+
+    if (validParts.length === 1) {
+      // 단독 자모
+      placeNewPieceRef.current(validParts[0], cx, cy);
+      return;
+    }
+
+    const cho = validParts[0];
+    const jung = validParts[1];
+    const jong = validParts[2];
+    const isVert = VERT_VOWELS.has(jung);
+    const hasJong = !!jong;
+
+    if (isVert) {
+      // 세로 모음: 초성 왼쪽, 중성 오른쪽, 종성 아래 중앙
+      const gap = cellSize * 0.45;
+      const yOff = hasJong ? -cellSize * 0.2 : 0;
+      placeNewPieceRef.current(cho, cx - gap, cy + yOff, false);
+      placeNewPieceRef.current(jung, cx + gap, cy + yOff, false);
+      if (hasJong) placeNewPieceRef.current(jong, cx, cy + cellSize * 0.5, false);
+    } else {
+      // 가로 모음: 초성 위, 중성 아래, 종성 맨 아래
+      const gap = cellSize * 0.4;
+      const yStart = hasJong ? -cellSize * 0.25 : -gap * 0.5;
+      placeNewPieceRef.current(cho, cx, cy + yStart, false);
+      placeNewPieceRef.current(jung, cx, cy + yStart + gap, false);
+      if (hasJong) placeNewPieceRef.current(jong, cx, cy + yStart + gap * 2, false);
+    }
+  }, [allChars]);
+
   const handleKbInput = useCallback((e) => {
     const val = e.target.value;
     const prev = kbPrevRef.current;
     if (val.length > prev.length) {
       const newChars = val.slice(prev.length);
       for (let i = 0; i < newChars.length - 1; i++) {
-        const jamos = decomposeWord(newChars[i]);
-        jamos.forEach(char => {
-          const pos = getNextPlacePosRef.current();
-          placeNewPieceRef.current(char, pos.x, pos.y);
-        });
+        placeSyllable(newChars[i]);
       }
     }
     kbPrevRef.current = val;
-  }, []);
+  }, [placeSyllable]);
 
   const handleCompositionEnd = useCallback((e) => {
     const val = kbInputRef.current?.value || '';
     if (val.length === 0) return;
     const lastChar = val[val.length - 1];
-    const jamos = decomposeWord(lastChar);
-    jamos.forEach(char => {
-      const pos = getNextPlacePosRef.current();
-      placeNewPieceRef.current(char, pos.x, pos.y);
-    });
+    placeSyllable(lastChar);
     if (kbInputRef.current) kbInputRef.current.value = '';
     kbPrevRef.current = '';
-  }, []);
+  }, [placeSyllable]);
 
   // ── 휠 줌 (마우스 위치 기준) ──
   useEffect(() => {
