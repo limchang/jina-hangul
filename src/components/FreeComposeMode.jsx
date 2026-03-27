@@ -147,7 +147,7 @@ export default function FreeComposeMode() {
   const [gridOn, setGridOn] = useState(false);
   const [kbMode, setKbMode] = useState(false); // 키보드 조합 입력 모드
   const kbInputRef = useRef(null);
-  const kbPrevRef = useRef(''); // 이전 입력값 추적
+  const kbPrevRef = useRef('');
   const GRID_SIZE = 100;
   const [cardEditMode, setCardEditMode] = useState(false);
   const wordCardsRef = useRef(null);
@@ -208,7 +208,6 @@ export default function FreeComposeMode() {
       kbInputRef.current.focus();
       kbInputRef.current.value = '';
       kbPrevRef.current = '';
-      kbPlacedLenRef.current = 0;
       kbComposingRef.current = false;
       syllableCursorRef.current = null;
       typingGroupRef.current = groupIdCounter.current++;
@@ -264,7 +263,7 @@ export default function FreeComposeMode() {
       syllableCursorRef.current = { x: pos.x, y: pos.y };
     }
 
-    const SYLLABLE_GAP = 80; // 음절 간 추가 여백 (과하게)
+    const SYLLABLE_GAP = 140; // 음절 간 추가 여백
     const ox = syllableCursorRef.current.x;
     const topY = syllableCursorRef.current.y; // 윗선 기준 (상단 정렬)
     // 자모 중심 Y = 윗선 + (캔버스중심 - bb상단) * scale → 상단 정렬
@@ -327,33 +326,11 @@ export default function FreeComposeMode() {
     syllableCursorRef.current.x = rightmost + SYLLABLE_GAP;
   }, [allChars, bboxCache]);
 
-  const kbTimerRef = useRef(null);
   const kbComposingRef = useRef(false);
-  const kbPlacedLenRef = useRef(0); // 이미 배치한 글자 수
-
-  // 대기 타이머 — 500ms 입력 없으면 조합 중인 글자도 강제 배치
-  const resetKbTimer = useCallback(() => {
-    if (kbTimerRef.current) clearTimeout(kbTimerRef.current);
-    kbTimerRef.current = setTimeout(() => {
-      const val = kbInputRef.current?.value || '';
-      if (val.length > kbPlacedLenRef.current) {
-        // 아직 배치 안 한 글자들 모두 배치
-        for (let i = kbPlacedLenRef.current; i < val.length; i++) {
-          placeSyllable(val[i]);
-        }
-        kbPlacedLenRef.current = val.length;
-        if (kbInputRef.current) kbInputRef.current.value = '';
-        kbPlacedLenRef.current = 0;
-        kbPrevRef.current = '';
-      }
-    }, 500);
-  }, [placeSyllable]);
 
   const handleKbInput = useCallback((e) => {
-    // compositionEnd 직후 input 이벤트는 무시 (이미 배치됨)
-    if (!kbComposingRef.current && kbInputRef.current?.value === '') return;
-    resetKbTimer();
-  }, [resetKbTimer]);
+    // compositionEnd에서만 배치 — input에서는 무시
+  }, []);
 
   const handleCompositionStart = useCallback(() => {
     kbComposingRef.current = true;
@@ -361,15 +338,11 @@ export default function FreeComposeMode() {
 
   const handleCompositionEnd = useCallback((e) => {
     kbComposingRef.current = false;
-    if (kbTimerRef.current) clearTimeout(kbTimerRef.current);
     const val = kbInputRef.current?.value || '';
     if (val.length > 0) {
-      // 완성된 글자 배치
       placeSyllable(val[val.length - 1]);
     }
-    // 즉시 비우기
     if (kbInputRef.current) kbInputRef.current.value = '';
-    kbPlacedLenRef.current = 0;
     kbPrevRef.current = '';
   }, [placeSyllable]);
 
@@ -497,6 +470,16 @@ export default function FreeComposeMode() {
     setSelectedId(firstPiece.id);
     setPanOffset({ x: screenCX - firstPiece.x * zoom, y: screenCY - firstPiece.y * zoom });
   }, [pieces, zoom, panOffset]);
+
+  // ── 현재 캔버스를 낱말카드로 저장 ──
+  const saveCanvasAsCard = useCallback(() => {
+    if (pieces.length === 0) return;
+    const cardName = pieces.map(p => p.char).join('');
+    const previewPieces = pieces.map(p => ({ ...p, done: false, source: getSource(p.char, p.id) }));
+    const img = renderLayoutPreview(previewPieces);
+    saveWordLayout(cardName, pieces.map(p => ({ char: p.char, x: p.x, y: p.y, scale: p.scale })));
+    if (wordCardsRef.current) wordCardsRef.current.addCardDirect(cardName, img);
+  }, [pieces]);
 
   // ── 낱말카드에서 자모 배치 ──
   const deployWord = useCallback((jamos, word, updatePreview, dropX, dropY) => {
@@ -865,7 +848,7 @@ export default function FreeComposeMode() {
       {cardEditMode && pieces.length === 0 && <div className="free-center-hint">카드 만들기 · 글자를 배치하고 완료를 누르세요</div>}
 
       <div style={{ display: cardEditMode ? 'none' : undefined }}>
-        <WordCards ref={wordCardsRef} onDeploy={deployWord} isOverTrash={isOverTrash} setTrashHover={setTrashHover} onNewCard={startCardEdit} onEditCard={startEditExistingCard} onPlaceAll={placeAll} />
+        <WordCards ref={wordCardsRef} onDeploy={deployWord} isOverTrash={isOverTrash} setTrashHover={setTrashHover} onNewCard={startCardEdit} onSaveCanvas={saveCanvasAsCard} onEditCard={startEditExistingCard} onPlaceAll={placeAll} />
       </div>
 
       {cardEditMode && <button className="card-edit-done-btn" onClick={finishCardEdit}>완료</button>}

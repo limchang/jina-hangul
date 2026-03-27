@@ -74,7 +74,7 @@ export function renderLayoutPreview(pieces) {
   return canvas.toDataURL();
 }
 
-const WordCards = forwardRef(function WordCards({ onDeploy, isOverTrash, setTrashHover, onNewCard, onEditCard, onPlaceAll }, ref) {
+const WordCards = forwardRef(function WordCards({ onDeploy, isOverTrash, setTrashHover, onNewCard, onSaveCanvas, onEditCard, onPlaceAll }, ref) {
   const [cards, setCards] = useState(loadCards);
   const [previews, setPreviews] = useState(loadPreviews);
   const dragRef = useRef(null);
@@ -290,9 +290,7 @@ const WordCards = forwardRef(function WordCards({ onDeploy, isOverTrash, setTras
             </div>
           );
         })}
-        <div className="word-card word-card--add" style={sideCardStyle(rightCards.length, rightCards.length + 1)} onClick={onNewCard}>
-          <span style={{ fontSize: '1.3rem', color: 'rgba(255,255,255,0.7)' }}>+</span>
-        </div>
+        <AddCardButton style={sideCardStyle(rightCards.length, rightCards.length + 1)} onNewCard={onNewCard} onSaveCanvas={onSaveCanvas} />
       </div>
 
       {dragCard && (() => {
@@ -313,5 +311,34 @@ const WordCards = forwardRef(function WordCards({ onDeploy, isOverTrash, setTras
     </>
   );
 });
+
+// + 버튼 — 클릭: 새 카드 편집, 꾸욱: 현재 캔버스를 카드로 저장
+function AddCardButton({ style, onNewCard, onSaveCanvas }) {
+  const timerRef = useRef(null);
+  const didLongPress = useRef(false);
+  const onDown = (e) => {
+    e.stopPropagation();
+    didLongPress.current = false;
+    timerRef.current = setTimeout(() => {
+      didLongPress.current = true;
+      timerRef.current = null;
+      if (onSaveCanvas) onSaveCanvas();
+    }, 600);
+  };
+  const onUp = () => {
+    if (timerRef.current) { clearTimeout(timerRef.current); timerRef.current = null; }
+  };
+  const onClick = () => {
+    if (!didLongPress.current && onNewCard) onNewCard();
+  };
+  return (
+    <div className="word-card word-card--add" style={style}
+      onMouseDown={onDown} onMouseUp={onUp} onMouseLeave={onUp}
+      onTouchStart={onDown} onTouchEnd={onUp}
+      onClick={onClick}>
+      <span style={{ fontSize: '1.3rem', color: 'rgba(255,255,255,0.7)' }}>+</span>
+    </div>
+  );
+}
 
 export default WordCards;
