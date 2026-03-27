@@ -58,6 +58,8 @@ export default function FreeComposeMode() {
   const dragNewRef = useRef(null);
   const panStart = useRef(null);
   const pinchRef = useRef(null);
+  const panLayerRef = useRef(null);
+  const panRafRef = useRef(null);
 
   useEffect(() => { initSvgHelper(); }, []);
 
@@ -224,7 +226,7 @@ export default function FreeComposeMode() {
     return () => { window.removeEventListener('touchmove', onMove); window.removeEventListener('mousemove', onMove); window.removeEventListener('touchend', onEnd); window.removeEventListener('mouseup', onEnd); };
   }); // 매 렌더마다 최신 클로저 유지
 
-  // ── 빈 공간 드래그 = 캔버스 패닝 ──
+  // ── 빈 공간 드래그 = 캔버스 패닝 (DOM 직접 조작으로 최적화) ──
   const startPan = useCallback((e) => {
     if (e.target.closest('.free-trace-wrap') || e.target.closest('.remote') || e.target.closest('.trash-zone') || e.target.closest('.word-tray') || e.target.closest('.word-card') || e.target.closest('.canvas-lock')) return;
     if (dragNewRef.current || panLocked) return;
@@ -233,24 +235,44 @@ export default function FreeComposeMode() {
     if (e.touches) { x = e.touches[0].clientX; y = e.touches[0].clientY; } else { x = e.clientX; y = e.clientY; }
     panStart.current = { startX: x, startY: y, origX: panOffset.x, origY: panOffset.y };
     setSelectedId(null);
-  }, [panOffset]);
+  }, [panOffset, panLocked]);
 
   useEffect(() => {
-    if (!panStart.current) return;
     function onMove(e) {
-      if (!panStart.current) return; e.preventDefault();
+      if (!panStart.current) return;
+      e.preventDefault();
       let x, y;
       if (e.touches) { x = e.touches[0].clientX; y = e.touches[0].clientY; } else { x = e.clientX; y = e.clientY; }
       const ps = panStart.current;
-      setPanOffset({ x: ps.origX + (x - ps.startX), y: ps.origY + (y - ps.startY) });
+      const nx = ps.origX + (x - ps.startX);
+      const ny = ps.origY + (y - ps.startY);
+      ps.lastX = nx; ps.lastY = ny;
+      // rAF로 DOM 직접 조작 — React 리렌더 없이 transform 갱신
+      if (!panRafRef.current) {
+        panRafRef.current = requestAnimationFrame(() => {
+          panRafRef.current = null;
+          if (panLayerRef.current && panStart.current) {
+            panLayerRef.current.style.transform = `translate(${panStart.current.lastX}px, ${panStart.current.lastY}px) scale(${zoom})`;
+          }
+        });
+      }
     }
-    function onEnd() { panStart.current = null; }
+    function onEnd() {
+      if (!panStart.current) return;
+      if (panRafRef.current) { cancelAnimationFrame(panRafRef.current); panRafRef.current = null; }
+      // 패닝 종료 시 state 동기화
+      const final = panStart.current.lastX !== undefined
+        ? { x: panStart.current.lastX, y: panStart.current.lastY }
+        : { x: panStart.current.origX, y: panStart.current.origY };
+      panStart.current = null;
+      setPanOffset(final);
+    }
     window.addEventListener('touchmove', onMove, { passive: false });
     window.addEventListener('mousemove', onMove);
     window.addEventListener('touchend', onEnd);
     window.addEventListener('mouseup', onEnd);
     return () => { window.removeEventListener('touchmove', onMove); window.removeEventListener('mousemove', onMove); window.removeEventListener('touchend', onEnd); window.removeEventListener('mouseup', onEnd); };
-  });
+  }, [zoom]);
 
   const undoRef = useRef(null);
 
@@ -334,7 +356,7 @@ export default function FreeComposeMode() {
 
   return (
     <div className="free-fullscreen" onMouseDown={startPan} onTouchStart={startPan}>
-      <div className={`free-pan-layer ${panSmooth ? 'free-pan-layer--smooth' : ''}`} style={{ transform: `translate(${panOffset.x}px, ${panOffset.y}px) scale(${zoom})`, transformOrigin: '0 0' }}>
+      <div ref={panLayerRef} className={`free-pan-layer ${panSmooth ? 'free-pan-layer--smooth' : ''}`} style={{ transform: `translate(${panOffset.x}px, ${panOffset.y}px) scale(${zoom})`, transformOrigin: '0 0' }}>
         {pieces.map(piece => (
           <TracePiece
             key={piece.id} piece={piece} selected={piece.id === selectedId}

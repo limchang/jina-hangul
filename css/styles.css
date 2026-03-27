@@ -689,14 +689,24 @@ main {
 }
 /* 기본 카드 (자음, 모음) — 확실한 흰색 배경 */
 .word-card--default {
-  background: rgba(255,255,255,0.85);
+  background: rgba(255,255,255,0.88);
   border-color: rgba(255,255,255,0.9);
-  padding: 4px 6px;
+  padding: 8px 6px;
+  max-width: 90px;
   box-shadow: 0 4px 16px rgba(0,0,0,0.1);
 }
 .word-card--default:hover {
   background: rgba(255,255,255,0.95);
   border-color: #fff;
+}
+.word-card-chars {
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 0.65rem; font-weight: 800;
+  color: rgba(100,100,100,0.9);
+  line-height: 1.4;
+  word-break: break-all;
+  text-align: center;
+  padding: 2px 0;
 }
 .word-card-label {
   font-family: 'Noto Sans KR', sans-serif;

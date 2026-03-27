@@ -6,41 +6,6 @@ import { decomposeWord } from '../utils/jamo.js';
 const STORAGE_KEY = 'jina-word-cards';
 const PREVIEW_KEY = 'jina-word-previews';
 
-// 기본 카드용 미리보기 — 노란색 두꺼운 실선 (따라쓰기 완료 느낌)
-function renderDefaultCardPreview(items) {
-  const show = items.slice(0, 3); // ㄱㄴㄷ / ㅏㅑㅓ 만 표시
-  const CELL = 50;
-  const PAD = 6;
-  const W = show.length * CELL + PAD * 2;
-  const H = CELL + PAD * 2;
-  const canvas = document.createElement('canvas');
-  canvas.width = W; canvas.height = H;
-  const ctx = canvas.getContext('2d');
-  show.forEach((item, i) => {
-    ctx.save();
-    ctx.translate(PAD + i * CELL + CELL / 2, PAD + CELL / 2);
-    const s = CELL / 500;
-    ctx.scale(s, s);
-    ctx.translate(-250, -250);
-    ctx.strokeStyle = '#ffeb3b';
-    ctx.lineWidth = 74;
-    ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-    item.strokes.forEach(st => ctx.stroke(new Path2D(st.path)));
-    ctx.restore();
-  });
-  return canvas.toDataURL();
-}
-
-let _defaultPreviews = null;
-function getDefaultPreviews() {
-  if (!_defaultPreviews) {
-    _defaultPreviews = {
-      consonants: renderDefaultCardPreview(CONSONANTS),
-      vowels: renderDefaultCardPreview(VOWELS),
-    };
-  }
-  return _defaultPreviews;
-}
 
 function loadCards() {
   try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); } catch { return []; }
@@ -243,8 +208,7 @@ const WordCards = forwardRef(function WordCards({ onDeploy, isOverTrash, setTras
         <div className="word-card word-card--default" style={sideCardStyle(0, leftCards.length + 1)}
           onTouchStart={(e) => startDrag('자음', -1, e, { type: 'consonants', isDefault: true })}
           onMouseDown={(e) => startDrag('자음', -1, e, { type: 'consonants', isDefault: true })}>
-          <img className="word-card-preview" src={getDefaultPreviews().consonants} draggable={false} />
-          <span className="word-card-label">ㄱㄴㄷ</span>
+          <span className="word-card-chars">{CONSONANTS.map(c => c.char).join('')}</span>
         </div>
         {leftCards.map((word, li) => {
           const origIdx = leftIndices[li];
@@ -262,8 +226,7 @@ const WordCards = forwardRef(function WordCards({ onDeploy, isOverTrash, setTras
         <div className="word-card word-card--default" style={sideCardStyle(0, rightCards.length + 2)}
           onTouchStart={(e) => startDrag('모음', -1, e, { type: 'vowels', isDefault: true })}
           onMouseDown={(e) => startDrag('모음', -1, e, { type: 'vowels', isDefault: true })}>
-          <img className="word-card-preview" src={getDefaultPreviews().vowels} draggable={false} />
-          <span className="word-card-label">ㅏㅑㅓ</span>
+          <span className="word-card-chars">{VOWELS.map(v => v.char).join('')}</span>
         </div>
         {rightCards.map((word, ri) => {
           const origIdx = rightIndices[ri];
