@@ -443,6 +443,13 @@ main {
   text-shadow: 0 1px 3px rgba(0,0,0,0.15);
   flex-shrink: 0;
 }
+.remote-btn--all {
+  font-size: 0.65rem; font-weight: 900;
+  letter-spacing: 1px;
+  background: rgba(255,200,60,0.3);
+  border-color: rgba(255,220,80,0.5);
+  cursor: pointer;
+}
 .remote-btn:hover {
   background: rgba(255,255,255,0.35);
   border-color: rgba(255,255,255,0.5);

@@ -488,11 +488,13 @@ export default function FreeComposeMode() {
 
       <DraggableRemote startY={window.innerHeight - 130}>
         <div className="remote-row">
+          <div className="remote-btn remote-btn--all" onClick={() => placeAll(CONSONANTS)}>ALL</div>
           {CONSONANTS.map(c => (
             <div key={c.char} className="remote-btn" onTouchStart={(e) => startDragNew(c.char, 'jamo', e)} onMouseDown={(e) => startDragNew(c.char, 'jamo', e)}>{c.char}</div>
           ))}
         </div>
         <div className="remote-row">
+          <div className="remote-btn remote-btn--all" onClick={() => placeAll(VOWELS)}>ALL</div>
           {VOWELS.map(v => (
             <div key={v.char} className="remote-btn" onTouchStart={(e) => startDragNew(v.char, 'jamo', e)} onMouseDown={(e) => startDragNew(v.char, 'jamo', e)}>{v.char}</div>
           ))}
