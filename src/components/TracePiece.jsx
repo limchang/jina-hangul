@@ -39,6 +39,10 @@ export default function TracePiece({ piece, selected, inputLocked, onDone, onRes
   const [unlocked, setUnlocked] = useState(false);
   const [justDone, setJustDone] = useState(false);
   const [localPos, setLocalPos] = useState({ x: piece.x, y: piece.y });
+  // 부모에서 piece.x/y 변경 시 동기화 (그룹 이동 등)
+  useEffect(() => {
+    setLocalPos({ x: piece.x, y: piece.y });
+  }, [piece.x, piece.y]);
 
   useEffect(() => {
     if (!selected) setEditMode(false);

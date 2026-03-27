@@ -778,17 +778,45 @@ export default function FreeComposeMode() {
     <div className="free-fullscreen" onMouseDown={startPan} onTouchStart={startPan}>
       <div ref={panLayerRef} className={`free-pan-layer ${panSmooth ? 'free-pan-layer--smooth' : ''}`} style={{ transform: `translate(${panOffset.x}px, ${panOffset.y}px) scale(${zoom})`, transformOrigin: '0 0' }}>
         {gridOn && <div className="grid-overlay" style={{ backgroundSize: `${GRID_SIZE}px ${GRID_SIZE}px` }} />}
-        {/* 그룹 테두리 */}
+        {/* 그룹 테두리 — 가이드 외곽 따라 부드럽게 */}
         {(() => {
           const groups = {};
           pieces.forEach(p => { if (p.groupId) { if (!groups[p.groupId]) groups[p.groupId] = []; groups[p.groupId].push(p); } });
           return Object.entries(groups).map(([gid, gpieces]) => {
-            const s = gpieces[0].scale;
-            const half = 250 * s;
+            // 각 자모의 실제 바운딩 박스로 원 생성
+            const circles = [];
+            gpieces.forEach(p => {
+              const bb = bboxCache[p.char];
+              if (!bb) return;
+              const s = p.scale;
+              const cx = p.x, cy = p.y;
+              const rx = (bb.w / 2) * s + 8;
+              const ry = (bb.h / 2) * s + 8;
+              circles.push({ cx, cy, rx, ry });
+            });
+            if (circles.length === 0) return null;
+            // 전체 바운딩
             let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
-            gpieces.forEach(p => { minX = Math.min(minX, p.x - half); maxX = Math.max(maxX, p.x + half); minY = Math.min(minY, p.y - half); maxY = Math.max(maxY, p.y + half); });
-            const pad = 10;
-            return <div key={`g${gid}`} className="group-outline" style={{ left: minX - pad, top: minY - pad, width: maxX - minX + pad * 2, height: maxY - minY + pad * 2 }} />;
+            circles.forEach(c => { minX = Math.min(minX, c.cx - c.rx); maxX = Math.max(maxX, c.cx + c.rx); minY = Math.min(minY, c.cy - c.ry); maxY = Math.max(maxY, c.cy + c.ry); });
+            const pad = 15;
+            const w = maxX - minX + pad * 2, h = maxY - minY + pad * 2;
+            const ox = minX - pad, oy = minY - pad;
+            // 메타볼 방식: 각 원을 SVG ellipse로 그려서 filter blur+threshold로 합침
+            return (
+              <svg key={`g${gid}`} className="group-blob" style={{ left: ox, top: oy, width: w, height: h }}>
+                <defs>
+                  <filter id={`blob${gid}`}>
+                    <feGaussianBlur in="SourceGraphic" stdDeviation="12" />
+                    <feColorMatrix type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 25 -10" />
+                  </filter>
+                </defs>
+                <g filter={`url(#blob${gid})`}>
+                  {circles.map((c, i) => (
+                    <ellipse key={i} cx={c.cx - ox} cy={c.cy - oy} rx={c.rx} ry={c.ry} fill="rgba(255,255,255,0.12)" />
+                  ))}
+                </g>
+              </svg>
+            );
           });
         })()}
         {pieces.map(piece => (
