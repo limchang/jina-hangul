@@ -4,7 +4,7 @@ import { APP_CONFIG } from '../data.js';
 import { TracingEngine, samplePath } from '../TracingEngine.js';
 import { ParticleSystem } from '../particles.js';
 
-import { playStart, playComplete, playCelebrate, playFail, playSlam, playFloat, playLand, startWobbleSound, stopWobbleSound, setWobbleIntensity } from '../sound.js';
+import { playStart, playComplete, playCelebrate, playFail, playSlam, playFloat, playLand } from '../sound.js';
 import { ICON_MAP } from '../icon-map.js';
 import { getSource } from '../sourceOverrides.js';
 import VertexEditor from './VertexEditor.jsx';
@@ -33,6 +33,9 @@ export default function TracePiece({ piece, selected, inputLocked, onDone, onRes
   const movedRef = useRef(false);
   const longPressRef = useRef(null);
   const lastTapRef = useRef(0);
+  const failCountRef = useRef(0); // 연속 실패 횟수
+  const superModeRef = useRef(false); // 3번 실패 → 슈퍼모드
+  const [flyAway, setFlyAway] = useState(false); // 휘우웅 날아가기 애니메이션
   const [unlocked, setUnlocked] = useState(false);
   const [justDone, setJustDone] = useState(false);
   const [localPos, setLocalPos] = useState({ x: piece.x, y: piece.y });
@@ -170,6 +173,9 @@ export default function TracePiece({ piece, selected, inputLocked, onDone, onRes
     const S = stateRef.current;
     const curSource = getSource(piece.char, piece.id);
     S.completed.push([...engineRef.current.pts]); S.strokeIdx++;
+    // 획 성공 → 실패 카운트 리셋, 슈퍼모드 해제
+    failCountRef.current = 0;
+    superModeRef.current = false;
     if (S.strokeIdx >= curSource.strokes.length) {
       overlayRef.current.innerHTML = '';
       particleRef.current.celebrate(SIZE/2, SIZE/2); startPLoop();
@@ -262,41 +268,33 @@ export default function TracePiece({ piece, selected, inputLocked, onDone, onRes
         const cPos = getPos(e);
         engineRef.current.move(cPos.x, cPos.y);
         particleRef.current.emit(cPos.x, cPos.y); renderTrace(); updateIcons();
-        // 경로 이탈 감지 → 즉시 크레센도 위글 + 불안 효과음 + 제자리 복귀
+        // 경로 이탈 감지 → 즉시 캐릭터 날아감 (슈퍼모드면 무시)
         const opc = engineRef.current.offPathCount || 0;
-        const h = overlayRef.current?.querySelector('.character-handler');
         const target = overlayRef.current?.querySelector('.target-icon');
-        // 드래그 중 도착지점 항상 강조
         if (target) target.classList.add('target-calling');
-        if (opc > 0) {
-          const intensity = Math.min(opc / 15, 1); // 0~15 프레임에 걸쳐 0→1 (빠른 크레센도)
-          if (h) {
-            h.classList.add('handler-wobble');
-            const deg = 6 + intensity * 18; // 6~24도
-            h.style.setProperty('--wobble-deg', `${deg}deg`);
-            h.style.setProperty('--wobble-speed', `${0.12 - intensity * 0.07}s`); // 0.12→0.05s
-          }
-          startWobbleSound();
-          setWobbleIntensity(intensity);
-          // 빠른 스냅백 → 도착지점으로 도망
-          if (opc > 18) {
-            engineRef.current.offPathCount = 0;
-            engineRef.current.maxReachedIdx = 0;
-            engineRef.current.isTracing = false;
-            if (h) { h.classList.remove('handler-wobble'); h.style.transform = 'translate(-50%,-50%)'; }
-            stopWobbleSound();
-            playFail();
-            stopPLoop();
-            // 트레이스 캔버스 클리어 + 가이드 다시 그리기 (시작점 표시)
+        if (opc > 3 && !superModeRef.current) {
+          // 휘우웅~ 날아가기
+          engineRef.current.offPathCount = 0;
+          engineRef.current.maxReachedIdx = 0;
+          engineRef.current.isTracing = false;
+          failCountRef.current++;
+          playFail();
+          stopPLoop();
+          // 캐릭터 날아가는 애니메이션
+          setFlyAway(true);
+          setTimeout(() => {
+            setFlyAway(false);
             const tCtx = traceRef.current?.getContext('2d');
             if (tCtx) tCtx.clearRect(0, 0, SIZE, SIZE);
             drawGuide();
             setupIcons();
-          }
-        } else {
-          if (h) h.classList.remove('handler-wobble');
+            // 3번 실패 → 슈퍼모드 활성화
+            if (failCountRef.current >= 3) {
+              superModeRef.current = true;
+            }
+          }, 500);
+        } else if (opc === 0) {
           if (target) target.classList.remove('target-calling');
-          stopWobbleSound();
         }
         return;
       }
@@ -326,15 +324,17 @@ export default function TracePiece({ piece, selected, inputLocked, onDone, onRes
       }
 
       if (engineRef.current?.isTracing) {
-        stopWobbleSound();
         const h = overlayRef.current?.querySelector('.character-handler');
         const tgt = overlayRef.current?.querySelector('.target-icon');
-        if (h) { h.classList.remove('handler-wobble'); h.style.transform = 'translate(-50%,-50%)'; }
+        if (h) h.style.transform = 'translate(-50%,-50%)';
         if (tgt) tgt.classList.remove('target-calling');
         if (engineRef.current.end()) {
           playComplete(); particleRef.current.burst(engineRef.current.getTargetPos().x, engineRef.current.getTargetPos().y, 15);
           completeStroke();
         } else {
+          // 도착지 못 도달 → 실패
+          failCountRef.current++;
+          if (failCountRef.current >= 3) superModeRef.current = true;
           playFail(); stopPLoop(); renderTrace(); updateIcons();
         }
         return;
@@ -378,7 +378,7 @@ export default function TracePiece({ piece, selected, inputLocked, onDone, onRes
     >
       <canvas ref={guideRef} className="free-trace-layer" />
       <canvas ref={traceRef} className="free-trace-layer" style={{ zIndex: 3, display: editMode ? 'none' : undefined }} />
-      <div ref={overlayRef} className="free-trace-layer free-trace-overlay" style={{ zIndex: 4, display: editMode ? 'none' : undefined }} />
+      <div ref={overlayRef} className={`free-trace-layer free-trace-overlay ${flyAway ? 'overlay-fly-away' : ''}`} style={{ zIndex: 4, display: editMode ? 'none' : undefined }} />
       {editMode && (
         <VertexEditor
           source={getSource(piece.char, piece.id)}
