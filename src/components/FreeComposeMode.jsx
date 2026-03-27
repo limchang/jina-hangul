@@ -3,7 +3,7 @@
 
 import React, { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import { CONSONANTS, VOWELS, APP_CONFIG } from '../data.js';
-import { initSvgHelper } from '../TracingEngine.js';
+import { initSvgHelper, samplePath } from '../TracingEngine.js';
 import { getSource, pieceOverrides } from '../sourceOverrides.js';
 import TracePiece from './TracePiece.jsx';
 import WordCards, { renderLayoutPreview } from './WordCards.jsx';
@@ -209,8 +209,26 @@ export default function FreeComposeMode() {
     }
   }, [kbMode]);
 
-  // 음절 커서 — 키보드 입력 시 가로 진행 위치 관리
-  const syllableCursorRef = useRef(null); // { x, y, scale }
+  // 자모 바운딩 박스 캐시 (500x500 캔버스 기준)
+  const bboxCache = useMemo(() => {
+    const cache = {};
+    [...CONSONANTS, ...VOWELS].forEach(item => {
+      let minX = 500, maxX = 0, minY = 500, maxY = 0;
+      item.strokes.forEach(s => {
+        const pts = samplePath(s.path, 30);
+        pts.forEach(p => {
+          if (p.x < minX) minX = p.x;
+          if (p.x > maxX) maxX = p.x;
+          if (p.y < minY) minY = p.y;
+          if (p.y > maxY) maxY = p.y;
+        });
+      });
+      cache[item.char] = { minX, maxX, minY, maxY, w: maxX - minX, h: maxY - minY, cx: (minX + maxX) / 2, cy: (minY + maxY) / 2 };
+    });
+    return cache;
+  }, []);
+
+  const syllableCursorRef = useRef(null);
   const VERT_VOWELS = new Set(['ㅏ','ㅑ','ㅓ','ㅕ','ㅣ']);
 
   const placeSyllable = useCallback((syllable) => {
@@ -219,45 +237,82 @@ export default function FreeComposeMode() {
     if (validParts.length === 0) return;
 
     const scale = 0.5;
-    const cellSize = 500 * scale;
-    const syllableWidth = cellSize * 1.1; // 음절 간격
+    const S = scale; // 월드 스케일
+    const PAD = 8; // 자모 간 최소 간격 (월드 좌표)
 
-    // 커서 초기화 (첫 음절이면 화면 중앙에서 시작)
     if (!syllableCursorRef.current) {
       const pos = getNextPlacePosRef.current();
-      syllableCursorRef.current = { x: pos.x, y: pos.y, scale };
+      syllableCursorRef.current = { x: pos.x, y: pos.y };
     }
-    const cx = syllableCursorRef.current.x;
-    const cy = syllableCursorRef.current.y; // 초성 기준 높이 고정
 
     if (validParts.length === 1) {
-      placeNewPieceRef.current(validParts[0], cx, cy, false);
-      syllableCursorRef.current.x += syllableWidth;
+      const bb = bboxCache[validParts[0]];
+      placeNewPieceRef.current(validParts[0], syllableCursorRef.current.x, syllableCursorRef.current.y, false);
+      syllableCursorRef.current.x += (bb ? bb.w * S : 250 * S) + PAD;
       return;
     }
 
-    const cho = validParts[0];
-    const jung = validParts[1];
-    const jong = validParts[2];
+    const cho = validParts[0], jung = validParts[1], jong = validParts[2];
+    const bbCho = bboxCache[cho], bbJung = bboxCache[jung], bbJong = jong ? bboxCache[jong] : null;
     const isVert = VERT_VOWELS.has(jung);
     const hasJong = !!jong;
 
+    // 음절 기준점
+    const ox = syllableCursorRef.current.x;
+    const oy = syllableCursorRef.current.y;
+    let syllableW = 0;
+
     if (isVert) {
-      const gap = cellSize * 0.45;
-      const yOff = hasJong ? -cellSize * 0.2 : 0;
-      placeNewPieceRef.current(cho, cx - gap, cy + yOff, false);
-      placeNewPieceRef.current(jung, cx + gap, cy + yOff, false);
-      if (hasJong) placeNewPieceRef.current(jong, cx, cy + cellSize * 0.5, false);
+      // 세로 모음: 초성(좌) + 중성(우), 종성(하단 중앙)
+      // 초성 오른쪽 끝과 중성 왼쪽 끝이 PAD만큼 떨어지게
+      const choRight = bbCho.maxX * S;
+      const jungLeft = bbJung.minX * S;
+      const gapX = choRight - jungLeft + PAD;
+
+      const choX = ox;
+      const jungX = ox + gapX;
+      const topY = oy;
+
+      if (hasJong) {
+        // 초성/중성을 위로 올리고 종성은 아래
+        const choBottom = bbCho.maxY * S;
+        const jongTop = bbJong.minY * S;
+        const gapY = choBottom - jongTop + PAD;
+        const yShift = -gapY * 0.3;
+
+        placeNewPieceRef.current(cho, choX, topY + yShift, false);
+        placeNewPieceRef.current(jung, jungX, topY + yShift, false);
+        placeNewPieceRef.current(jong, ox + gapX * 0.5, topY + gapY * 0.7, false);
+      } else {
+        placeNewPieceRef.current(cho, choX, topY, false);
+        placeNewPieceRef.current(jung, jungX, topY, false);
+      }
+      syllableW = gapX + bbJung.w * S;
     } else {
-      const gap = cellSize * 0.4;
-      const yStart = hasJong ? -cellSize * 0.25 : -gap * 0.5;
-      placeNewPieceRef.current(cho, cx, cy + yStart, false);
-      placeNewPieceRef.current(jung, cx, cy + yStart + gap, false);
-      if (hasJong) placeNewPieceRef.current(jong, cx, cy + yStart + gap * 2, false);
+      // 가로 모음: 초성(상) + 중성(중), 종성(하)
+      const choBottom = bbCho.maxY * S;
+      const jungTop = bbJung.minY * S;
+      const gapY1 = choBottom - jungTop + PAD;
+
+      if (hasJong) {
+        const jungBottom = bbJung.maxY * S;
+        const jongTop = bbJong.minY * S;
+        const gapY2 = jungBottom - jongTop + PAD;
+        const totalH = gapY1 + gapY2;
+        const yStart = -totalH * 0.3;
+
+        placeNewPieceRef.current(cho, ox, oy + yStart, false);
+        placeNewPieceRef.current(jung, ox, oy + yStart + gapY1, false);
+        placeNewPieceRef.current(jong, ox, oy + yStart + gapY1 + gapY2, false);
+      } else {
+        placeNewPieceRef.current(cho, ox, oy - gapY1 * 0.3, false);
+        placeNewPieceRef.current(jung, ox, oy + gapY1 * 0.7, false);
+      }
+      syllableW = Math.max(bbCho.w, bbJung.w, bbJong ? bbJong.w : 0) * S;
     }
-    // 다음 음절 위치로 커서 이동
-    syllableCursorRef.current.x += syllableWidth;
-  }, [allChars]);
+
+    syllableCursorRef.current.x += syllableW + PAD * 3;
+  }, [allChars, bboxCache]);
 
   const handleKbInput = useCallback((e) => {
     const val = e.target.value;
