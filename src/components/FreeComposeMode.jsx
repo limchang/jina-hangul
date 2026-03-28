@@ -928,7 +928,14 @@ export default function FreeComposeMode({ onGameMode }) {
             <line x1="8" y1="16" x2="16" y2="16"/>
           </svg>
         <div className="ctrl-divider" />
-        <div className={`zoom-btn ${fireSkin ? 'zoom-btn--active' : ''}`} onClick={() => setFireSkin(f => !f)} title="소방관 스킨">🔥</div>
+        <div className={`zoom-btn ${fireSkin ? 'zoom-btn--active' : ''}`} onClick={() => setFireSkin(f => {
+          if (!f) {
+            // 켤 때 "불이야!! 불을 꺼주자!!" TTS
+            const url = `https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=ko&q=${encodeURIComponent('불이야! 불을 꺼주자!')}`;
+            new Audio(url).play().catch(() => {});
+          }
+          return !f;
+        })} title="소방관 스킨">🔥</div>
         </div>
       </div>
 
@@ -962,6 +969,13 @@ export default function FreeComposeMode({ onGameMode }) {
         </div>
       )}
 
+      {/* 소방관 캐릭터 — 오른쪽 아래 */}
+      {fireSkin && (
+        <div className="firefighter-char">
+          <div className="firefighter-emoji">🧑‍🚒</div>
+          <div className="firefighter-bubble">불을 꺼주자!</div>
+        </div>
+      )}
     </div>
   );
 }
