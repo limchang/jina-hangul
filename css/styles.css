@@ -985,6 +985,42 @@ main {
   filter: drop-shadow(0 2px 6px rgba(79,195,247,0.6));
 }
 
+/* 호스 바 (하단) */
+.fire-hose-bar {
+  position: fixed; bottom: 0; left: 0; width: 100%;
+  height: 56px; z-index: 950;
+  background: linear-gradient(180deg, rgba(30,60,90,0.9) 0%, rgba(20,40,70,0.95) 100%);
+  border-top: 3px solid rgba(79,195,247,0.5);
+  display: flex; align-items: center; gap: 12px;
+  padding: 0 20px;
+  box-shadow: 0 -4px 20px rgba(79,195,247,0.2);
+}
+.fire-hose-nozzle {
+  font-size: 1.8rem;
+  filter: drop-shadow(0 0 6px rgba(79,195,247,0.6));
+  animation: hoseReady 1.5s ease-in-out infinite;
+}
+@keyframes hoseReady {
+  0%, 100% { transform: rotate(-5deg); }
+  50% { transform: rotate(5deg); }
+}
+.fire-hose-pipe {
+  flex: 1; height: 8px; border-radius: 4px;
+  background: linear-gradient(90deg, #1565c0, #42a5f5, #1565c0);
+  background-size: 200% 100%;
+  animation: hosePulse 2s linear infinite;
+}
+@keyframes hosePulse {
+  0% { background-position: 0% 0%; }
+  100% { background-position: 200% 0%; }
+}
+.fire-hose-label {
+  font-family: 'Fredoka', 'Noto Sans KR', sans-serif;
+  font-size: 0.8rem; font-weight: 600;
+  color: rgba(179,229,252,0.8);
+  white-space: nowrap;
+}
+
 /* ═══ 소방관 게임모드 ═══ */
 .fire-mode {
   position: fixed; top: 0; left: 0; width: 100%; height: 100%;
