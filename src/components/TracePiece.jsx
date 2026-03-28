@@ -314,6 +314,7 @@ export default function TracePiece({ piece, selected, inputLocked, onDone, onRes
       if (engineRef.current && !piece.done) {
         if (engineRef.current.start(cPos.x, cPos.y)) {
           playStart();
+          if (stateRef.current.strokeIdx === 0) speakChar(piece.char);
           particleRef.current.burst(cPos.x, cPos.y, 6); startPLoop(); renderTrace(); updateIcons();
           const h = overlayRef.current?.querySelector('.character-handler');
           if (h) h.style.transform = 'translate(-50%,-50%) scale(1.15) rotate(5deg)';
