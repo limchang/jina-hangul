@@ -59,12 +59,14 @@ export default function FreeComposeMode() {
   const [panLocked, setPanLocked] = useState(false);
   const [mathQuiz, setMathQuiz] = useState(null);
   const [focusZoom, setFocusZoom] = useState(true); // 도착지 근접 시 확대
+  const focusZoomValRef = useRef(true);
+  useEffect(() => { focusZoomValRef.current = focusZoom; }, [focusZoom]);
   const focusZoomActiveRef = useRef(false);
   const savedZoomRef = useRef(null);
   const spaceHeldRef = useRef(false);
 
   const onNearGoal = useCallback((near, piece) => {
-    if (!focusZoom) return;
+    if (!focusZoomValRef.current) return;
     if (near && !focusZoomActiveRef.current) {
       focusZoomActiveRef.current = true;
       savedZoomRef.current = zoomRef.current;
@@ -104,7 +106,7 @@ export default function FreeComposeMode() {
         savedZoomRef.current = null;
       }
     }
-  }, [focusZoom]);
+  }, []);
 
   const handleLockClick = useCallback(() => {
     if (!panLocked) {
