@@ -975,34 +975,14 @@ main {
   100% { transform: translate(-50%, -50%) scale(1); }
 }
 
-/* 불모드 — 리모컨 버튼 소화기 */
-.remote-btn--fire {
-  background: linear-gradient(135deg, #bf360c, #e65100) !important;
-  border-color: rgba(255,150,50,0.6) !important;
-  color: white !important;
-}
-.fire-btn-inner {
-  display: flex; align-items: center; gap: 2px;
-  font-size: 0.85em; line-height: 1;
-}
-.fire-btn-char {
-  font-size: 0.75em; opacity: 0.85;
-}
-
-/* 불모드 — 드래그 고스트 소화기 */
-.drag-ghost-fire {
-  position: fixed; pointer-events: none; z-index: 9999;
-  font-size: 3rem;
-  transform: translate(-50%, -50%) rotate(-15deg);
-  filter: drop-shadow(0 4px 12px rgba(0,0,0,0.4));
-}
-
-/* 불모드 — 핸들러 숨김 (포인터 글로우만 사용) */
-.fire-handler-hidden {
+/* 불모드 — 소화기 핸들러 (따라쓰기 시작점) */
+.fire-handler-extinguisher {
   position: absolute;
-  width: 0; height: 0;
+  width: 120px; height: 120px;
+  font-size: 56px; line-height: 120px; text-align: center;
+  transform: translate(-50%, -50%);
   pointer-events: none;
-  opacity: 0;
+  filter: drop-shadow(0 3px 8px rgba(0,0,0,0.5));
 }
 
 /* ═══ 소방관 게임모드 ═══ */

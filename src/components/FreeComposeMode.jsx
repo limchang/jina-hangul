@@ -886,17 +886,13 @@ export default function FreeComposeMode({ onGameMode }) {
         <div className="remote-row">
           <div className="remote-btn remote-btn--all" onClick={() => placeAll(CONSONANTS)}>ALL</div>
           {CONSONANTS.map(c => (
-            <div key={c.char} className={`remote-btn ${fireSkin ? 'remote-btn--fire' : ''}`} onTouchStart={(e) => startDragNew(c.char, 'jamo', e)} onMouseDown={(e) => startDragNew(c.char, 'jamo', e)}>
-              {fireSkin ? <span className="fire-btn-inner">🧯<span className="fire-btn-char">{c.char}</span></span> : c.char}
-            </div>
+            <div key={c.char} className="remote-btn" onTouchStart={(e) => startDragNew(c.char, 'jamo', e)} onMouseDown={(e) => startDragNew(c.char, 'jamo', e)}>{c.char}</div>
           ))}
         </div>
         <div className="remote-row">
           <div className="remote-btn remote-btn--all" onClick={() => placeAll(VOWELS)}>ALL</div>
           {VOWELS.map(v => (
-            <div key={v.char} className={`remote-btn ${fireSkin ? 'remote-btn--fire' : ''}`} onTouchStart={(e) => startDragNew(v.char, 'jamo', e)} onMouseDown={(e) => startDragNew(v.char, 'jamo', e)}>
-              {fireSkin ? <span className="fire-btn-inner">🧯<span className="fire-btn-char">{v.char}</span></span> : v.char}
-            </div>
+            <div key={v.char} className="remote-btn" onTouchStart={(e) => startDragNew(v.char, 'jamo', e)} onMouseDown={(e) => startDragNew(v.char, 'jamo', e)}>{v.char}</div>
           ))}
         </div>
       </DraggableRemote>
@@ -971,9 +967,7 @@ export default function FreeComposeMode({ onGameMode }) {
       )}
 
       {dragNew && jamoImages[dragNew.char] && (
-        fireSkin
-          ? <div className="drag-ghost-fire" style={{ left: dragNew.x, top: dragNew.y }}>🧯</div>
-          : <img className="drag-ghost-img" src={jamoImages[dragNew.char]} style={{ left: dragNew.x, top: dragNew.y }} draggable={false} />
+        <img className="drag-ghost-img" src={jamoImages[dragNew.char]} style={{ left: dragNew.x, top: dragNew.y }} draggable={false} />
       )}
 
       {mathQuiz && (
