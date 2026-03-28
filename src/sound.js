@@ -181,6 +181,39 @@ export function speakChar(char, delay = 0) {
   else doSpeak();
 }
 
+// 불모드 글자 완성 — 쏴~ 물 소리 + 상승 멜로디
+export function playWaterComplete() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    // 물 소리
+    const noise = ctx.createBufferSource();
+    const buf = ctx.createBuffer(1, ctx.sampleRate * 0.3, ctx.sampleRate);
+    const data = buf.getChannelData(0);
+    for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * 0.25;
+    noise.buffer = buf;
+    const filter = ctx.createBiquadFilter();
+    filter.type = 'bandpass'; filter.frequency.value = 2500; filter.Q.value = 0.5;
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(0.12, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
+    noise.connect(filter); filter.connect(gain); gain.connect(ctx.destination);
+    noise.start(ctx.currentTime); noise.stop(ctx.currentTime + 0.3);
+    // 상승 멜로디
+    [523, 659, 784].forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const g2 = ctx.createGain();
+      osc.connect(g2); g2.connect(ctx.destination);
+      osc.type = 'sine';
+      const t = ctx.currentTime + 0.1 + i * 0.1;
+      osc.frequency.setValueAtTime(freq, t);
+      g2.gain.setValueAtTime(0, t);
+      g2.gain.linearRampToValueAtTime(0.12, t + 0.02);
+      g2.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
+      osc.start(t); osc.stop(t + 0.2);
+    });
+  } catch {}
+}
+
 // 실패 (놓았는데 완성 안 됨) — 낮은 붕 사운드
 export function playFail() {
   const ctx = getCtx();

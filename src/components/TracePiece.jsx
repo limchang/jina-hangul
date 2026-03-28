@@ -4,7 +4,7 @@ import { APP_CONFIG } from '../data.js';
 import { TracingEngine, samplePath } from '../TracingEngine.js';
 import { ParticleSystem } from '../particles.js';
 
-import { playStart, playComplete, playCelebrate, playFail, playSlam, playFloat, playLand, playFallSound, speakChar } from '../sound.js';
+import { playStart, playComplete, playCelebrate, playFail, playSlam, playFloat, playLand, playFallSound, speakChar, playWaterComplete } from '../sound.js';
 import { ICON_MAP } from '../icon-map.js';
 import { getSource } from '../sourceOverrides.js';
 import VertexEditor from './VertexEditor.jsx';
@@ -204,17 +204,16 @@ export default function TracePiece({ piece, selected, inputLocked, onDone, onRes
 
   function loadStroke(idx) { loadStrokeWith(idx, getSource(piece.char, piece.id)); }
 
-  // fireSkin 토글 시 가이드+아이콘 다시 그리기 + 불 애니메이션 루프
+  // fireSkin/fireTheme/done 변경 시 가이드+아이콘 다시 그리기 + 불 애니메이션 루프
   const fireAnimRef = useRef(null);
   useEffect(() => {
     if (stateRef.current.inited) { drawGuide(); setupIcons(); }
     if (fireSkin && !piece.done) {
-      // 불 애니메이션 — 매 프레임 renderTrace 호출
       function fireLoop() { renderTrace(); fireAnimRef.current = requestAnimationFrame(fireLoop); }
       fireAnimRef.current = requestAnimationFrame(fireLoop);
     }
     return () => { if (fireAnimRef.current) { cancelAnimationFrame(fireAnimRef.current); fireAnimRef.current = null; } };
-  }, [fireSkin, fireTheme]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [fireSkin, fireTheme, piece.done]); // eslint-disable-line react-hooks/exhaustive-deps
 
   function redrawAll() {
     const src = getSource(piece.char, piece.id);
@@ -273,6 +272,15 @@ export default function TracePiece({ piece, selected, inputLocked, onDone, onRes
   function setupIcons() {
     const ol = overlayRef.current; if (!ol) return;
     const fire = fireSkinRef.current;
+    // done이면서 fireTheme → 오버레이 완전 비움 (가젤/소화기 다 안 나옴)
+    if (piece.done && fireThemeRef.current) {
+      ol.innerHTML = '';
+      return;
+    }
+    if (piece.done) {
+      ol.innerHTML = '';
+      return;
+    }
     if (fire) {
       // 불모드: 소화기 핸들러 + 물색 타겟
       const targetSvg = `<svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="16" fill="none" stroke="rgba(79,195,247,0.6)" stroke-width="2"/><circle cx="20" cy="20" r="5" fill="rgba(79,195,247,0.7)"/></svg>`;
@@ -350,13 +358,24 @@ export default function TracePiece({ piece, selected, inputLocked, onDone, onRes
     }
     if (S.strokeIdx >= curSource.strokes.length) {
       overlayRef.current.innerHTML = '';
-      particleRef.current.celebrate(250, 250); startPLoop();
-      playCelebrate();
-      speakChar(piece.char, 400);
-      setJustDone(true);
-      setTimeout(() => { onDone(); playSlam(); }, 150);
-      setTimeout(() => setJustDone(false), 600);
-      setTimeout(() => stopPLoop(), 2000);
+      if (fireSkinRef.current || fireThemeRef.current) {
+        // 불모드 완성 — 물 폭발 + 증기, 일반 파티클 없음
+        speakChar(piece.char, 200);
+        playWaterComplete();
+        setJustDone(true);
+        // 가이드를 물색으로 다시 그리기
+        drawGuideWith(curSource);
+        setTimeout(() => { onDone(); }, 150);
+        setTimeout(() => setJustDone(false), 600);
+      } else {
+        particleRef.current.celebrate(250, 250); startPLoop();
+        playCelebrate();
+        speakChar(piece.char, 400);
+        setJustDone(true);
+        setTimeout(() => { onDone(); playSlam(); }, 150);
+        setTimeout(() => setJustDone(false), 600);
+        setTimeout(() => stopPLoop(), 2000);
+      }
     } else { loadStroke(S.strokeIdx); }
   }
 
