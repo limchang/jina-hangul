@@ -812,6 +812,7 @@ export default function FreeComposeMode() {
             onSelect={() => selectPiece(piece.id)}
             onUngroup={piece.groupId ? () => setPieces(prev => prev.map(p => p.groupId === piece.groupId ? { ...p, groupId: null } : p)) : null}
             onNearGoal={(near) => onNearGoal(near, piece)}
+            focusZoom={focusZoom}
             onSourceUpdate={(ns) => updateSource(piece.id, piece.char, ns)}
             onMoved={(nx, ny) => {
               const sx = gridOn ? Math.round(nx / GRID_SIZE) * GRID_SIZE : nx;

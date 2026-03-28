@@ -16,7 +16,7 @@ function getIconImageUrl(char) {
   return DEFAULT_ICON;
 }
 
-export default function TracePiece({ piece, selected, inputLocked, onDone, onResetDone, onDelete, onSelect, onUngroup, isOverTrash, setTrashHover, onNearGoal, onSourceUpdate, onMoved }) {
+export default function TracePiece({ piece, selected, inputLocked, onDone, onResetDone, onDelete, onSelect, onUngroup, isOverTrash, setTrashHover, onNearGoal, onSourceUpdate, onMoved, focusZoom = true }) {
   const source = getSource(piece.char, piece.id);
   const [editMode, setEditMode] = useState(false);
   const guideRef = useRef(null);
@@ -181,12 +181,12 @@ export default function TracePiece({ piece, selected, inputLocked, onDone, onRes
     const progress = engineRef.current.pts?.length > 0 ? engineRef.current.maxReachedIdx / (engineRef.current.pts.length - 1) : 0;
     const isClosed = engineRef.current.isClosedLoop;
     const allowNear = isClosed ? progress > 0.7 : true;
-    const proximity = (isTracing && allowNear) ? Math.max(0, 1 - dist / maxDist) : 0;
+    const proximity = (isTracing && allowNear && focusZoom) ? Math.max(0, 1 - dist / maxDist) : 0;
     const baseSize = 220;
     const maxSize = 700;
     const curSize = baseSize + proximity * (maxSize - baseSize);
     target.style.width = `${curSize}px`;
-    const isNear = dist < 150 && isTracing && allowNear;
+    const isNear = dist < 150 && isTracing && allowNear && focusZoom;
     if (isNear) {
       handler.classList.add('handler-near-goal');
       target.classList.add('target-near-goal');
