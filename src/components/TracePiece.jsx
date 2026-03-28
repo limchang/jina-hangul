@@ -163,14 +163,7 @@ export default function TracePiece({ piece, selected, inputLocked, onDone, onRes
     gCtx.setLineDash([18, 14]);
     src.strokes.forEach(s => gCtx.stroke(new Path2D(s.path)));
     gCtx.setLineDash([]);
-    // 소방관 스킨: 글자 단위로 불 — 완성 획 포함 모든 획에 불 (현재 획은 traceRef에서 동적)
-    if (fireSkinRef.current && S.strokeIdx < src.strokes.length) {
-      for (let si = 0; si < src.strokes.length; si++) {
-        if (si === S.strokeIdx) continue; // 현재 획은 traceRef에서 동적
-        drawFireOnPath(gCtx, samplePath(src.strokes[si].path, 25), 0, si);
-      }
-    }
-    // 완성된 획 — 불 위에 그려서 물색이 최상위
+    // 완성된 획
     S.completed.forEach(pts => {
       gCtx.beginPath();
       gCtx.strokeStyle = fire ? '#4fc3f7' : APP_CONFIG.TRACE_COLOR;
@@ -234,17 +227,24 @@ export default function TracePiece({ piece, selected, inputLocked, onDone, onRes
     const isFire = fireSkinRef.current;
     const eng = engineRef.current;
 
-    // 소방관 스킨 — 현재 획의 불꽃 (지나간 부분은 제외 = 물로 꺼짐)
-    if (isFire && eng.pts?.length > 0) {
-      // maxReachedIdx 기준으로 아직 안 지나간 포인트만 불꽃
-      // eng.pts는 120포인트, samplePath(path,25)는 별도이므로 비율로 변환
+    // 소방관 스킨 — 모든 미완성 획에 동적 불꽃 (매 프레임 애니메이션)
+    if (isFire) {
       const src = getSource(piece.char, piece.id);
       if (src && stateRef.current.strokeIdx < src.strokes.length) {
-        const curPath = src.strokes[stateRef.current.strokeIdx].path;
-        const firePts = samplePath(curPath, 25);
-        const progress = eng.pts.length > 1 ? eng.maxReachedIdx / (eng.pts.length - 1) : 0;
-        const fireStart = Math.floor(progress * firePts.length);
-        drawFireOnPath(tCtx, firePts, fireStart, stateRef.current.strokeIdx);
+        for (let si = 0; si < src.strokes.length; si++) {
+          // 완성된 획은 건너뜀
+          if (si < stateRef.current.strokeIdx) continue;
+          const firePts = samplePath(src.strokes[si].path, 25);
+          if (si === stateRef.current.strokeIdx && eng.pts?.length > 0) {
+            // 현재 획: 지나간 부분은 불 제거
+            const progress = eng.pts.length > 1 ? eng.maxReachedIdx / (eng.pts.length - 1) : 0;
+            const fireStart = Math.floor(progress * firePts.length);
+            drawFireOnPath(tCtx, firePts, fireStart, si);
+          } else {
+            // 대기 획: 전체에 불
+            drawFireOnPath(tCtx, firePts, 0, si);
+          }
+        }
       }
     }
 
