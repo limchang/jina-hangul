@@ -16,32 +16,50 @@ function getIconImageUrl(char) {
   return DEFAULT_ICON;
 }
 
-// 불꽃 그리기 — pts 배열의 startIdx부터 끝까지만 불꽃 표시
+// 불꽃 그리기 — 시간 기반 애니메이션, startIdx 이후만
 function drawFireOnPath(ctx, pts, startIdx, seed) {
+  const t = performance.now() * 0.003; // 시간 흐름
   for (let pi = startIdx; pi < pts.length; pi++) {
     const pt = pts[pi];
     const h = pt.x * 7.3 + pt.y * 13.7 + seed * 31;
-    // 열기 글로우
-    const g = ctx.createRadialGradient(pt.x, pt.y - 8, 0, pt.x, pt.y - 8, 45);
-    g.addColorStop(0, 'rgba(255,100,0,0.2)');
-    g.addColorStop(1, 'rgba(255,60,0,0)');
+
+    // 1) 넓은 열기 글로우
+    const g = ctx.createRadialGradient(pt.x, pt.y - 15, 0, pt.x, pt.y - 15, 55);
+    g.addColorStop(0, 'rgba(255,80,0,0.22)');
+    g.addColorStop(0.5, 'rgba(255,40,0,0.08)');
+    g.addColorStop(1, 'rgba(255,30,0,0)');
     ctx.fillStyle = g;
-    ctx.fillRect(pt.x - 45, pt.y - 53, 90, 90);
-    // 불알갱이 3겹
-    for (let fi = 0; fi < 3; fi++) {
-      const s = Math.sin(h + fi * 137);
-      const c = Math.cos(h + fi * 97);
-      const ox = s * 16;
-      const oy = -6 - Math.abs(c) * 22 - fi * 12;
-      const r = 5 + Math.abs(s) * 7 - fi;
-      if (r < 2) continue;
-      const t = fi / 2;
-      ctx.globalAlpha = 0.65 - fi * 0.15;
+    ctx.fillRect(pt.x - 55, pt.y - 70, 110, 110);
+
+    // 2) 불꽃 입자 5겹 — 시간에 따라 흔들림
+    for (let fi = 0; fi < 5; fi++) {
+      const phase = t + h * 0.1 + fi * 2.3;
+      const sway = Math.sin(phase * 1.7 + fi) * 14; // 좌우 흔들림
+      const rise = Math.sin(phase * 0.9 + fi * 1.1); // 위아래 출렁
+      const ox = sway;
+      const oy = -10 - fi * 13 - Math.abs(rise) * 8;
+      const r = 9 - fi * 1.2 + Math.sin(phase) * 2;
+      if (r < 1.5) continue;
+
+      // 아래(fi=0): 밝은 흰노랑, 위(fi=4): 어두운 빨강
+      const blend = fi / 4;
+      const cr = 255;
+      const cg = Math.round(255 - blend * 200 + Math.sin(phase) * 15);
+      const cb = Math.round(120 - blend * 110);
+      ctx.globalAlpha = (0.7 - fi * 0.1) * (0.8 + Math.sin(phase * 2) * 0.2);
       ctx.beginPath();
       ctx.arc(pt.x + ox, pt.y + oy, r, 0, Math.PI * 2);
-      ctx.fillStyle = `rgb(255,${Math.round(220 - t * 150)},${Math.round(50 - t * 50)})`;
+      ctx.fillStyle = `rgb(${cr},${Math.max(0, cg)},${Math.max(0, cb)})`;
       ctx.fill();
     }
+
+    // 3) 밝은 코어 (흰노랑 중심) — 가장 아래 레이어
+    const coreAlpha = 0.4 + Math.sin(t * 2 + h) * 0.15;
+    ctx.globalAlpha = coreAlpha;
+    ctx.beginPath();
+    ctx.arc(pt.x + Math.sin(t + h) * 3, pt.y - 5, 6, 0, Math.PI * 2);
+    ctx.fillStyle = '#fff8c4';
+    ctx.fill();
   }
   ctx.globalAlpha = 1;
 }
@@ -183,9 +201,16 @@ export default function TracePiece({ piece, selected, inputLocked, onDone, onRes
 
   function loadStroke(idx) { loadStrokeWith(idx, getSource(piece.char, piece.id)); }
 
-  // fireSkin 토글 시 가이드+아이콘 다시 그리기
+  // fireSkin 토글 시 가이드+아이콘 다시 그리기 + 불 애니메이션 루프
+  const fireAnimRef = useRef(null);
   useEffect(() => {
     if (stateRef.current.inited) { drawGuide(); setupIcons(); }
+    if (fireSkin && !piece.done) {
+      // 불 애니메이션 — 매 프레임 renderTrace 호출
+      function fireLoop() { renderTrace(); fireAnimRef.current = requestAnimationFrame(fireLoop); }
+      fireAnimRef.current = requestAnimationFrame(fireLoop);
+    }
+    return () => { if (fireAnimRef.current) { cancelAnimationFrame(fireAnimRef.current); fireAnimRef.current = null; } };
   }, [fireSkin]); // eslint-disable-line react-hooks/exhaustive-deps
 
   function redrawAll() {

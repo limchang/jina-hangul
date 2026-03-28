@@ -821,7 +821,12 @@ export default function FreeComposeMode({ onGameMode }) {
             );
           });
         })()}
-        {pieces.map(piece => (
+        {(() => {
+          // 소방관 스킨: 왼쪽 위 미완성 글자 1개만 불
+          const fireTargetId = fireSkin
+            ? (pieces.filter(p => !p.done).sort((a, b) => (a.y + a.x * 0.3) - (b.y + b.x * 0.3))[0]?.id ?? null)
+            : null;
+          return pieces.map(piece => (
           <TracePiece
             key={piece.id} piece={piece} selected={piece.id === selectedId}
             inputLocked={panSmooth || panLocked}
@@ -833,7 +838,7 @@ export default function FreeComposeMode({ onGameMode }) {
             onUngroup={piece.groupId ? () => setPieces(prev => prev.map(p => p.groupId === piece.groupId ? { ...p, groupId: null } : p)) : null}
             onNearGoal={(near) => onNearGoal(near, piece)}
             focusZoom={focusZoom}
-            fireSkin={fireSkin}
+            fireSkin={piece.id === fireTargetId}
             onSourceUpdate={(ns) => updateSource(piece.id, piece.char, ns)}
             onMoved={(nx, ny) => {
               const sx = gridOn ? Math.round(nx / GRID_SIZE) * GRID_SIZE : nx;
@@ -849,7 +854,8 @@ export default function FreeComposeMode({ onGameMode }) {
               });
             }}
           />
-        ))}
+        ));
+        })()}
       </div>
 
       <DraggableRemote startY={window.innerHeight - 130}>
