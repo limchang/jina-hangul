@@ -48,7 +48,7 @@ function renderJamoImage(source) {
   return canvas.toDataURL();
 }
 
-export default function FreeComposeMode() {
+export default function FreeComposeMode({ onGameMode }) {
   const [pieces, setPieces] = useState([]);
   const [dragNew, setDragNew] = useState(null);
   const [selectedId, setSelectedId] = useState(null);
@@ -916,6 +916,12 @@ export default function FreeComposeMode() {
             <line x1="6" y1="12" x2="6" y2="12"/><line x1="10" y1="12" x2="10" y2="12"/><line x1="14" y1="12" x2="14" y2="12"/><line x1="18" y1="12" x2="18" y2="12"/>
             <line x1="8" y1="16" x2="16" y2="16"/>
           </svg>
+        {onGameMode && (
+          <>
+            <div className="ctrl-divider" />
+            <div className="fire-mode-btn" onClick={onGameMode} title="소방관 게임">🚒</div>
+          </>
+        )}
         </div>
       </div>
 

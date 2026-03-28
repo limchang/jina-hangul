@@ -117,26 +117,7 @@ export default function TracePiece({ piece, selected, inputLocked, onDone, onRes
       for (const p of pts) gCtx.lineTo(p.x, p.y);
       gCtx.stroke();
     });
-    // 획순 번호 표시 (2획 이상일 때, 미완성 획에 번호 표시)
-    if (!hideStartDot && src.strokes.length > 1) {
-      for (let si = S.strokeIdx; si < src.strokes.length; si++) {
-        const pts = samplePath(src.strokes[si].path, 80);
-        if (pts.length < 2) continue;
-        const isCurrent = si === S.strokeIdx;
-        const r = isCurrent ? 18 : 14;
-        // 원 배경
-        gCtx.beginPath(); gCtx.arc(pts[0].x, pts[0].y, r, 0, Math.PI * 2);
-        gCtx.fillStyle = isCurrent ? '#44ee88' : 'rgba(255,255,255,0.5)';
-        gCtx.fill();
-        gCtx.strokeStyle = '#fff'; gCtx.lineWidth = 2.5; gCtx.stroke();
-        // 번호 텍스트
-        gCtx.fillStyle = isCurrent ? '#fff' : 'rgba(0,0,0,0.6)';
-        gCtx.font = `bold ${r * 1.3}px 'Fredoka', sans-serif`;
-        gCtx.textAlign = 'center'; gCtx.textBaseline = 'middle';
-        gCtx.fillText(String(si + 1), pts[0].x, pts[0].y + 1);
-      }
-    } else if (!hideStartDot && S.strokeIdx < src.strokes.length) {
-      // 1획짜리 — 기존 초록 시작점만
+    if (!hideStartDot && S.strokeIdx < src.strokes.length) {
       const pts = samplePath(src.strokes[S.strokeIdx].path, 80);
       if (pts.length >= 2) {
         gCtx.beginPath(); gCtx.arc(pts[0].x, pts[0].y, 12, 0, Math.PI * 2);
