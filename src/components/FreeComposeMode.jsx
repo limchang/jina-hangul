@@ -953,14 +953,6 @@ export default function FreeComposeMode({ onGameMode }) {
         </div>
       )}
 
-      {/* 소방관 스킨 — 하단 호스 노즐 */}
-      {fireSkin && (
-        <div className="fire-hose-bar">
-          <div className="fire-hose-nozzle">🚿</div>
-          <div className="fire-hose-pipe" />
-          <div className="fire-hose-label">물 대기 중... 글자를 따라 써서 불을 꺼요!</div>
-        </div>
-      )}
     </div>
   );
 }

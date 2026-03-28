@@ -16,6 +16,36 @@ function getIconImageUrl(char) {
   return DEFAULT_ICON;
 }
 
+// 불꽃 그리기 — pts 배열의 startIdx부터 끝까지만 불꽃 표시
+function drawFireOnPath(ctx, pts, startIdx, seed) {
+  for (let pi = startIdx; pi < pts.length; pi++) {
+    const pt = pts[pi];
+    const h = pt.x * 7.3 + pt.y * 13.7 + seed * 31;
+    // 열기 글로우
+    const g = ctx.createRadialGradient(pt.x, pt.y - 8, 0, pt.x, pt.y - 8, 45);
+    g.addColorStop(0, 'rgba(255,100,0,0.2)');
+    g.addColorStop(1, 'rgba(255,60,0,0)');
+    ctx.fillStyle = g;
+    ctx.fillRect(pt.x - 45, pt.y - 53, 90, 90);
+    // 불알갱이 3겹
+    for (let fi = 0; fi < 3; fi++) {
+      const s = Math.sin(h + fi * 137);
+      const c = Math.cos(h + fi * 97);
+      const ox = s * 16;
+      const oy = -6 - Math.abs(c) * 22 - fi * 12;
+      const r = 5 + Math.abs(s) * 7 - fi;
+      if (r < 2) continue;
+      const t = fi / 2;
+      ctx.globalAlpha = 0.65 - fi * 0.15;
+      ctx.beginPath();
+      ctx.arc(pt.x + ox, pt.y + oy, r, 0, Math.PI * 2);
+      ctx.fillStyle = `rgb(255,${Math.round(220 - t * 150)},${Math.round(50 - t * 50)})`;
+      ctx.fill();
+    }
+  }
+  ctx.globalAlpha = 1;
+}
+
 export default function TracePiece({ piece, selected, inputLocked, onDone, onResetDone, onDelete, onSelect, onUngroup, isOverTrash, setTrashHover, onNearGoal, onSourceUpdate, onMoved, focusZoom = true, fireSkin = false }) {
   const source = getSource(piece.char, piece.id);
   const [editMode, setEditMode] = useState(false);
@@ -113,7 +143,7 @@ export default function TracePiece({ piece, selected, inputLocked, onDone, onRes
     gCtx.setLineDash([18, 14]);
     src.strokes.forEach(s => gCtx.stroke(new Path2D(s.path)));
     gCtx.setLineDash([]);
-    // 완성된 획 — fire: 물색, 기본: 노란색
+    // 완성된 획
     S.completed.forEach(pts => {
       gCtx.beginPath();
       gCtx.strokeStyle = fire ? '#4fc3f7' : APP_CONFIG.TRACE_COLOR;
@@ -123,51 +153,10 @@ export default function TracePiece({ piece, selected, inputLocked, onDone, onRes
       for (const p of pts) gCtx.lineTo(p.x, p.y);
       gCtx.stroke();
     });
-    // 소방관 스킨: 미완성 획 위에 불꽃
+    // 소방관 스킨: 아직 시작 안 한 대기 획에만 정적 불꽃 (현재 획은 traceRef에서 동적으로)
     if (fire) {
-      for (let si = S.strokeIdx; si < src.strokes.length; si++) {
-        const pts = samplePath(src.strokes[si].path, 30);
-        // 1) 넓은 주황 글로우 (배경 열기)
-        for (const pt of pts) {
-          const g = gCtx.createRadialGradient(pt.x, pt.y - 10, 0, pt.x, pt.y - 10, 50);
-          g.addColorStop(0, 'rgba(255,100,0,0.25)');
-          g.addColorStop(1, 'rgba(255,60,0,0)');
-          gCtx.fillStyle = g;
-          gCtx.fillRect(pt.x - 50, pt.y - 60, 100, 100);
-        }
-        // 2) 불꽃 알갱이들 — 경로 위로 솟아오르는 형태
-        for (let pi = 0; pi < pts.length; pi++) {
-          const pt = pts[pi];
-          const seed = pt.x * 7.3 + pt.y * 13.7 + si * 31;
-          for (let fi = 0; fi < 4; fi++) {
-            const s = Math.sin(seed + fi * 137);
-            const c = Math.cos(seed + fi * 97);
-            const ox = s * 18;
-            const oy = -8 - Math.abs(c) * 25 - fi * 14;
-            const r = 6 + Math.abs(s) * 8 - fi * 1.5;
-            if (r < 2) continue;
-            // 아래=밝은 노랑, 위=빨강~어두운 주황
-            const t = fi / 3;
-            const rr = Math.round(255);
-            const gg = Math.round(220 * (1 - t * 0.7));
-            const bb = Math.round(50 * (1 - t));
-            gCtx.globalAlpha = 0.7 - fi * 0.12;
-            gCtx.beginPath();
-            gCtx.arc(pt.x + ox, pt.y + oy, r, 0, Math.PI * 2);
-            gCtx.fillStyle = `rgb(${rr},${gg},${bb})`;
-            gCtx.fill();
-          }
-        }
-        // 3) 밝은 중심선 (핵심 불꽃)
-        gCtx.globalAlpha = 0.5;
-        gCtx.strokeStyle = '#ffe680';
-        gCtx.lineWidth = 12;
-        gCtx.lineCap = 'round'; gCtx.lineJoin = 'round';
-        gCtx.beginPath();
-        gCtx.moveTo(pts[0].x, pts[0].y);
-        for (let i = 1; i < pts.length; i++) gCtx.lineTo(pts[i].x, pts[i].y);
-        gCtx.stroke();
-        gCtx.globalAlpha = 1;
+      for (let si = S.strokeIdx + 1; si < src.strokes.length; si++) {
+        drawFireOnPath(gCtx, samplePath(src.strokes[si].path, 25), 0, si);
       }
     }
     if (!hideStartDot && S.strokeIdx < src.strokes.length) {
@@ -214,17 +203,35 @@ export default function TracePiece({ piece, selected, inputLocked, onDone, onRes
     tCtx.clearRect(0, 0, SIZE, SIZE);
     tCtx.save();
     tCtx.translate(PAD, PAD);
-    engineRef.current.draw(fireSkinRef.current);
+
+    const isFire = fireSkinRef.current;
+    const eng = engineRef.current;
+
+    // 소방관 스킨 — 현재 획의 불꽃 (지나간 부분은 제외 = 물로 꺼짐)
+    if (isFire && eng.pts?.length > 0) {
+      // maxReachedIdx 기준으로 아직 안 지나간 포인트만 불꽃
+      // eng.pts는 120포인트, samplePath(path,25)는 별도이므로 비율로 변환
+      const src = getSource(piece.char, piece.id);
+      if (src && stateRef.current.strokeIdx < src.strokes.length) {
+        const curPath = src.strokes[stateRef.current.strokeIdx].path;
+        const firePts = samplePath(curPath, 25);
+        const progress = eng.pts.length > 1 ? eng.maxReachedIdx / (eng.pts.length - 1) : 0;
+        const fireStart = Math.floor(progress * firePts.length);
+        drawFireOnPath(tCtx, firePts, fireStart, stateRef.current.strokeIdx);
+      }
+    }
+
+    eng.draw(isFire);
     particleRef.current.draw(tCtx);
-    // 소방관 스킨 — 물방울 파티클 렌더
-    if (fireSkinRef.current) {
+
+    // 소방관 스킨 — 물방울 파티클
+    if (isFire) {
       const drops = waterDropsRef.current;
       for (let i = drops.length - 1; i >= 0; i--) {
         const d = drops[i];
-        d.x += d.vx; d.y += d.vy; d.vy += 0.15; d.life -= 0.025;
+        d.x += d.vx; d.y += d.vy; d.vy += 0.12; d.life -= 0.025;
         if (d.life <= 0) { drops.splice(i, 1); continue; }
         tCtx.globalAlpha = d.life * 0.7;
-        // 물방울 모양 (눈물방울)
         tCtx.beginPath();
         tCtx.arc(d.x, d.y, d.size, 0, Math.PI * 2);
         tCtx.fillStyle = d.light ? '#b3e5fc' : '#4fc3f7';
@@ -423,16 +430,18 @@ export default function TracePiece({ piece, selected, inputLocked, onDone, onRes
         const cPos = getPos(e);
         engineRef.current.move(cPos.x, cPos.y);
         particleRef.current.emit(cPos.x, cPos.y);
-        // 소방관 스킨 — 물방울 호스 발사
+        // 소방관 스킨 — 손가락에서 물 튀김
         if (fireSkinRef.current) {
-          for (let i = 0; i < 3; i++) {
+          for (let i = 0; i < 2; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const speed = 1 + Math.random() * 3;
             waterDropsRef.current.push({
               x: cPos.x, y: cPos.y,
-              vx: (Math.random() - 0.5) * 6,
-              vy: -(1 + Math.random() * 4),
-              size: 3 + Math.random() * 5,
-              life: 0.5 + Math.random() * 0.5,
-              light: Math.random() > 0.5,
+              vx: Math.cos(angle) * speed,
+              vy: Math.sin(angle) * speed - 1,
+              size: 2 + Math.random() * 4,
+              life: 0.3 + Math.random() * 0.3,
+              light: Math.random() > 0.4,
             });
           }
         }
