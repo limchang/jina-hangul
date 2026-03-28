@@ -16,11 +16,13 @@ function getIconImageUrl(char) {
   return DEFAULT_ICON;
 }
 
-export default function TracePiece({ piece, selected, inputLocked, onDone, onResetDone, onDelete, onSelect, onUngroup, isOverTrash, setTrashHover, onNearGoal, onSourceUpdate, onMoved, focusZoom = true }) {
+export default function TracePiece({ piece, selected, inputLocked, onDone, onResetDone, onDelete, onSelect, onUngroup, isOverTrash, setTrashHover, onNearGoal, onSourceUpdate, onMoved, focusZoom = true, fireSkin = false }) {
   const source = getSource(piece.char, piece.id);
   const [editMode, setEditMode] = useState(false);
   const focusZoomRef = useRef(focusZoom);
   useEffect(() => { focusZoomRef.current = focusZoom; }, [focusZoom]);
+  const fireSkinRef = useRef(fireSkin);
+  useEffect(() => { fireSkinRef.current = fireSkin; }, [fireSkin]);
   const guideRef = useRef(null);
 
   const traceRef = useRef(null);
@@ -94,23 +96,26 @@ export default function TracePiece({ piece, selected, inputLocked, onDone, onRes
     const gCtx = guideRef.current?.getContext('2d');
     if (!gCtx || !src) return;
     const S = stateRef.current;
+    const fire = fireSkinRef.current;
     gCtx.clearRect(0, 0, SIZE, SIZE);
     gCtx.save();
     gCtx.translate(PAD, PAD);
-    // 흰색 배경선 (두꺼운 밑선)
-    gCtx.strokeStyle = 'rgba(255,255,255,0.25)';
+    // 배경선
+    gCtx.strokeStyle = fire ? 'rgba(255,100,30,0.2)' : 'rgba(255,255,255,0.25)';
     gCtx.lineWidth = APP_CONFIG.GUIDE_STROKE_WIDTH + 28;
     gCtx.lineCap = 'round'; gCtx.lineJoin = 'round';
     gCtx.setLineDash([]);
     src.strokes.forEach(s => gCtx.stroke(new Path2D(s.path)));
-    // 노란 점선 가이드
-    gCtx.strokeStyle = 'rgba(255,200,0,0.55)';
+    // 점선 가이드
+    gCtx.strokeStyle = fire ? 'rgba(255,80,0,0.5)' : 'rgba(255,200,0,0.55)';
     gCtx.lineWidth = 6;
     gCtx.setLineDash([18, 14]);
     src.strokes.forEach(s => gCtx.stroke(new Path2D(s.path)));
     gCtx.setLineDash([]);
+    // 완성된 획 — fire: 물색, 기본: 노란색
     S.completed.forEach(pts => {
-      gCtx.beginPath(); gCtx.strokeStyle = APP_CONFIG.TRACE_COLOR;
+      gCtx.beginPath();
+      gCtx.strokeStyle = fire ? '#4fc3f7' : APP_CONFIG.TRACE_COLOR;
       gCtx.lineWidth = APP_CONFIG.TRACE_STROKE_WIDTH;
       gCtx.lineCap = 'round'; gCtx.lineJoin = 'round';
       gCtx.moveTo(pts[0].x, pts[0].y);
@@ -121,7 +126,7 @@ export default function TracePiece({ piece, selected, inputLocked, onDone, onRes
       const pts = samplePath(src.strokes[S.strokeIdx].path, 80);
       if (pts.length >= 2) {
         gCtx.beginPath(); gCtx.arc(pts[0].x, pts[0].y, 12, 0, Math.PI * 2);
-        gCtx.fillStyle = '#44ee88'; gCtx.fill();
+        gCtx.fillStyle = fire ? '#4fc3f7' : '#44ee88'; gCtx.fill();
         gCtx.strokeStyle = '#fff'; gCtx.lineWidth = 3; gCtx.stroke();
       }
     }
@@ -140,6 +145,11 @@ export default function TracePiece({ piece, selected, inputLocked, onDone, onRes
   }
 
   function loadStroke(idx) { loadStrokeWith(idx, getSource(piece.char, piece.id)); }
+
+  // fireSkin 토글 시 가이드+아이콘 다시 그리기
+  useEffect(() => {
+    if (stateRef.current.inited) { drawGuide(); setupIcons(); }
+  }, [fireSkin]); // eslint-disable-line react-hooks/exhaustive-deps
 
   function redrawAll() {
     const src = getSource(piece.char, piece.id);
@@ -163,8 +173,14 @@ export default function TracePiece({ piece, selected, inputLocked, onDone, onRes
 
   function setupIcons() {
     const ol = overlayRef.current; if (!ol) return;
-    const targetSvg = `<svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="16" fill="none" stroke="rgba(255,235,80,0.8)" stroke-width="3"/><circle cx="20" cy="20" r="6" fill="rgba(255,235,80,0.9)"/></svg>`;
-    ol.innerHTML = `<div class="target-icon free-target"><div class="target-echo"></div><div class="target-echo target-echo--delay"></div>${targetSvg}</div><img class="character-handler" src="${getIconImageUrl(piece.char)}" onerror="this.src='${DEFAULT_ICON}'">`;
+    const fire = fireSkinRef.current;
+    if (fire) {
+      const targetSvg = `<svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="16" fill="none" stroke="rgba(79,195,247,0.8)" stroke-width="3"/><circle cx="20" cy="20" r="6" fill="rgba(79,195,247,0.9)"/></svg>`;
+      ol.innerHTML = `<div class="target-icon free-target"><div class="target-echo"></div><div class="target-echo target-echo--delay"></div>${targetSvg}</div><div class="character-handler fire-handler-emoji">💧</div>`;
+    } else {
+      const targetSvg = `<svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="16" fill="none" stroke="rgba(255,235,80,0.8)" stroke-width="3"/><circle cx="20" cy="20" r="6" fill="rgba(255,235,80,0.9)"/></svg>`;
+      ol.innerHTML = `<div class="target-icon free-target"><div class="target-echo"></div><div class="target-echo target-echo--delay"></div>${targetSvg}</div><img class="character-handler" src="${getIconImageUrl(piece.char)}" onerror="this.src='${DEFAULT_ICON}'">`;
+    }
     updateIcons();
   }
   function updateIcons() {
@@ -434,7 +450,7 @@ export default function TracePiece({ piece, selected, inputLocked, onDone, onRes
   return (
     <div
       ref={wrapRef}
-      className={`free-trace-wrap ${justDone ? 'free-trace-wrap--slam' : piece.done ? 'free-trace-wrap--done' : ''} ${selected ? 'free-trace-wrap--selected' : ''} ${unlocked ? 'free-trace-wrap--unlocked' : ''} ${editMode ? 'free-trace-wrap--editing' : ''}`}
+      className={`free-trace-wrap ${justDone ? 'free-trace-wrap--slam' : piece.done ? 'free-trace-wrap--done' : ''} ${selected ? 'free-trace-wrap--selected' : ''} ${unlocked ? 'free-trace-wrap--unlocked' : ''} ${editMode ? 'free-trace-wrap--editing' : ''} ${fireSkin && !piece.done ? 'free-trace-wrap--fire' : ''} ${fireSkin && justDone ? 'free-trace-wrap--extinguished' : ''}`}
       style={{ left: localPos.x, top: localPos.y, width: 0, height: 0 }}
     >
       <canvas ref={guideRef} className="free-trace-layer" style={{ width: pixelSize, height: pixelSize }} />

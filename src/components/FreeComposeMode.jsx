@@ -59,6 +59,7 @@ export default function FreeComposeMode({ onGameMode }) {
   const [panLocked, setPanLocked] = useState(false);
   const [mathQuiz, setMathQuiz] = useState(null);
   const [focusZoom, setFocusZoom] = useState(true); // 도착지 근접 시 확대
+  const [fireSkin, setFireSkin] = useState(false); // 소방관 스킨 모드
   const focusZoomValRef = useRef(true);
   useEffect(() => { focusZoomValRef.current = focusZoom; }, [focusZoom]);
   const focusZoomActiveRef = useRef(false);
@@ -776,7 +777,7 @@ export default function FreeComposeMode({ onGameMode }) {
   const selectPiece = useCallback((id) => setSelectedId(id), []);
 
   return (
-    <div className="free-fullscreen" onMouseDown={startPan} onTouchStart={startPan}>
+    <div className={`free-fullscreen ${fireSkin ? 'free-fullscreen--fire' : ''}`} onMouseDown={startPan} onTouchStart={startPan}>
       <div ref={panLayerRef} className={`free-pan-layer ${panSmooth ? 'free-pan-layer--smooth' : ''}`} style={{ transform: `translate(${panOffset.x}px, ${panOffset.y}px) scale(${zoom})`, transformOrigin: '0 0' }}>
         {gridOn && <div className="grid-overlay" style={{ backgroundSize: `${GRID_SIZE}px ${GRID_SIZE}px` }} />}
         {/* 그룹 테두리 — 가이드 외곽 따라 부드럽게 */}
@@ -832,6 +833,7 @@ export default function FreeComposeMode({ onGameMode }) {
             onUngroup={piece.groupId ? () => setPieces(prev => prev.map(p => p.groupId === piece.groupId ? { ...p, groupId: null } : p)) : null}
             onNearGoal={(near) => onNearGoal(near, piece)}
             focusZoom={focusZoom}
+            fireSkin={fireSkin}
             onSourceUpdate={(ns) => updateSource(piece.id, piece.char, ns)}
             onMoved={(nx, ny) => {
               const sx = gridOn ? Math.round(nx / GRID_SIZE) * GRID_SIZE : nx;
@@ -916,12 +918,8 @@ export default function FreeComposeMode({ onGameMode }) {
             <line x1="6" y1="12" x2="6" y2="12"/><line x1="10" y1="12" x2="10" y2="12"/><line x1="14" y1="12" x2="14" y2="12"/><line x1="18" y1="12" x2="18" y2="12"/>
             <line x1="8" y1="16" x2="16" y2="16"/>
           </svg>
-        {onGameMode && (
-          <>
-            <div className="ctrl-divider" />
-            <div className="fire-mode-btn" onClick={onGameMode} title="소방관 게임">🚒</div>
-          </>
-        )}
+        <div className="ctrl-divider" />
+        <div className={`zoom-btn ${fireSkin ? 'zoom-btn--active' : ''}`} onClick={() => setFireSkin(f => !f)} title="소방관 스킨">🔥</div>
         </div>
       </div>
 
