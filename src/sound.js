@@ -156,19 +156,20 @@ const JAMO_NAMES = {
   'ㅛ':'요','ㅜ':'우','ㅠ':'유','ㅡ':'으','ㅣ':'이'
 };
 
-// 글자 완성 시 발음 읽어주기 (Web Speech API)
-export function speakChar(char) {
+// 자모 발음 읽어주기 (Web Speech API)
+export function speakChar(char, delay = 0) {
   if (!('speechSynthesis' in window)) return;
   const name = JAMO_NAMES[char];
   if (!name) return;
-  // 축하 사운드와 겹치지 않게 약간 지연
-  setTimeout(() => {
+  const doSpeak = () => {
     const utter = new SpeechSynthesisUtterance(name);
     utter.lang = 'ko-KR';
     utter.rate = 0.85;
     utter.pitch = 1.2;
     speechSynthesis.speak(utter);
-  }, 400);
+  };
+  if (delay > 0) setTimeout(doSpeak, delay);
+  else doSpeak();
 }
 
 // 실패 (놓았는데 완성 안 됨) — 낮은 붕 사운드

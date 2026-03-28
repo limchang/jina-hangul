@@ -239,7 +239,7 @@ export default function TracePiece({ piece, selected, inputLocked, onDone, onRes
       overlayRef.current.innerHTML = '';
       particleRef.current.celebrate(250, 250); startPLoop();
       playCelebrate();
-      speakChar(piece.char);
+      speakChar(piece.char, 400);
       setJustDone(true);
       setTimeout(() => { onDone(); playSlam(); }, 150);
       setTimeout(() => setJustDone(false), 600);
