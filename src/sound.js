@@ -147,6 +147,30 @@ export function playFallSound() {
   osc.stop(ctx.currentTime + 0.45);
 }
 
+// 자모 이름 매핑
+const JAMO_NAMES = {
+  'ㄱ':'기역','ㄴ':'니은','ㄷ':'디귿','ㄹ':'리을','ㅁ':'미음',
+  'ㅂ':'비읍','ㅅ':'시옷','ㅇ':'이응','ㅈ':'지읒','ㅊ':'치읓',
+  'ㅋ':'키읔','ㅌ':'티읕','ㅍ':'피읖','ㅎ':'히읗',
+  'ㅏ':'아','ㅑ':'야','ㅓ':'어','ㅕ':'여','ㅗ':'오',
+  'ㅛ':'요','ㅜ':'우','ㅠ':'유','ㅡ':'으','ㅣ':'이'
+};
+
+// 글자 완성 시 발음 읽어주기 (Web Speech API)
+export function speakChar(char) {
+  if (!('speechSynthesis' in window)) return;
+  const name = JAMO_NAMES[char];
+  if (!name) return;
+  // 축하 사운드와 겹치지 않게 약간 지연
+  setTimeout(() => {
+    const utter = new SpeechSynthesisUtterance(name);
+    utter.lang = 'ko-KR';
+    utter.rate = 0.85;
+    utter.pitch = 1.2;
+    speechSynthesis.speak(utter);
+  }, 400);
+}
+
 // 실패 (놓았는데 완성 안 됨) — 낮은 붕 사운드
 export function playFail() {
   const ctx = getCtx();

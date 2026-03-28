@@ -343,9 +343,6 @@ export default function FreeComposeMode() {
       const maxW = Math.max(bc.w, bj.w, bk ? bk.w : 0) * S;
       syllableCursorRef.current.x += maxW / 2 + SYLLABLE_GAP;
     }
-
-    // 다음 음절 커서: 이 음절의 오른쪽 끝 + 음절 간 여백
-    syllableCursorRef.current.x = rightmost + SYLLABLE_GAP;
   }, [allChars, bboxCache]);
 
   const kbComposingRef = useRef(false);
