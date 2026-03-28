@@ -359,11 +359,15 @@ export default function TracePiece({ piece, selected, inputLocked, onDone, onRes
     if (S.strokeIdx >= curSource.strokes.length) {
       overlayRef.current.innerHTML = '';
       if (fireSkinRef.current || fireThemeRef.current) {
-        // 불모드 완성 — 물 폭발 + 증기, 일반 파티클 없음
+        // 불모드 완성 — 트레이스 캔버스 클리어 + 불 애니메이션 정지
+        const tCtx = traceRef.current?.getContext('2d');
+        if (tCtx) tCtx.clearRect(0, 0, SIZE, SIZE);
+        if (fireAnimRef.current) { cancelAnimationFrame(fireAnimRef.current); fireAnimRef.current = null; }
+        stopPLoop();
+        waterDropsRef.current = [];
         speakChar(piece.char, 200);
         playWaterComplete();
         setJustDone(true);
-        // 가이드를 물색으로 다시 그리기
         drawGuideWith(curSource);
         setTimeout(() => { onDone(); }, 150);
         setTimeout(() => setJustDone(false), 600);
