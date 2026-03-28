@@ -249,6 +249,18 @@ export default function TracePiece({ piece, selected, inputLocked, onDone, onRes
     }
 
     eng.draw(isFire);
+    // 소방관 스킨 — 완성된 획 물색을 불 위에 다시 그리기 (물색 > 불)
+    if (isFire && stateRef.current.completed.length > 0) {
+      tCtx.strokeStyle = '#4fc3f7';
+      tCtx.lineWidth = APP_CONFIG.TRACE_STROKE_WIDTH;
+      tCtx.lineCap = 'round'; tCtx.lineJoin = 'round';
+      for (const pts of stateRef.current.completed) {
+        tCtx.beginPath();
+        tCtx.moveTo(pts[0].x, pts[0].y);
+        for (const p of pts) tCtx.lineTo(p.x, p.y);
+        tCtx.stroke();
+      }
+    }
     particleRef.current.draw(tCtx);
 
     // 소방관 스킨 — 물방울 파티클
