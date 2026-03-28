@@ -276,34 +276,54 @@ export default function FreeComposeMode() {
       return;
     }
 
-    const cho = validParts[0], jung = validParts[1], jong = validParts[2];
+    // 복합 모음 처리: 3번째 자모가 모음이면 받침이 아니라 복합 모음의 일부
+    const cho = validParts[0];
+    const vowelParts = []; // 중성 자모들
+    let jong = null;
+    for (let vi = 1; vi < validParts.length; vi++) {
+      if (isVowel(validParts[vi])) vowelParts.push(validParts[vi]);
+      else { jong = validParts[vi]; break; }
+    }
+    const jung = vowelParts[0];
     const bc = bboxCache[cho], bj = bboxCache[jung], bk = jong ? bboxCache[jong] : null;
     const isVert = VERT_VOWELS.has(jung);
     const hasJong = !!jong;
 
     if (isVert) {
-      const dx = distX(bc, bj, S, PAD);
-      // 음절 총 너비: 초성 왼쪽 끝 ~ 중성 오른쪽 끝
+      // 모든 세로 모음 파트의 누적 너비 계산
+      let prevBB = bc;
+      let totalDx = 0;
+      const vowelDxList = []; // 각 모음의 x 오프셋
+      for (const vp of vowelParts) {
+        const bv = bboxCache[vp];
+        const ddx = distX(prevBB, bv, S, PAD);
+        totalDx += ddx;
+        vowelDxList.push(totalDx);
+        prevBB = bv;
+      }
+      const lastVowelBB = bboxCache[vowelParts[vowelParts.length - 1]];
       const leftEdge = (C - bc.minX) * S;
-      const rightEdge = dx + (bj.maxX - C) * S;
+      const rightEdge = totalDx + (lastVowelBB.maxX - C) * S;
       const totalW = leftEdge + rightEdge;
       const startX = ox - totalW / 2 + leftEdge; // 초성 중심
 
       const choX = startX;
-      const jungX = startX + dx;
 
       if (hasJong) {
         const choY = topAlignY(bc);
-        const jungY = topAlignY(bj);
-        const dyJong = distY(bc, bk, S, PAD);
-        const jongX = startX + dx * 0.5;
-        const jongY = choY + dyJong;
         placeNewPieceRef.current(cho, choX, choY, false, syllableGroupId);
-        placeNewPieceRef.current(jung, jungX, jungY, false, syllableGroupId);
+        for (let vi = 0; vi < vowelParts.length; vi++) {
+          placeNewPieceRef.current(vowelParts[vi], startX + vowelDxList[vi], topAlignY(bboxCache[vowelParts[vi]]), false, syllableGroupId);
+        }
+        const dyJong = distY(bc, bk, S, PAD);
+        const jongX = startX + totalDx * 0.5;
+        const jongY = choY + dyJong;
         placeNewPieceRef.current(jong, jongX, jongY, false, syllableGroupId);
       } else {
         placeNewPieceRef.current(cho, choX, topAlignY(bc), false, syllableGroupId);
-        placeNewPieceRef.current(jung, jungX, topAlignY(bj), false, syllableGroupId);
+        for (let vi = 0; vi < vowelParts.length; vi++) {
+          placeNewPieceRef.current(vowelParts[vi], startX + vowelDxList[vi], topAlignY(bboxCache[vowelParts[vi]]), false, syllableGroupId);
+        }
       }
       syllableCursorRef.current.x += totalW / 2 + SYLLABLE_GAP;
     } else {

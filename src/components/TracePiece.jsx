@@ -216,7 +216,7 @@ export default function TracePiece({ piece, selected, inputLocked, onDone, onRes
     superModeRef.current = false;
     if (S.strokeIdx >= curSource.strokes.length) {
       overlayRef.current.innerHTML = '';
-      particleRef.current.celebrate(SIZE/2, SIZE/2); startPLoop();
+      particleRef.current.celebrate(250, 250); startPLoop();
       playCelebrate();
       setJustDone(true);
       setTimeout(() => { onDone(); playSlam(); }, 150);
