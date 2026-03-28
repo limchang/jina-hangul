@@ -271,8 +271,9 @@ export default function TracePiece({ piece, selected, inputLocked, onDone, onRes
     const ol = overlayRef.current; if (!ol) return;
     const fire = fireSkinRef.current;
     if (fire) {
-      const targetSvg = `<svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="16" fill="none" stroke="rgba(79,195,247,0.8)" stroke-width="3"/><circle cx="20" cy="20" r="6" fill="rgba(79,195,247,0.9)"/></svg>`;
-      ol.innerHTML = `<div class="target-icon free-target"><div class="target-echo"></div><div class="target-echo target-echo--delay"></div>${targetSvg}</div><div class="character-handler fire-handler-emoji">💧</div>`;
+      // 불모드: 아이콘 없이 타겟만 (물색 도착점 표시)
+      const targetSvg = `<svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="16" fill="none" stroke="rgba(79,195,247,0.6)" stroke-width="2"/><circle cx="20" cy="20" r="5" fill="rgba(79,195,247,0.7)"/></svg>`;
+      ol.innerHTML = `<div class="target-icon free-target">${targetSvg}</div><div class="character-handler fire-handler-hidden"></div>`;
     } else {
       const targetSvg = `<svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="16" fill="none" stroke="rgba(255,235,80,0.8)" stroke-width="3"/><circle cx="20" cy="20" r="6" fill="rgba(255,235,80,0.9)"/></svg>`;
       ol.innerHTML = `<div class="target-icon free-target"><div class="target-echo"></div><div class="target-echo target-echo--delay"></div>${targetSvg}</div><img class="character-handler" src="${getIconImageUrl(piece.char)}" onerror="this.src='${DEFAULT_ICON}'">`;
