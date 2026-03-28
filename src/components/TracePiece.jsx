@@ -166,7 +166,7 @@ export default function TracePiece({ piece, selected, inputLocked, onDone, onRes
     tCtx.clearRect(0, 0, SIZE, SIZE);
     tCtx.save();
     tCtx.translate(PAD, PAD);
-    engineRef.current.draw();
+    engineRef.current.draw(fireSkinRef.current);
     particleRef.current.draw(tCtx);
     tCtx.restore();
   }
