@@ -156,17 +156,26 @@ const JAMO_NAMES = {
   'ㅛ':'요','ㅜ':'우','ㅠ':'유','ㅡ':'으','ㅣ':'이'
 };
 
-// 자모 발음 읽어주기 (Web Speech API)
+// Google Translate TTS로 발음 재생
+const ttsCache = {}; // URL → Audio 캐시 (같은 글자 반복 시 즉시 재생)
+
 export function speakChar(char, delay = 0) {
-  if (!('speechSynthesis' in window)) return;
   const name = JAMO_NAMES[char];
   if (!name) return;
   const doSpeak = () => {
-    const utter = new SpeechSynthesisUtterance(name);
-    utter.lang = 'ko-KR';
-    utter.rate = 0.85;
-    utter.pitch = 1.2;
-    speechSynthesis.speak(utter);
+    const url = `https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=ko&q=${encodeURIComponent(name)}`;
+    if (!ttsCache[name]) ttsCache[name] = new Audio(url);
+    const audio = ttsCache[name];
+    audio.currentTime = 0;
+    audio.play().catch(() => {
+      // 네트워크 실패 시 Web Speech API 폴백
+      if ('speechSynthesis' in window) {
+        const utter = new SpeechSynthesisUtterance(name);
+        utter.lang = 'ko-KR';
+        utter.rate = 0.85;
+        speechSynthesis.speak(utter);
+      }
+    });
   };
   if (delay > 0) setTimeout(doSpeak, delay);
   else doSpeak();
