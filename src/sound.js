@@ -181,6 +181,65 @@ export function speakChar(char, delay = 0) {
   else doSpeak();
 }
 
+// 불모드 — 치지직 소리 (따라쓰기 중 지속)
+let sizzleNodes = null;
+
+export function startSizzle() {
+  try {
+    if (sizzleNodes) return; // 이미 재생 중
+    const ctx = getCtx();
+    // 화이트 노이즈 생성 (2초 루프)
+    const bufLen = ctx.sampleRate * 2;
+    const buf = ctx.createBuffer(1, bufLen, ctx.sampleRate);
+    const data = buf.getChannelData(0);
+    for (let i = 0; i < bufLen; i++) data[i] = (Math.random() * 2 - 1);
+    const noise = ctx.createBufferSource();
+    noise.buffer = buf;
+    noise.loop = true;
+    // 밴드패스 필터 — 치지직 느낌 (고주파 강조)
+    const bp = ctx.createBiquadFilter();
+    bp.type = 'bandpass';
+    bp.frequency.value = 4000;
+    bp.Q.value = 1.5;
+    // 하이패스 — 저음 제거
+    const hp = ctx.createBiquadFilter();
+    hp.type = 'highpass';
+    hp.frequency.value = 1500;
+    // 볼륨 — LFO로 치지지지 느낌 (불규칙 떨림)
+    const gain = ctx.createGain();
+    gain.gain.value = 0.06;
+    // LFO 떨림
+    const lfo = ctx.createOscillator();
+    const lfoGain = ctx.createGain();
+    lfo.frequency.value = 8;
+    lfoGain.gain.value = 0.03;
+    lfo.connect(lfoGain);
+    lfoGain.connect(gain.gain);
+    lfo.start();
+
+    noise.connect(bp);
+    bp.connect(hp);
+    hp.connect(gain);
+    gain.connect(ctx.destination);
+    noise.start();
+    sizzleNodes = { noise, lfo, gain, ctx };
+  } catch {}
+}
+
+export function stopSizzle() {
+  if (!sizzleNodes) return;
+  try {
+    const { noise, lfo, gain } = sizzleNodes;
+    // 페이드 아웃
+    gain.gain.setValueAtTime(gain.gain.value, sizzleNodes.ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, sizzleNodes.ctx.currentTime + 0.15);
+    setTimeout(() => {
+      try { noise.stop(); lfo.stop(); } catch {}
+    }, 200);
+  } catch {}
+  sizzleNodes = null;
+}
+
 // 불모드 글자 완성 — 쏴~ 물 소리 + 상승 멜로디
 export function playWaterComplete() {
   try {

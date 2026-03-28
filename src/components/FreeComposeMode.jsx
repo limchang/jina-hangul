@@ -822,20 +822,11 @@ export default function FreeComposeMode({ onGameMode }) {
           });
         })()}
         {(() => {
-          // 소방관 스킨: 왼쪽 아래부터 불 번짐 (받침부터)
+          // 소방관 스킨: 배치 순서대로 불 이동 (첫 번째 미완성 글자)
           let fireTargetId = null;
           if (fireSkin) {
-            const undone = pieces.filter(p => !p.done);
-            if (undone.length > 0) {
-              // 왼쪽 아래 우선: y 큰(아래) + x 작은(왼쪽)
-              undone.sort((a, b) => {
-                // y 내림차순 (아래 우선), 같으면 x 오름차순 (왼쪽 우선)
-                const dy = b.y - a.y;
-                if (Math.abs(dy) > 30) return dy;
-                return a.x - b.x;
-              });
-              fireTargetId = undone[0].id;
-            }
+            const first = pieces.find(p => !p.done);
+            if (first) fireTargetId = first.id;
           }
           return pieces.map(piece => (
           <TracePiece
