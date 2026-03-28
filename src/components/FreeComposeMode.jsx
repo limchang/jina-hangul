@@ -822,32 +822,19 @@ export default function FreeComposeMode({ onGameMode }) {
           });
         })()}
         {(() => {
-          // 소방관 스킨: 왼쪽 위 음절의 받침(아래)부터 불
+          // 소방관 스킨: 왼쪽 아래부터 불 번짐 (받침부터)
           let fireTargetId = null;
           if (fireSkin) {
             const undone = pieces.filter(p => !p.done);
             if (undone.length > 0) {
-              // 그룹별로 묶어서, 그룹 기준 왼쪽 위 → 그룹 내에서 y 가장 큰(받침)
-              const grouped = {};
-              for (const p of undone) {
-                const gid = p.groupId || `solo_${p.id}`;
-                if (!grouped[gid]) grouped[gid] = [];
-                grouped[gid].push(p);
-              }
-              // 그룹 중심 좌표로 왼쪽 위 그룹 선택
-              let bestGroup = null, bestScore = Infinity;
-              for (const gid in grouped) {
-                const members = grouped[gid];
-                const avgX = members.reduce((s, p) => s + p.x, 0) / members.length;
-                const avgY = members.reduce((s, p) => s + p.y, 0) / members.length;
-                const score = avgY + avgX * 0.3;
-                if (score < bestScore) { bestScore = score; bestGroup = members; }
-              }
-              // 그룹 내에서 y 가장 큰 (받침) 미완성 글자
-              if (bestGroup) {
-                bestGroup.sort((a, b) => b.y - a.y);
-                fireTargetId = bestGroup[0].id;
-              }
+              // 왼쪽 아래 우선: y 큰(아래) + x 작은(왼쪽)
+              undone.sort((a, b) => {
+                // y 내림차순 (아래 우선), 같으면 x 오름차순 (왼쪽 우선)
+                const dy = b.y - a.y;
+                if (Math.abs(dy) > 30) return dy;
+                return a.x - b.x;
+              });
+              fireTargetId = undone[0].id;
             }
           }
           return pieces.map(piece => (
