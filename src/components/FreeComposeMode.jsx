@@ -863,6 +863,7 @@ export default function FreeComposeMode({ onGameMode }) {
             onNearGoal={(near) => onNearGoal(near, piece)}
             focusZoom={focusZoom}
             fireSkin={piece.id === fireTargetId}
+            fireTheme={fireSkin}
             onSourceUpdate={(ns) => updateSource(piece.id, piece.char, ns)}
             onMoved={(nx, ny) => {
               const sx = gridOn ? Math.round(nx / GRID_SIZE) * GRID_SIZE : nx;

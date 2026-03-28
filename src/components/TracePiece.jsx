@@ -64,13 +64,15 @@ function drawFireOnPath(ctx, pts, startIdx, seed) {
   ctx.globalAlpha = 1;
 }
 
-export default function TracePiece({ piece, selected, inputLocked, onDone, onResetDone, onDelete, onSelect, onUngroup, isOverTrash, setTrashHover, onNearGoal, onSourceUpdate, onMoved, focusZoom = true, fireSkin = false }) {
+export default function TracePiece({ piece, selected, inputLocked, onDone, onResetDone, onDelete, onSelect, onUngroup, isOverTrash, setTrashHover, onNearGoal, onSourceUpdate, onMoved, focusZoom = true, fireSkin = false, fireTheme = false }) {
   const source = getSource(piece.char, piece.id);
   const [editMode, setEditMode] = useState(false);
   const focusZoomRef = useRef(focusZoom);
   useEffect(() => { focusZoomRef.current = focusZoom; }, [focusZoom]);
   const fireSkinRef = useRef(fireSkin);
   useEffect(() => { fireSkinRef.current = fireSkin; }, [fireSkin]);
+  const fireThemeRef = useRef(fireTheme);
+  useEffect(() => { fireThemeRef.current = fireTheme; }, [fireTheme]);
   const guideRef = useRef(null);
 
   const traceRef = useRef(null);
@@ -145,7 +147,7 @@ export default function TracePiece({ piece, selected, inputLocked, onDone, onRes
     const gCtx = guideRef.current?.getContext('2d');
     if (!gCtx || !src) return;
     const S = stateRef.current;
-    const fire = fireSkinRef.current;
+    const fire = fireSkinRef.current || fireThemeRef.current;
     gCtx.clearRect(0, 0, SIZE, SIZE);
     gCtx.save();
     gCtx.translate(PAD, PAD);
@@ -161,7 +163,14 @@ export default function TracePiece({ piece, selected, inputLocked, onDone, onRes
     gCtx.setLineDash([18, 14]);
     src.strokes.forEach(s => gCtx.stroke(new Path2D(s.path)));
     gCtx.setLineDash([]);
-    // 완성된 획
+    // 소방관 스킨: 글자 단위로 불 — 완성 획 포함 모든 획에 불 (현재 획은 traceRef에서 동적)
+    if (fireSkinRef.current && S.strokeIdx < src.strokes.length) {
+      for (let si = 0; si < src.strokes.length; si++) {
+        if (si === S.strokeIdx) continue; // 현재 획은 traceRef에서 동적
+        drawFireOnPath(gCtx, samplePath(src.strokes[si].path, 25), 0, si);
+      }
+    }
+    // 완성된 획 — 불 위에 그려서 물색이 최상위
     S.completed.forEach(pts => {
       gCtx.beginPath();
       gCtx.strokeStyle = fire ? '#4fc3f7' : APP_CONFIG.TRACE_COLOR;
@@ -171,12 +180,6 @@ export default function TracePiece({ piece, selected, inputLocked, onDone, onRes
       for (const p of pts) gCtx.lineTo(p.x, p.y);
       gCtx.stroke();
     });
-    // 소방관 스킨: 아직 시작 안 한 대기 획에만 정적 불꽃 (현재 획은 traceRef에서 동적으로)
-    if (fire) {
-      for (let si = S.strokeIdx + 1; si < src.strokes.length; si++) {
-        drawFireOnPath(gCtx, samplePath(src.strokes[si].path, 25), 0, si);
-      }
-    }
     if (!hideStartDot && S.strokeIdx < src.strokes.length) {
       const pts = samplePath(src.strokes[S.strokeIdx].path, 80);
       if (pts.length >= 2) {
@@ -211,7 +214,7 @@ export default function TracePiece({ piece, selected, inputLocked, onDone, onRes
       fireAnimRef.current = requestAnimationFrame(fireLoop);
     }
     return () => { if (fireAnimRef.current) { cancelAnimationFrame(fireAnimRef.current); fireAnimRef.current = null; } };
-  }, [fireSkin]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [fireSkin, fireTheme]); // eslint-disable-line react-hooks/exhaustive-deps
 
   function redrawAll() {
     const src = getSource(piece.char, piece.id);
@@ -579,7 +582,7 @@ export default function TracePiece({ piece, selected, inputLocked, onDone, onRes
   return (
     <div
       ref={wrapRef}
-      className={`free-trace-wrap ${justDone ? 'free-trace-wrap--slam' : piece.done ? 'free-trace-wrap--done' : ''} ${selected ? 'free-trace-wrap--selected' : ''} ${unlocked ? 'free-trace-wrap--unlocked' : ''} ${editMode ? 'free-trace-wrap--editing' : ''} ${fireSkin && !piece.done ? 'free-trace-wrap--fire' : ''} ${fireSkin && justDone ? 'free-trace-wrap--extinguished' : ''}`}
+      className={`free-trace-wrap ${justDone ? (fireTheme ? 'free-trace-wrap--extinguished' : 'free-trace-wrap--slam') : piece.done ? (fireTheme ? 'free-trace-wrap--fire-done' : 'free-trace-wrap--done') : ''} ${selected ? 'free-trace-wrap--selected' : ''} ${unlocked ? 'free-trace-wrap--unlocked' : ''} ${editMode ? 'free-trace-wrap--editing' : ''} ${fireSkin && !piece.done ? 'free-trace-wrap--fire' : ''}`}
       style={{ left: localPos.x, top: localPos.y, width: 0, height: 0 }}
     >
       <canvas ref={guideRef} className="free-trace-layer" style={{ width: pixelSize, height: pixelSize }} />

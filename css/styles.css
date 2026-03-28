@@ -965,6 +965,13 @@ main {
   50% { filter: drop-shadow(0 0 28px rgba(255,120,0,0.8)) drop-shadow(0 0 12px rgba(255,60,0,0.5)); }
 }
 
+/* 불모드 완성 — 파란색 정적 스타일 (가젤 없음) */
+.free-trace-wrap--fire-done {
+  cursor: default;
+  pointer-events: auto;
+  filter: drop-shadow(0 0 8px rgba(79,195,247,0.4)) drop-shadow(0 2px 3px rgba(0,0,0,0.2));
+}
+
 /* 진화 성공 — 물색 글로우 + 증기 */
 .free-trace-wrap--extinguished {
   filter: drop-shadow(0 0 20px rgba(79,195,247,0.7)) drop-shadow(0 0 8px rgba(100,200,255,0.4)) !important;
