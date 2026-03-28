@@ -122,6 +122,31 @@ export default function TracePiece({ piece, selected, inputLocked, onDone, onRes
       for (const p of pts) gCtx.lineTo(p.x, p.y);
       gCtx.stroke();
     });
+    // 소방관 스킨: 미완성 획 경로 위에 불꽃 그리기
+    if (fire) {
+      for (let si = S.strokeIdx; si < src.strokes.length; si++) {
+        const pts = samplePath(src.strokes[si].path, 40);
+        for (const pt of pts) {
+          // 불꽃 — 경로를 따라 위로 솟는 원들
+          const seed = pt.x * 7 + pt.y * 13 + si * 31; // 결정적 랜덤 (깜빡임 방지)
+          for (let fi = 0; fi < 3; fi++) {
+            const s = Math.sin(seed + fi * 99);
+            const c = Math.cos(seed + fi * 77);
+            const ox = s * 15;
+            const oy = -Math.abs(c) * 30 - fi * 12;
+            const r = 8 + Math.abs(s) * 10;
+            const hue = 15 + Math.abs(c) * 25; // 10~40: 빨강~주황
+            const lum = 45 + Math.abs(s) * 20;
+            gCtx.globalAlpha = 0.6 - fi * 0.15;
+            gCtx.beginPath();
+            gCtx.arc(pt.x + ox, pt.y + oy, r, 0, Math.PI * 2);
+            gCtx.fillStyle = `hsl(${hue}, 100%, ${lum}%)`;
+            gCtx.fill();
+          }
+        }
+        gCtx.globalAlpha = 1;
+      }
+    }
     if (!hideStartDot && S.strokeIdx < src.strokes.length) {
       const pts = samplePath(src.strokes[S.strokeIdx].path, 80);
       if (pts.length >= 2) {
