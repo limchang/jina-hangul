@@ -186,7 +186,7 @@ export default function TracePiece({ piece, selected, inputLocked, onDone, onRes
     const maxSize = 700;
     const curSize = baseSize + proximity * (maxSize - baseSize);
     target.style.width = `${curSize}px`;
-    const isNear = dist < 150 && isTracing;
+    const isNear = dist < 150 && isTracing && allowNear;
     if (isNear) {
       handler.classList.add('handler-near-goal');
       target.classList.add('target-near-goal');
