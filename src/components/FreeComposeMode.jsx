@@ -58,7 +58,7 @@ export default function FreeComposeMode({ onGameMode }) {
   const [zoom, setZoom] = useState(1);
   const [panLocked, setPanLocked] = useState(true);
   const [mathQuiz, setMathQuiz] = useState(null);
-  const [focusZoom, setFocusZoom] = useState(true); // 도착지 근접 시 확대
+  const [focusZoom, setFocusZoom] = useState(false); // 도착지 근접 시 확대 (기본 off)
   const [fireSkin, setFireSkin] = useState(false); // 소방관 스킨 모드
   const focusZoomValRef = useRef(true);
   useEffect(() => { focusZoomValRef.current = focusZoom; }, [focusZoom]);

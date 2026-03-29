@@ -46,6 +46,7 @@ export class TracingEngine {
     this.isTracing = false;
     this.maxReachedIdx = 0;
     this.offPathCount = 0;
+    this.reachedGoal = false;
   }
 
   start(x, y) {
@@ -81,6 +82,14 @@ export class TracingEngine {
     if (bestDist < 140) {
       this.maxReachedIdx = Math.max(this.maxReachedIdx, bestIdx);
     }
+    // 도착지 근처 도달 기록 — 지나쳐도 성공 판정용
+    const goalPt = this.pts[this.pts.length - 1];
+    const goalDist = Math.hypot(x - goalPt.x, y - goalPt.y);
+    const percent = this.pts.length > 1 ? this.maxReachedIdx / (this.pts.length - 1) : 0;
+    const goalThreshold = this.isClosedLoop ? 0.85 : 0.75;
+    if (percent > goalThreshold && goalDist < 150) {
+      this.reachedGoal = true;
+    }
     // offPath 판정 — 도착지 근처일수록 후하게
     const progress = this.pts.length > 1 ? this.maxReachedIdx / (this.pts.length - 1) : 0;
     const offThreshold = progress > 0.7 ? 100 : 52; // 70% 이상 진행 시 판정 넓힘
@@ -95,10 +104,11 @@ export class TracingEngine {
     this.isTracing = false;
     if (!this.pts || this.pts.length === 0) return false;
     const percent = this.maxReachedIdx / (this.pts.length - 1);
-    // 닫힌 도형은 90% 이상 필요 (시작=끝이라 쉽게 완료되는 것 방지)
     const threshold = this.isClosedLoop ? 0.9 : 0.85;
-    if (percent > threshold) return true;
+    // 도착지에 도달했었으면 지나쳐도 성공
+    if (percent > threshold || this.reachedGoal) return true;
     this.maxReachedIdx = 0;
+    this.reachedGoal = false;
     return false;
   }
 
