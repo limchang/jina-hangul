@@ -1009,7 +1009,9 @@ main {
   animation: firefighterIdle 2s ease-in-out infinite;
 }
 .firefighter-char--follow {
-  bottom: auto; left: auto; right: auto;
+  position: absolute;
+  bottom: auto; right: auto;
+  z-index: 3;
   transition: left 0.5s ease-out, top 0.5s ease-out;
 }
 @keyframes firefighterIdle {
