@@ -969,12 +969,24 @@ export default function FreeComposeMode({ onGameMode }) {
         </div>
       )}
 
-      {/* 소방관 캐릭터 — 오른쪽 아래 */}
-      {fireSkin && (
-        <div className="firefighter-char">
-          <img className="firefighter-img" src="icons/firefighter-elephant.png" draggable={false} />
-        </div>
-      )}
+      {/* 소방관 캐릭터 — 불타는 글자 근처로 이동 */}
+      {fireSkin && (() => {
+        const target = pieces.find(p => !p.done);
+        if (target) {
+          const tx = target.x * zoom + panOffset.x - 60;
+          const ty = target.y * zoom + panOffset.y - 180;
+          return (
+            <div className="firefighter-char firefighter-char--follow" style={{ left: tx, top: ty }}>
+              <img className="firefighter-img" src="icons/firefighter-elephant.png" draggable={false} />
+            </div>
+          );
+        }
+        return (
+          <div className="firefighter-char">
+            <img className="firefighter-img" src="icons/firefighter-elephant.png" draggable={false} />
+          </div>
+        );
+      })()}
     </div>
   );
 }
