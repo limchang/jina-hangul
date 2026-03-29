@@ -64,7 +64,7 @@ function drawFireOnPath(ctx, pts, startIdx, seed) {
   ctx.globalAlpha = 1;
 }
 
-export default function TracePiece({ piece, selected, inputLocked, onDone, onResetDone, onDelete, onSelect, onUngroup, isOverTrash, setTrashHover, onNearGoal, onSourceUpdate, onMoved, focusZoom = true, fireSkin = false, fireTheme = false }) {
+export default function TracePiece({ piece, selected, inputLocked, onDone, onResetDone, onDelete, onSelect, onUngroup, isOverTrash, setTrashHover, onNearGoal, onSourceUpdate, onMoved, focusZoom = true, fireSkin = false, fireTheme = false, difficulty = 'easy' }) {
   const source = getSource(piece.char, piece.id);
   const [editMode, setEditMode] = useState(false);
   const focusZoomRef = useRef(focusZoom);
@@ -73,6 +73,7 @@ export default function TracePiece({ piece, selected, inputLocked, onDone, onRes
   useEffect(() => { fireSkinRef.current = fireSkin; }, [fireSkin]);
   const fireThemeRef = useRef(fireTheme);
   useEffect(() => { fireThemeRef.current = fireTheme; }, [fireTheme]);
+  useEffect(() => { if (engineRef.current) engineRef.current.difficulty = difficulty; }, [difficulty]);
   const guideRef = useRef(null);
 
   const traceRef = useRef(null);

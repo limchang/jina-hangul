@@ -60,6 +60,7 @@ export default function FreeComposeMode({ onGameMode }) {
   const [mathQuiz, setMathQuiz] = useState(null);
   const [focusZoom, setFocusZoom] = useState(false); // 도착지 근접 시 확대 (기본 off)
   const [fireSkin, setFireSkin] = useState(false); // 소방관 스킨 모드
+  const [difficulty, setDifficulty] = useState('easy'); // 'easy' | 'normal' | 'hard'
   const focusZoomValRef = useRef(true);
   useEffect(() => { focusZoomValRef.current = focusZoom; }, [focusZoom]);
   const focusZoomActiveRef = useRef(false);
@@ -842,6 +843,7 @@ export default function FreeComposeMode({ onGameMode }) {
             focusZoom={focusZoom}
             fireSkin={piece.id === fireTargetId}
             fireTheme={fireSkin}
+            difficulty={difficulty}
             onSourceUpdate={(ns) => updateSource(piece.id, piece.char, ns)}
             onMoved={(nx, ny) => {
               const sx = gridOn ? Math.round(nx / GRID_SIZE) * GRID_SIZE : nx;
@@ -947,6 +949,10 @@ export default function FreeComposeMode({ onGameMode }) {
           }
           return !f;
         })} title="소방관 스킨">🔥</div>
+        <div className="ctrl-divider" />
+        <div className="difficulty-btn" onClick={() => setDifficulty(d => d === 'easy' ? 'normal' : d === 'normal' ? 'hard' : 'easy')}>
+          {difficulty === 'easy' ? '😊' : difficulty === 'normal' ? '😐' : '😤'}
+        </div>
       </div>
 
       {/* 키보드 조합 입력 모드 — 숨겨진 input */}

@@ -950,6 +950,16 @@ main {
   50% { box-shadow: 0 8px 32px rgba(255,110,180,0.5); }
 }
 
+/* 난이도 버튼 */
+.difficulty-btn {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: rgba(255,255,255,0.15); border: 2px solid rgba(255,255,255,0.3);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; font-size: 1.2rem;
+  transition: all 0.15s;
+}
+.difficulty-btn:active { transform: scale(0.9); }
+
 /* ═══ 소방관 스킨 모드 (캔버스 오버레이) ═══ */
 .free-fullscreen--fire {
   background: linear-gradient(180deg, #1a0a00 0%, #3d1500 40%, #2a0800 100%) !important;

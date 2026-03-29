@@ -33,6 +33,7 @@ export class TracingEngine {
     this.ctx = ctx;
     this.config = config;
     this.pts = [];
+    this.difficulty = 'easy'; // 'easy' | 'normal' | 'hard'
     this.reset();
   }
 
@@ -90,13 +91,26 @@ export class TracingEngine {
     if (percent > goalThreshold && goalDist < 150) {
       this.reachedGoal = true;
     }
-    // offPath 판정 — 도착지 도달했으면 이탈 무시
-    if (this.reachedGoal) {
+    // offPath 판정 — 난이도별 분기
+    if (this.difficulty === 'easy') {
+      // 이지: 이탈 판정 없음
       this.offPathCount = 0;
+    } else if (this.difficulty === 'normal') {
+      // 노말: 도착지 도달 후 이탈 무시
+      if (this.reachedGoal) {
+        this.offPathCount = 0;
+      } else {
+        const progress = this.pts.length > 1 ? this.maxReachedIdx / (this.pts.length - 1) : 0;
+        const offThreshold = progress > 0.7 ? 100 : 52;
+        if (bestDist < offThreshold) {
+          this.offPathCount = 0;
+        } else {
+          this.offPathCount = (this.offPathCount || 0) + 1;
+        }
+      }
     } else {
-      const progress = this.pts.length > 1 ? this.maxReachedIdx / (this.pts.length - 1) : 0;
-      const offThreshold = progress > 0.7 ? 100 : 52;
-      if (bestDist < offThreshold) {
+      // 하드: 항상 엄격 판정, reachedGoal 무시
+      if (bestDist < 52) {
         this.offPathCount = 0;
       } else {
         this.offPathCount = (this.offPathCount || 0) + 1;
