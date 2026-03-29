@@ -61,6 +61,7 @@ export default function FreeComposeMode({ onGameMode }) {
   const [focusZoom, setFocusZoom] = useState(false); // 도착지 근접 시 확대 (기본 off)
   const [fireSkin, setFireSkin] = useState(false); // 소방관 스킨 모드
   const [difficulty, setDifficulty] = useState('easy'); // 'easy' | 'normal' | 'hard'
+  const [elephantPos, setElephantPos] = useState(null); // 코끼리 위치 (소화기 따라다님)
   const focusZoomValRef = useRef(true);
   useEffect(() => { focusZoomValRef.current = focusZoom; }, [focusZoom]);
   const focusZoomActiveRef = useRef(false);
@@ -844,6 +845,7 @@ export default function FreeComposeMode({ onGameMode }) {
             fireSkin={piece.id === fireTargetId}
             fireTheme={fireSkin}
             difficulty={difficulty}
+            onHandlerMove={piece.id === fireTargetId ? setElephantPos : undefined}
             onSourceUpdate={(ns) => updateSource(piece.id, piece.char, ns)}
             onMoved={(nx, ny) => {
               const sx = gridOn ? Math.round(nx / GRID_SIZE) * GRID_SIZE : nx;
@@ -860,16 +862,6 @@ export default function FreeComposeMode({ onGameMode }) {
             }}
           />
         ));
-        })()}
-        {/* 소방관 코끼리 — panLayer 안 (소화기보다 z-index 아래) */}
-        {fireSkin && (() => {
-          const target = pieces.find(p => !p.done);
-          if (!target) return null;
-          return (
-            <div className="firefighter-char firefighter-char--follow" style={{ left: target.x - 260, top: target.y - 80 }}>
-              <img className="firefighter-img" src="icons/firefighter-elephant.png" draggable={false} />
-            </div>
-          );
         })()}
       </div>
 
@@ -985,6 +977,13 @@ export default function FreeComposeMode({ onGameMode }) {
         </div>
       )}
 
+      {/* 소방관 코끼리 — 소화기 따라다님, 없으면 왼쪽 아래 */}
+      {fireSkin && (
+        <div className={`firefighter-char ${elephantPos ? 'firefighter-char--follow' : ''}`}
+          style={elephantPos ? { left: elephantPos.x - 280, top: elephantPos.y - 100 } : undefined}>
+          <img className="firefighter-img" src="icons/firefighter-elephant.png" draggable={false} />
+        </div>
+      )}
     </div>
   );
 }

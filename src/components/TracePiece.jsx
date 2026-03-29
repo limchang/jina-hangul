@@ -64,7 +64,7 @@ function drawFireOnPath(ctx, pts, startIdx, seed) {
   ctx.globalAlpha = 1;
 }
 
-export default function TracePiece({ piece, selected, inputLocked, onDone, onResetDone, onDelete, onSelect, onUngroup, isOverTrash, setTrashHover, onNearGoal, onSourceUpdate, onMoved, focusZoom = true, fireSkin = false, fireTheme = false, difficulty = 'easy' }) {
+export default function TracePiece({ piece, selected, inputLocked, onDone, onResetDone, onDelete, onSelect, onUngroup, isOverTrash, setTrashHover, onNearGoal, onSourceUpdate, onMoved, focusZoom = true, fireSkin = false, fireTheme = false, difficulty = 'easy', onHandlerMove }) {
   const source = getSource(piece.char, piece.id);
   const [editMode, setEditMode] = useState(false);
   const focusZoomRef = useRef(focusZoom);
@@ -341,6 +341,13 @@ export default function TracePiece({ piece, selected, inputLocked, onDone, onRes
     echos.forEach(e => { e.style.opacity = proximity > 0.2 ? '1' : '0'; e.style.animation = proximity > 0.2 ? `echoShrink ${0.5 + (1 - proximity) * 1.5}s infinite ease-in` : 'none'; });
     if (onNearGoal) onNearGoal(isNear);
     target.style.left = `${(tp.x + PAD) * piece.scale - halfPx}px`; target.style.top = `${(tp.y + PAD) * piece.scale - halfPx}px`;
+    // 소화기 위치를 부모에 전달 (코끼리 따라다님)
+    if (onHandlerMove && isTracing) {
+      const rect = handler.getBoundingClientRect();
+      onHandlerMove({ x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 });
+    } else if (onHandlerMove && !isTracing) {
+      onHandlerMove(null);
+    }
   }
 
   function startPLoop() {
