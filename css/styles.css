@@ -950,6 +950,25 @@ main {
   50% { box-shadow: 0 8px 32px rgba(255,110,180,0.5); }
 }
 
+/* 편집 모드 확인 버튼 — 글자 가이드 바로 아래 */
+.edit-done-btn {
+  position: absolute;
+  left: 0; transform: translateX(-50%);
+  z-index: 20;
+  padding: 8px 24px; border-radius: 20px;
+  font-family: 'Fredoka', 'Noto Sans KR', sans-serif;
+  font-size: 1rem; font-weight: 700;
+  color: white; background: #4caf50;
+  border: 3px solid white;
+  box-shadow: 0 4px 0 #388e3c, 0 6px 12px rgba(0,0,0,0.3);
+  cursor: pointer; pointer-events: auto;
+  transition: all 0.15s;
+}
+.edit-done-btn:active {
+  transform: translateX(-50%) translateY(3px);
+  box-shadow: 0 1px 0 #388e3c;
+}
+
 /* 난이도 버튼 */
 .difficulty-btn {
   width: 36px; height: 36px; border-radius: 50%;

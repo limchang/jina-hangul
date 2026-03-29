@@ -644,10 +644,13 @@ export default function TracePiece({ piece, selected, inputLocked, onDone, onRes
       <div ref={hitRef} className="free-trace-hit" style={{ width: 500 * piece.scale, height: 500 * piece.scale, zIndex: 5 }} />
       <div ref={overlayRef} className={`free-trace-layer free-trace-overlay ${flyAway ? 'overlay-fly-away' : ''}`} style={{ zIndex: 4, display: editMode ? 'none' : undefined }} />
       {editMode && (
-        <VertexEditor
-          source={getSource(piece.char, piece.id)}
-          onUpdate={handleVertexUpdate}
-        />
+        <>
+          <VertexEditor
+            source={getSource(piece.char, piece.id)}
+            onUpdate={handleVertexUpdate}
+          />
+          <button className="edit-done-btn" style={{ top: 250 * piece.scale + 10 }} onClick={(e) => { e.stopPropagation(); setEditMode(false); }}>✔ 확인</button>
+        </>
       )}
     </div>
   );
