@@ -152,15 +152,14 @@ export default function TracePiece({ piece, selected, inputLocked, onDone, onRes
     gCtx.clearRect(0, 0, SIZE, SIZE);
     gCtx.save();
     gCtx.translate(PAD, PAD);
-    // 대기 중 글자(fireTheme이지만 아직 불 안 붙은)는 가이드 숨김
+    // 배경선 — 대기 글자도 표시 (글자 모양 보이게)
+    gCtx.strokeStyle = fire ? 'rgba(255,100,30,0.15)' : 'rgba(255,255,255,0.25)';
+    gCtx.lineWidth = APP_CONFIG.GUIDE_STROKE_WIDTH + 28;
+    gCtx.lineCap = 'round'; gCtx.lineJoin = 'round';
+    gCtx.setLineDash([]);
+    src.strokes.forEach(s => gCtx.stroke(new Path2D(s.path)));
+    // 점선 가이드 — 대기 글자는 숨김
     if (!fireWaiting) {
-      // 배경선
-      gCtx.strokeStyle = fire ? 'rgba(255,100,30,0.2)' : 'rgba(255,255,255,0.25)';
-      gCtx.lineWidth = APP_CONFIG.GUIDE_STROKE_WIDTH + 28;
-      gCtx.lineCap = 'round'; gCtx.lineJoin = 'round';
-      gCtx.setLineDash([]);
-      src.strokes.forEach(s => gCtx.stroke(new Path2D(s.path)));
-      // 점선 가이드
       gCtx.strokeStyle = fire ? 'rgba(255,80,0,0.5)' : 'rgba(255,200,0,0.55)';
       gCtx.lineWidth = 6;
       gCtx.setLineDash([18, 14]);
