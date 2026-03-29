@@ -12,24 +12,22 @@ const PAD = 750;
 const DISPLAY_SIZE = 340; // 캔버스 CSS 크기
 const SCALE = DISPLAY_SIZE / SIZE;
 
-// ── 불 파티클 ──
-class FireParticle {
-  constructor(x, y) {
-    this.x = x + (Math.random() - 0.5) * 40;
-    this.y = y;
-    this.vx = (Math.random() - 0.5) * 1.5;
-    this.vy = -(1 + Math.random() * 3);
-    this.life = 0.6 + Math.random() * 0.4;
-    this.size = 6 + Math.random() * 10;
-    this.hue = 10 + Math.random() * 30; // 주황~빨강
+// ── 불 이모지 배치 (경량화) ──
+// 파티클 대신 획 위에 🔥 이모지를 듬성듬성 배치
+function buildFirePositions(strokes, spacing = 120) {
+  const positions = [];
+  for (const s of strokes) {
+    const pts = samplePath(s.path, Math.max(4, Math.ceil(200 / spacing)));
+    for (let i = 0; i < pts.length; i += Math.max(1, Math.floor(spacing / 20))) {
+      positions.push({
+        x: pts[i].x + (Math.random() - 0.5) * 20,
+        y: pts[i].y - 15,
+        size: 30 + Math.random() * 20,
+        phase: Math.random() * Math.PI * 2, // 흔들림 위상
+      });
+    }
   }
-  update() {
-    this.x += this.vx;
-    this.y += this.vy;
-    this.vy -= 0.03;
-    this.life -= 0.015;
-    this.size *= 0.995;
-  }
+  return positions;
 }
 
 // ── 물 파티클 ──
@@ -81,7 +79,7 @@ export default function FirefighterMode({ onExit }) {
   const fireCanvasRef = useRef(null);
   const engineRef = useRef(null);
   const stateRef = useRef({ strokeIdx: 0, completed: [], inited: false });
-  const fireParticles = useRef([]);
+  const firePositions = useRef([]);
   const waterParticles = useRef([]);
   const steamParticles = useRef([]);
   const animRef = useRef(null);
@@ -95,7 +93,7 @@ export default function FirefighterMode({ onExit }) {
     fireIntensityRef.current = 1;
     setExtinguished(false);
     stateRef.current = { strokeIdx: 0, completed: [], inited: false };
-    fireParticles.current = [];
+    firePositions.current = [];
     waterParticles.current = [];
     steamParticles.current = [];
   }, []);
@@ -110,6 +108,7 @@ export default function FirefighterMode({ onExit }) {
     gCanvas.height = tCanvas.height = fCanvas.height = SIZE;
     engineRef.current = new TracingEngine(tCanvas.getContext('2d'), APP_CONFIG);
     stateRef.current.inited = true;
+    firePositions.current = buildFirePositions(currentChar.strokes);
     drawGuide();
     loadStroke(0);
     speakChar(currentChar.char);
@@ -184,28 +183,19 @@ export default function FirefighterMode({ onExit }) {
     ctx.translate(PAD, PAD);
 
     const intensity = fireIntensityRef.current;
+    const now = Date.now() * 0.003;
 
-    // 불 파티클 생성 — 글자의 각 획 위에서 솟아오름
+    // 🔥 이모지를 듬성듬성 배치 (파티클 대신)
     if (intensity > 0.05) {
-      const emitCount = Math.ceil(intensity * 4);
-      for (let i = 0; i < emitCount; i++) {
-        const sIdx = Math.floor(Math.random() * currentChar.strokes.length);
-        const pts = samplePath(currentChar.strokes[sIdx].path, 30);
-        const pt = pts[Math.floor(Math.random() * pts.length)];
-        if (pt) fireParticles.current.push(new FireParticle(pt.x, pt.y));
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      for (const fp of firePositions.current) {
+        const bobY = Math.sin(now + fp.phase) * 8;
+        const alpha = intensity * (0.6 + 0.4 * Math.sin(now * 1.5 + fp.phase));
+        ctx.globalAlpha = alpha;
+        ctx.font = `${fp.size}px serif`;
+        ctx.fillText('🔥', fp.x, fp.y + bobY);
       }
-    }
-
-    // 불 파티클 업데이트 & 렌더
-    for (let i = fireParticles.current.length - 1; i >= 0; i--) {
-      const p = fireParticles.current[i];
-      p.update();
-      if (p.life <= 0) { fireParticles.current.splice(i, 1); continue; }
-      ctx.globalAlpha = p.life * intensity;
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-      ctx.fillStyle = `hsl(${p.hue}, 100%, ${40 + p.life * 30}%)`;
-      ctx.fill();
     }
 
     // 물 파티클
