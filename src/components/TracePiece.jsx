@@ -424,7 +424,7 @@ export default function TracePiece({ piece, selected, inputLocked, onDone, onRes
 
     function onDown(e) {
       if (e.touches?.length > 1) return;
-      if (editMode || inputLocked) return;
+      if (editMode) return;
       const cPos = getPos(e);
       if (!isOnGlyph(cPos)) {
         // 글자 밖 → pointer-events 끄고 아래 요소에 이벤트 재전달
@@ -474,6 +474,9 @@ export default function TracePiece({ piece, selected, inputLocked, onDone, onRes
           return;
         }
       }
+
+      // 잠금 모드면 롱프레스(편집)와 이동 차단
+      if (inputLocked) return;
 
       {
         let cx, cy;

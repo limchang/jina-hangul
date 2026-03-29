@@ -56,7 +56,7 @@ export default function FreeComposeMode({ onGameMode }) {
   let groupIdCounter = useRef(1);
   const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
-  const [panLocked, setPanLocked] = useState(false);
+  const [panLocked, setPanLocked] = useState(true);
   const [mathQuiz, setMathQuiz] = useState(null);
   const [focusZoom, setFocusZoom] = useState(true); // 도착지 근접 시 확대
   const [fireSkin, setFireSkin] = useState(false); // 소방관 스킨 모드
