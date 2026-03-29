@@ -153,19 +153,22 @@ export default function TracePiece({ piece, selected, inputLocked, onDone, onRes
     gCtx.clearRect(0, 0, SIZE, SIZE);
     gCtx.save();
     gCtx.translate(PAD, PAD);
-    // 배경선 — 대기 글자도 표시 (글자 모양 보이게)
-    gCtx.strokeStyle = fire ? 'rgba(255,100,30,0.15)' : 'rgba(255,255,255,0.25)';
-    gCtx.lineWidth = APP_CONFIG.GUIDE_STROKE_WIDTH + 28;
-    gCtx.lineCap = 'round'; gCtx.lineJoin = 'round';
-    gCtx.setLineDash([]);
-    src.strokes.forEach(s => gCtx.stroke(new Path2D(s.path)));
-    // 점선 가이드 — 대기 글자는 숨김
-    if (!fireWaiting) {
-      gCtx.strokeStyle = fire ? 'rgba(255,80,0,0.5)' : 'rgba(255,200,0,0.55)';
-      gCtx.lineWidth = 6;
-      gCtx.setLineDash([18, 14]);
-      src.strokes.forEach(s => gCtx.stroke(new Path2D(s.path)));
+    // 완성된 글자는 배경선/점선 가이드 안 그림
+    if (!piece.done) {
+      // 배경선 — 대기 글자도 표시 (글자 모양 보이게)
+      gCtx.strokeStyle = fire ? 'rgba(255,100,30,0.15)' : 'rgba(255,255,255,0.25)';
+      gCtx.lineWidth = APP_CONFIG.GUIDE_STROKE_WIDTH + 28;
+      gCtx.lineCap = 'round'; gCtx.lineJoin = 'round';
       gCtx.setLineDash([]);
+      src.strokes.forEach(s => gCtx.stroke(new Path2D(s.path)));
+      // 점선 가이드 — 대기 글자는 숨김
+      if (!fireWaiting) {
+        gCtx.strokeStyle = fire ? 'rgba(255,80,0,0.5)' : 'rgba(255,200,0,0.55)';
+        gCtx.lineWidth = 6;
+        gCtx.setLineDash([18, 14]);
+        src.strokes.forEach(s => gCtx.stroke(new Path2D(s.path)));
+        gCtx.setLineDash([]);
+      }
     }
     // 완성된 획
     S.completed.forEach(pts => {
@@ -650,7 +653,7 @@ export default function TracePiece({ piece, selected, inputLocked, onDone, onRes
             source={getSource(piece.char, piece.id)}
             onUpdate={handleVertexUpdate}
           />
-          <button className="edit-done-btn" style={{ top: 250 * piece.scale + 10 }} onClick={(e) => { e.stopPropagation(); setEditMode(false); }}>✔ 확인</button>
+          <button className="edit-done-btn" onClick={(e) => { e.stopPropagation(); setEditMode(false); }}>✔ 확인</button>
         </>
       )}
     </div>

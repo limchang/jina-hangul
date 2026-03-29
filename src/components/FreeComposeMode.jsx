@@ -983,7 +983,7 @@ export default function FreeComposeMode({ onGameMode }) {
       {/* 소방관 코끼리 — 소화기 따라다님, 없으면 왼쪽 아래 */}
       {fireSkin && (
         <div className={`firefighter-char ${elephantPos ? 'firefighter-char--follow' : ''}`}
-          style={elephantPos ? { left: elephantPos.x - 280, top: elephantPos.y - 100 } : undefined}>
+          style={elephantPos ? { left: elephantPos.x - 220, top: elephantPos.y - 140 } : undefined}>
           <img className="firefighter-img" src="icons/firefighter-elephant.png" draggable={false} />
         </div>
       )}
