@@ -352,7 +352,7 @@ export default function TracePiece({ piece, selected, inputLocked, onDone, onRes
       if (nextIdx > idx) {
         const dx = eng.pts[nextIdx].x - eng.pts[idx].x;
         const dy = eng.pts[nextIdx].y - eng.pts[idx].y;
-        const angle = Math.atan2(dy, dx) * (180 / Math.PI) + 90;
+        const angle = Math.atan2(dy, dx) * (180 / Math.PI) - 90;
         handler.style.transform = `translate(-50%,-50%) rotate(${angle}deg)`;
       }
     }
