@@ -6,12 +6,24 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>진아의 프리미엄 한글 공부 - 따라쓰기</title>
   <meta name="description" content="진아를 위한 프리미엄 한글 따라쓰기 앱입니다.">
-  <script type="module" crossorigin src="./assets/index-COGsav3A.js"></script>
-  <link rel="stylesheet" crossorigin href="./assets/index-_UnwH-rv.css">
+  <meta name="theme-color" content="#76d2f9">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="manifest" href="./manifest.json">
+  <link rel="apple-touch-icon" href="./assets/ChatGPT%20Image%202026%EB%85%84%203%EC%9B%94%2026%EC%9D%BC%20%EC%98%A4%ED%9B%84%2012_27_41-BGaC3tK7.png">
+  <script type="module" crossorigin src="./assets/index-N_mcAxIs.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-9Fg9pRVc.css">
 </head>
 
 <body>
   <div id="root"></div>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js');
+      });
+    }
+  </script>
 </body>
 
 </html>
