@@ -930,17 +930,18 @@ export default function FreeComposeMode({ onGameMode }) {
           </div>
         ))}
         <div className="ctrl-divider" />
-        <div className={`zoom-btn ${kbMode ? 'zoom-btn--active' : ''}`}
+        {!fireSkin && <div className={`zoom-btn ${kbMode ? 'zoom-btn--active' : ''}`}
           onClick={() => setKbMode(k => !k)} title="키보드 입력 모드">
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <rect x="2" y="4" width="20" height="16" rx="2"/><line x1="6" y1="8" x2="6" y2="8"/><line x1="10" y1="8" x2="10" y2="8"/><line x1="14" y1="8" x2="14" y2="8"/><line x1="18" y1="8" x2="18" y2="8"/>
             <line x1="6" y1="12" x2="6" y2="12"/><line x1="10" y1="12" x2="10" y2="12"/><line x1="14" y1="12" x2="14" y2="12"/><line x1="18" y1="12" x2="18" y2="12"/>
             <line x1="8" y1="16" x2="16" y2="16"/>
           </svg>
+        </div>}
         <div className="ctrl-divider" />
         <div className={`zoom-btn ${fireSkin ? 'zoom-btn--active' : ''}`} onClick={() => setFireSkin(f => {
           if (!f) {
-            // 켤 때 "불이야!! 불을 꺼주자!!" TTS
+            setKbMode(false); // 불 모드 켜면 키보드 끔
             const url = `https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=ko&q=${encodeURIComponent('불이야! 불을 꺼주자!')}`;
             new Audio(url).play().catch(() => {});
           }
