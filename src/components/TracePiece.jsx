@@ -319,27 +319,6 @@ export default function TracePiece({ piece, selected, inputLocked, onDone, onRes
     const dist = Math.hypot(hp.x - tp.x, hp.y - tp.y);
     const halfPx = pixelSize / 2;
     handler.style.left = `${(hp.x + PAD) * piece.scale - halfPx}px`; handler.style.top = `${(hp.y + PAD) * piece.scale - halfPx}px`;
-    // 경로 방향으로 핸들러 회전 (자동차 모드)
-    if (isTracing && !fireSkinRef.current) {
-      const eng = engineRef.current;
-      const idx = eng.maxReachedIdx;
-      const nextIdx = Math.min(idx + 3, eng.pts.length - 1);
-      if (nextIdx > idx) {
-        const dx = eng.pts[nextIdx].x - eng.pts[idx].x;
-        const dy = eng.pts[nextIdx].y - eng.pts[idx].y;
-        const angle = Math.atan2(dy, dx) * (180 / Math.PI) + 90; // +90: 차 앞쪽이 위
-        handler.style.transform = `translate(-50%,-50%) rotate(${angle}deg)`;
-      }
-    } else if (!isTracing && !fireSkinRef.current) {
-      // 시작 전: 첫 포인트 → 다음 포인트 방향
-      const eng = engineRef.current;
-      if (eng.pts.length > 3) {
-        const dx = eng.pts[3].x - eng.pts[0].x;
-        const dy = eng.pts[3].y - eng.pts[0].y;
-        const angle = Math.atan2(dy, dx) * (180 / Math.PI) + 90;
-        handler.style.transform = `translate(-50%,-50%) rotate(${angle}deg)`;
-      }
-    }
     // 거리에 비례해서 도착지 원 크기 연속 변화 (가까울수록 큼)
     const maxDist = 450;
     const isTracing = engineRef.current.isTracing;
@@ -365,6 +344,18 @@ export default function TracePiece({ piece, selected, inputLocked, onDone, onRes
     echos.forEach(e => { e.style.opacity = proximity > 0.2 ? '1' : '0'; e.style.animation = proximity > 0.2 ? `echoShrink ${0.5 + (1 - proximity) * 1.5}s infinite ease-in` : 'none'; });
     if (onNearGoal) onNearGoal(isNear);
     target.style.left = `${(tp.x + PAD) * piece.scale - halfPx}px`; target.style.top = `${(tp.y + PAD) * piece.scale - halfPx}px`;
+    // 경로 방향으로 핸들러 회전 (자동차 모드, 불모드 제외)
+    if (!fireSkinRef.current && engineRef.current?.pts?.length > 3) {
+      const eng = engineRef.current;
+      const idx = isTracing ? eng.maxReachedIdx : 0;
+      const nextIdx = Math.min(idx + 3, eng.pts.length - 1);
+      if (nextIdx > idx) {
+        const dx = eng.pts[nextIdx].x - eng.pts[idx].x;
+        const dy = eng.pts[nextIdx].y - eng.pts[idx].y;
+        const angle = Math.atan2(dy, dx) * (180 / Math.PI) + 90;
+        handler.style.transform = `translate(-50%,-50%) rotate(${angle}deg)`;
+      }
+    }
     // 소화기 위치를 부모에 전달 (코끼리 따라다님)
     if (onHandlerMove && isTracing) {
       const rect = handler.getBoundingClientRect();
