@@ -973,7 +973,6 @@ export default function FreeComposeMode({ onGameMode }) {
       {fireSkin && (
         <div className="firefighter-char">
           <img className="firefighter-img" src="icons/firefighter-elephant.png" draggable={false} />
-          <div className="firefighter-bubble">불을 꺼주자!</div>
         </div>
       )}
     </div>
