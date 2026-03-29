@@ -14,6 +14,11 @@ const VEHICLE_ICONS = [
   'icons/default/character/fire-truck.png',
   'icons/default/character/ambulance.png',
 ];
+const VEHICLE_TARGETS = [
+  { type: 'img', src: 'icons/thief.png' },    // 경찰차 → 도둑
+  { type: 'emoji', text: '🔥' },               // 소방차 → 불
+  { type: 'emoji', text: '🤕' },               // 구급차 → 환자
+];
 const DEFAULT_ICON = VEHICLE_ICONS[0];
 
 // piece ID 기반으로 랜덤 차량 선택 (같은 piece는 항상 같은 차)
@@ -312,8 +317,13 @@ export default function TracePiece({ piece, selected, inputLocked, onDone, onRes
       const targetSvg = `<svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="16" fill="none" stroke="rgba(79,195,247,0.8)" stroke-width="3"/><circle cx="20" cy="20" r="6" fill="rgba(79,195,247,0.9)"/></svg>`;
       ol.innerHTML = `<div class="target-icon free-target">${targetSvg}</div><div class="character-handler fire-handler-extinguisher">🧯</div>`;
     } else {
-      // 자동차 모드: 도둑 목적지
-      ol.innerHTML = `<div class="target-icon free-target"><img class="target-thief" src="icons/thief.png" /></div><img class="character-handler" src="${getIconImageUrl(piece.char, piece.id)}" onerror="this.src='${DEFAULT_ICON}'">`;
+      // 자동차 모드: 차량별 목적지
+      const vIdx = piece.id !== undefined ? piece.id % VEHICLE_ICONS.length : 0;
+      const vTarget = VEHICLE_TARGETS[vIdx];
+      const targetHtml = vTarget.type === 'img'
+        ? `<img class="target-thief" src="${vTarget.src}" />`
+        : `<div class="target-emoji">${vTarget.text}</div>`;
+      ol.innerHTML = `<div class="target-icon free-target">${targetHtml}</div><img class="character-handler" src="${getIconImageUrl(piece.char, piece.id)}" onerror="this.src='${DEFAULT_ICON}'">`;
     }
     updateIcons();
   }
