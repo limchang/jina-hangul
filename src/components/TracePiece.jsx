@@ -9,10 +9,17 @@ import { ICON_MAP } from '../icon-map.js';
 import { getSource } from '../sourceOverrides.js';
 import VertexEditor from './VertexEditor.jsx';
 
-const DEFAULT_ICON = 'icons/default/character/police-car.png';
+const VEHICLE_ICONS = [
+  'icons/default/character/police-car.png',
+  'icons/default/character/fire-truck.png',
+  'icons/default/character/ambulance.png',
+];
+const DEFAULT_ICON = VEHICLE_ICONS[0];
 
-function getIconImageUrl(char) {
+// piece ID 기반으로 랜덤 차량 선택 (같은 piece는 항상 같은 차)
+function getIconImageUrl(char, pieceId) {
   if (ICON_MAP[char]) return ICON_MAP[char];
+  if (pieceId !== undefined) return VEHICLE_ICONS[pieceId % VEHICLE_ICONS.length];
   return DEFAULT_ICON;
 }
 
@@ -306,7 +313,7 @@ export default function TracePiece({ piece, selected, inputLocked, onDone, onRes
       ol.innerHTML = `<div class="target-icon free-target">${targetSvg}</div><div class="character-handler fire-handler-extinguisher">🧯</div>`;
     } else {
       // 자동차 모드: 도둑 목적지
-      ol.innerHTML = `<div class="target-icon free-target"><img class="target-thief" src="icons/thief.png" /></div><img class="character-handler" src="${getIconImageUrl(piece.char)}" onerror="this.src='${DEFAULT_ICON}'">`;
+      ol.innerHTML = `<div class="target-icon free-target"><img class="target-thief" src="icons/thief.png" /></div><img class="character-handler" src="${getIconImageUrl(piece.char, piece.id)}" onerror="this.src='${DEFAULT_ICON}'">`;
     }
     updateIcons();
   }
