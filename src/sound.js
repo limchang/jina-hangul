@@ -181,6 +181,47 @@ export function speakChar(char, delay = 0) {
   else doSpeak();
 }
 
+// 경찰차 — 삐뽀삐뽀 사이렌 (따라쓰기 중 지속)
+let sirenNodes = null;
+
+export function startSiren() {
+  try {
+    if (sirenNodes) return;
+    const ctx = getCtx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    gain.gain.value = 0.08;
+    // 삐뽀: 두 음 사이를 LFO로 왕복
+    const lfo = ctx.createOscillator();
+    const lfoGain = ctx.createGain();
+    lfo.type = 'square'; // 사각파 → 삐-뽀 끊어지는 느낌
+    lfo.frequency.value = 3; // 초당 3번 삐뽀
+    lfoGain.gain.value = 200; // 주파수 변조 폭
+    lfo.connect(lfoGain);
+    lfoGain.connect(osc.frequency);
+    osc.frequency.value = 700; // 중심 주파수 (500~900 왕복)
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start();
+    lfo.start();
+    sirenNodes = { osc, lfo, gain, ctx };
+  } catch {}
+}
+
+export function stopSiren() {
+  if (!sirenNodes) return;
+  try {
+    const { osc, lfo, gain } = sirenNodes;
+    gain.gain.setValueAtTime(gain.gain.value, sirenNodes.ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, sirenNodes.ctx.currentTime + 0.15);
+    setTimeout(() => {
+      try { osc.stop(); lfo.stop(); } catch {}
+    }, 200);
+  } catch {}
+  sirenNodes = null;
+}
+
 // 불모드 — 치지직 소리 (따라쓰기 중 지속)
 let sizzleNodes = null;
 

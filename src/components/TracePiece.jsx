@@ -4,7 +4,7 @@ import { APP_CONFIG } from '../data.js';
 import { TracingEngine, samplePath } from '../TracingEngine.js';
 import { ParticleSystem } from '../particles.js';
 
-import { playStart, playComplete, playCelebrate, playFail, playSlam, playFloat, playLand, playFallSound, speakChar, playWaterComplete, startSizzle, stopSizzle } from '../sound.js';
+import { playStart, playComplete, playCelebrate, playFail, playSlam, playFloat, playLand, playFallSound, speakChar, playWaterComplete, startSizzle, stopSizzle, startSiren, stopSiren } from '../sound.js';
 import { ICON_MAP } from '../icon-map.js';
 import { getSource } from '../sourceOverrides.js';
 import VertexEditor from './VertexEditor.jsx';
@@ -466,6 +466,7 @@ export default function TracePiece({ piece, selected, inputLocked, onDone, onRes
         if (engineRef.current.start(cPos.x, cPos.y)) {
           playStart();
           if (fireSkinRef.current) startSizzle();
+          else startSiren();
           if (stateRef.current.strokeIdx === 0) speakChar(piece.char);
           particleRef.current.burst(cPos.x, cPos.y, 6); startPLoop(); renderTrace(); updateIcons();
           const h = overlayRef.current?.querySelector('.character-handler');
@@ -525,7 +526,7 @@ export default function TracePiece({ piece, selected, inputLocked, onDone, onRes
           engineRef.current.isTracing = false;
           failCountRef.current++;
           playFallSound();
-          stopSizzle();
+          stopSizzle(); stopSiren();
           stopPLoop();
           if (onNearGoal) onNearGoal(false);
           // 캐릭터 캔버스로 수직 낙하
@@ -577,7 +578,7 @@ export default function TracePiece({ piece, selected, inputLocked, onDone, onRes
         if (h) { h.style.transform = 'translate(-50%,-50%)'; h.classList.remove('handler-near-goal'); }
         if (tgt) { tgt.classList.remove('target-calling'); tgt.classList.remove('target-near-goal'); }
         if (onNearGoal) onNearGoal(false);
-        stopSizzle();
+        stopSizzle(); stopSiren();
         if (engineRef.current.end()) {
           playComplete(); particleRef.current.burst(engineRef.current.getTargetPos().x, engineRef.current.getTargetPos().y, 15);
           completeStroke();
