@@ -55,7 +55,7 @@ export default function FreeComposeMode({ onGameMode }) {
   const [selectedGroup, setSelectedGroup] = useState(null); // 그룹 선택
   let groupIdCounter = useRef(1);
   const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
-  const [zoom, setZoom] = useState(1);
+  const [zoom, setZoom] = useState(2);
   const [panLocked, setPanLocked] = useState(true);
   const [mathQuiz, setMathQuiz] = useState(null);
   const [focusZoom, setFocusZoom] = useState(false); // 도착지 근접 시 확대 (기본 off)
