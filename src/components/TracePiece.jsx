@@ -15,7 +15,7 @@ const VEHICLE_ICONS = [
   'icons/default/character/ambulance.png',
 ];
 const VEHICLE_TARGETS = [
-  { type: 'img', src: 'icons/thief.png' },    // 경찰차 → 도둑
+  { type: 'emoji', text: '🦹' },               // 경찰차 → 도둑
   { type: 'emoji', text: '🔥' },               // 소방차 → 불
   { type: 'emoji', text: '🤕' },               // 구급차 → 환자
 ];
