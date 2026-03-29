@@ -1000,8 +1000,9 @@ main {
   animation: firefighterBounce 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   pointer-events: none;
 }
-.firefighter-emoji {
-  font-size: 4rem;
+.firefighter-img {
+  width: 100px; height: 100px;
+  object-fit: contain;
   filter: drop-shadow(0 4px 12px rgba(0,0,0,0.4));
   animation: firefighterIdle 2s ease-in-out infinite;
 }

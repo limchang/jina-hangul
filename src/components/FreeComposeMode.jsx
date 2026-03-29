@@ -972,7 +972,7 @@ export default function FreeComposeMode({ onGameMode }) {
       {/* 소방관 캐릭터 — 오른쪽 아래 */}
       {fireSkin && (
         <div className="firefighter-char">
-          <div className="firefighter-emoji">🧑‍🚒</div>
+          <img className="firefighter-img" src="icons/firefighter-elephant.png" draggable={false} />
           <div className="firefighter-bubble">불을 꺼주자!</div>
         </div>
       )}
