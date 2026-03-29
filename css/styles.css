@@ -994,7 +994,7 @@ main {
 
 /* 소방관 캐릭터 (오른쪽 아래) */
 .firefighter-char {
-  position: fixed; bottom: 160px; right: 20px;
+  position: fixed; bottom: 160px; left: 20px;
   z-index: 960; display: flex; flex-direction: column;
   align-items: center; gap: 6px;
   animation: firefighterBounce 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
