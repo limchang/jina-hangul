@@ -16,7 +16,12 @@ export function initSvgHelper() {
   document.body.appendChild(tempSvg);
 }
 
+const pathCache = new Map();
+
 export function samplePath(pathStr, samples = 120) {
+  const key = `${pathStr}|${samples}`;
+  const cached = pathCache.get(key);
+  if (cached) return cached;
   if (!tempPath) initSvgHelper();
   tempPath.setAttribute("d", pathStr);
   const len = tempPath.getTotalLength();
@@ -25,6 +30,7 @@ export function samplePath(pathStr, samples = 120) {
     const p = tempPath.getPointAtLength((i / samples) * len);
     pts.push({ x: p.x, y: p.y });
   }
+  pathCache.set(key, pts);
   return pts;
 }
 

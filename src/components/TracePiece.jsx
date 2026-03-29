@@ -76,7 +76,7 @@ function drawFireOnPath(ctx, pts, startIdx, seed) {
   ctx.globalAlpha = 1;
 }
 
-export default function TracePiece({ piece, selected, inputLocked, onDone, onResetDone, onDelete, onSelect, onUngroup, isOverTrash, setTrashHover, onNearGoal, onSourceUpdate, onMoved, focusZoom = true, fireSkin = false, fireTheme = false, difficulty = 'easy', onHandlerMove }) {
+function TracePiece({ piece, selected, inputLocked, onDone, onResetDone, onDelete, onSelect, onUngroup, isOverTrash, setTrashHover, onNearGoal, onSourceUpdate, onMoved, focusZoom = true, fireSkin = false, fireTheme = false, difficulty = 'easy', onHandlerMove }) {
   const source = getSource(piece.char, piece.id);
   const [editMode, setEditMode] = useState(false);
   const focusZoomRef = useRef(focusZoom);
@@ -95,6 +95,9 @@ export default function TracePiece({ piece, selected, inputLocked, onDone, onRes
   const waterDropsRef = useRef([]); // 소방관 스킨 물방울 파티클
   const stateRef = useRef({ strokeIdx: 0, completed: [], inited: false });
   const particleAnimRef = useRef(null);
+  const handlerElRef = useRef(null); // querySelector 캐싱
+  const targetElRef = useRef(null);
+  const iconRafRef = useRef(null);
 
   const wrapRef = useRef(null);
   const hitRef = useRef(null);
@@ -220,8 +223,15 @@ export default function TracePiece({ piece, selected, inputLocked, onDone, onRes
   const fireAnimRef = useRef(null);
   useEffect(() => {
     if (stateRef.current.inited) { drawGuide(); setupIcons(); }
+    // 기존 루프 정리
+    if (fireAnimRef.current) { cancelAnimationFrame(fireAnimRef.current); fireAnimRef.current = null; }
     if (fireSkin && !piece.done) {
-      function fireLoop() { renderTrace(); fireAnimRef.current = requestAnimationFrame(fireLoop); }
+      let lastTime = 0;
+      function fireLoop(now) {
+        // 30fps 제한 — 불꽃 애니메이션은 60fps 불필요
+        if (now - lastTime > 33) { lastTime = now; renderTrace(); }
+        fireAnimRef.current = requestAnimationFrame(fireLoop);
+      }
       fireAnimRef.current = requestAnimationFrame(fireLoop);
     }
     return () => { if (fireAnimRef.current) { cancelAnimationFrame(fireAnimRef.current); fireAnimRef.current = null; } };
@@ -288,7 +298,7 @@ export default function TracePiece({ piece, selected, inputLocked, onDone, onRes
       for (let i = drops.length - 1; i >= 0; i--) {
         const d = drops[i];
         d.x += d.vx; d.y += d.vy; d.vy += 0.12; d.life -= 0.025;
-        if (d.life <= 0) { drops.splice(i, 1); continue; }
+        if (d.life <= 0) { drops[i] = drops[drops.length - 1]; drops.pop(); continue; }
         tCtx.globalAlpha = d.life * 0.7;
         tCtx.beginPath();
         tCtx.arc(d.x, d.y, d.size, 0, Math.PI * 2);
@@ -306,10 +316,12 @@ export default function TracePiece({ piece, selected, inputLocked, onDone, onRes
     // fireTheme: done이거나 대기 중(불 안 붙은) → 오버레이 비움
     if (fireThemeRef.current && (piece.done || !fire)) {
       ol.innerHTML = '';
+      handlerElRef.current = null; targetElRef.current = null;
       return;
     }
     if (piece.done) {
       ol.innerHTML = '';
+      handlerElRef.current = null; targetElRef.current = null;
       return;
     }
     if (fire) {
@@ -325,12 +337,19 @@ export default function TracePiece({ piece, selected, inputLocked, onDone, onRes
         : `<div class="target-emoji">${vTarget.text}</div>`;
       ol.innerHTML = `<div class="target-icon free-target">${targetHtml}</div><img class="character-handler" src="${getIconImageUrl(piece.char, piece.id)}" onerror="this.src='${DEFAULT_ICON}'">`;
     }
+    // 요소 ref 캐싱 — 이후 querySelector 불필요
+    handlerElRef.current = ol.querySelector('.character-handler');
+    targetElRef.current = ol.querySelector('.target-icon');
     updateIcons();
   }
+  function scheduleUpdateIcons() {
+    if (iconRafRef.current) return;
+    iconRafRef.current = requestAnimationFrame(() => { iconRafRef.current = null; updateIcons(); });
+  }
   function updateIcons() {
-    const ol = overlayRef.current; if (!ol || !engineRef.current?.pts) return;
-    const handler = ol.querySelector('.character-handler');
-    const target = ol.querySelector('.target-icon');
+    if (!engineRef.current?.pts) return;
+    const handler = handlerElRef.current;
+    const target = targetElRef.current;
     if (!handler || !target) return;
     const hp = engineRef.current.getHandlerPos(), tp = engineRef.current.getTargetPos();
     const dist = Math.hypot(hp.x - tp.x, hp.y - tp.y);
@@ -509,8 +528,8 @@ export default function TracePiece({ piece, selected, inputLocked, onDone, onRes
           if (fireSkinRef.current) startSizzle();
           else startSiren();
           if (stateRef.current.strokeIdx === 0) speakChar(piece.char);
-          particleRef.current.burst(cPos.x, cPos.y, 6); startPLoop(); renderTrace(); updateIcons();
-          const h = overlayRef.current?.querySelector('.character-handler');
+          particleRef.current.burst(cPos.x, cPos.y, 6); startPLoop(); renderTrace(); scheduleUpdateIcons();
+          const h = handlerElRef.current;
           if (h) h.style.transform = 'translate(-50%,-50%) scale(1.15) rotate(5deg)';
           return;
         }
@@ -558,10 +577,10 @@ export default function TracePiece({ piece, selected, inputLocked, onDone, onRes
             });
           }
         }
-        renderTrace(); updateIcons();
+        renderTrace(); scheduleUpdateIcons();
         // 경로 이탈 감지 → 즉시 캐릭터 날아감 (슈퍼모드면 무시)
         const opc = engineRef.current.offPathCount || 0;
-        const target = overlayRef.current?.querySelector('.target-icon');
+        const target = targetElRef.current;
         if (target) target.classList.add('target-calling');
         if (opc > 3 && !superModeRef.current) {
           // 휘우웅~ 날아가기
@@ -617,8 +636,8 @@ export default function TracePiece({ piece, selected, inputLocked, onDone, onRes
       }
 
       if (engineRef.current?.isTracing) {
-        const h = overlayRef.current?.querySelector('.character-handler');
-        const tgt = overlayRef.current?.querySelector('.target-icon');
+        const h = handlerElRef.current;
+        const tgt = targetElRef.current;
         if (h) { h.style.transform = 'translate(-50%,-50%)'; h.classList.remove('handler-near-goal'); }
         if (tgt) { tgt.classList.remove('target-calling'); tgt.classList.remove('target-near-goal'); }
         if (onNearGoal) onNearGoal(false);
@@ -630,7 +649,7 @@ export default function TracePiece({ piece, selected, inputLocked, onDone, onRes
           // 도착지 못 도달 → 실패
           failCountRef.current++;
           if (failCountRef.current >= 3) superModeRef.current = true;
-          playFail(); stopPLoop(); renderTrace(); updateIcons();
+          playFail(); stopPLoop(); renderTrace(); scheduleUpdateIcons();
         }
         return;
       }
@@ -655,6 +674,7 @@ export default function TracePiece({ piece, selected, inputLocked, onDone, onRes
       wrap.removeEventListener('touchmove', onMove);
       wrap.removeEventListener('touchend', onUp);
       window.removeEventListener('touchend', onUp);
+      if (iconRafRef.current) { cancelAnimationFrame(iconRafRef.current); iconRafRef.current = null; }
     };
   }, [localPos, piece.done, editMode]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -688,3 +708,17 @@ export default function TracePiece({ piece, selected, inputLocked, onDone, onRes
     </div>
   );
 }
+
+export default React.memo(TracePiece, (prev, next) => {
+  return prev.piece === next.piece
+    && prev.selected === next.selected
+    && prev.inputLocked === next.inputLocked
+    && prev.focusZoom === next.focusZoom
+    && prev.fireSkin === next.fireSkin
+    && prev.fireTheme === next.fireTheme
+    && prev.difficulty === next.difficulty
+    && prev.onDone === next.onDone
+    && prev.onMoved === next.onMoved
+    && prev.onSelect === next.onSelect
+    && prev.onHandlerMove === next.onHandlerMove;
+});

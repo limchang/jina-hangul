@@ -284,7 +284,7 @@ export function stopSizzle() {
 // 불모드 글자 완성 — 쏴~ 물 소리 + 상승 멜로디
 export function playWaterComplete() {
   try {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const ctx = getCtx();
     // 물 소리
     const noise = ctx.createBufferSource();
     const buf = ctx.createBuffer(1, ctx.sampleRate * 0.3, ctx.sampleRate);

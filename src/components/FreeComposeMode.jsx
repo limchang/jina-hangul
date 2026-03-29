@@ -557,6 +557,9 @@ export default function FreeComposeMode({ onGameMode }) {
   useEffect(() => { getNextPlacePosRef.current = getNextPlacePos; }, [getNextPlacePos]);
   useEffect(() => { placeNewPieceRef.current = placeNewPiece; }, [placeNewPiece]);
 
+  // 드래그 고스트 DOM ref — setState 대신 직접 조작
+  const dragGhostRef = useRef(null);
+
   // 드래그 이벤트 — 한 번만 등록
   useEffect(() => {
     function onMove(e) {
@@ -567,7 +570,11 @@ export default function FreeComposeMode({ onGameMode }) {
       const d = dragNewRef.current;
       if (d && (Math.abs(x - d.startX) > 10 || Math.abs(y - d.startY) > 10)) dragMovedRef.current = true;
       dragNewRef.current = { ...d, x, y };
-      setDragNew({ ...dragNewRef.current });
+      // DOM 직접 조작 — setState 없이 고스트 위치 갱신
+      if (dragGhostRef.current) {
+        dragGhostRef.current.style.left = `${x}px`;
+        dragGhostRef.current.style.top = `${y}px`;
+      }
     }
     function onEnd(e) {
       const d = dragNewRef.current; if (!d) return;
@@ -778,51 +785,73 @@ export default function FreeComposeMode({ onGameMode }) {
 
   const selectPiece = useCallback((id) => setSelectedId(id), []);
 
+  const resetDone = useCallback((id) => {
+    setPieces(prev => prev.map(p => p.id === id ? { ...p, done: false } : p));
+  }, []);
+
+  const deletePiece = useCallback((id) => {
+    delete pieceOverrides[id];
+    setPieces(prev => prev.filter(p => p.id !== id));
+  }, []);
+
+  const ungroupPiece = useCallback((groupId) => {
+    setPieces(prev => prev.map(p => p.groupId === groupId ? { ...p, groupId: null } : p));
+  }, []);
+
+  const movePiece = useCallback((id, nx, ny) => {
+    const sx = gridOn ? Math.round(nx / GRID_SIZE) * GRID_SIZE : nx;
+    const sy = gridOn ? Math.round(ny / GRID_SIZE) * GRID_SIZE : ny;
+    setPieces(prev => {
+      const target = prev.find(p => p.id === id);
+      if (!target) return prev;
+      const dx = sx - target.x, dy = sy - target.y;
+      if (target.groupId) {
+        return prev.map(p => p.groupId === target.groupId ? { ...p, x: p.x + dx, y: p.y + dy } : p);
+      }
+      return prev.map(p => p.id === id ? { ...p, x: sx, y: sy } : p);
+    });
+  }, [gridOn]);
+
+  // 그룹 blob SVG 데이터 메모이제이션
+  const groupBlobData = useMemo(() => {
+    const groups = {};
+    pieces.forEach(p => { if (p.groupId) { if (!groups[p.groupId]) groups[p.groupId] = []; groups[p.groupId].push(p); } });
+    return Object.entries(groups).map(([gid, gpieces]) => {
+      const circles = [];
+      gpieces.forEach(p => {
+        const bb = bboxCache[p.char];
+        if (!bb) return;
+        const s = p.scale;
+        circles.push({ cx: p.x, cy: p.y, rx: (bb.w / 2) * s + 8, ry: (bb.h / 2) * s + 8 });
+      });
+      if (circles.length === 0) return null;
+      let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+      circles.forEach(c => { minX = Math.min(minX, c.cx - c.rx); maxX = Math.max(maxX, c.cx + c.rx); minY = Math.min(minY, c.cy - c.ry); maxY = Math.max(maxY, c.cy + c.ry); });
+      const pad = 15;
+      return { gid, circles, ox: minX - pad, oy: minY - pad, w: maxX - minX + pad * 2, h: maxY - minY + pad * 2 };
+    }).filter(Boolean);
+  }, [pieces, bboxCache]);
+
   return (
     <div className={`free-fullscreen ${fireSkin ? 'free-fullscreen--fire' : ''}`} onMouseDown={startPan} onTouchStart={startPan}>
       <div ref={panLayerRef} className={`free-pan-layer ${panSmooth ? 'free-pan-layer--smooth' : ''}`} style={{ transform: `translate(${panOffset.x}px, ${panOffset.y}px) scale(${zoom})`, transformOrigin: '0 0' }}>
         {gridOn && <div className="grid-overlay" style={{ backgroundSize: `${GRID_SIZE}px ${GRID_SIZE}px` }} />}
-        {/* 그룹 테두리 — 가이드 외곽 따라 부드럽게 */}
-        {(() => {
-          const groups = {};
-          pieces.forEach(p => { if (p.groupId) { if (!groups[p.groupId]) groups[p.groupId] = []; groups[p.groupId].push(p); } });
-          return Object.entries(groups).map(([gid, gpieces]) => {
-            // 각 자모의 실제 바운딩 박스로 원 생성
-            const circles = [];
-            gpieces.forEach(p => {
-              const bb = bboxCache[p.char];
-              if (!bb) return;
-              const s = p.scale;
-              const cx = p.x, cy = p.y;
-              const rx = (bb.w / 2) * s + 8;
-              const ry = (bb.h / 2) * s + 8;
-              circles.push({ cx, cy, rx, ry });
-            });
-            if (circles.length === 0) return null;
-            // 전체 바운딩
-            let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
-            circles.forEach(c => { minX = Math.min(minX, c.cx - c.rx); maxX = Math.max(maxX, c.cx + c.rx); minY = Math.min(minY, c.cy - c.ry); maxY = Math.max(maxY, c.cy + c.ry); });
-            const pad = 15;
-            const w = maxX - minX + pad * 2, h = maxY - minY + pad * 2;
-            const ox = minX - pad, oy = minY - pad;
-            // 메타볼 방식: 각 원을 SVG ellipse로 그려서 filter blur+threshold로 합침
-            return (
-              <svg key={`g${gid}`} className="group-blob" style={{ left: ox, top: oy, width: w, height: h }}>
-                <defs>
-                  <filter id={`blob${gid}`}>
-                    <feGaussianBlur in="SourceGraphic" stdDeviation="12" />
-                    <feColorMatrix type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 25 -10" />
-                  </filter>
-                </defs>
-                <g filter={`url(#blob${gid})`}>
-                  {circles.map((c, i) => (
-                    <ellipse key={i} cx={c.cx - ox} cy={c.cy - oy} rx={c.rx} ry={c.ry} fill="rgba(255,255,255,0.12)" />
-                  ))}
-                </g>
-              </svg>
-            );
-          });
-        })()}
+        {/* 그룹 테두리 — 메모이제이션된 데이터 사용 */}
+        {groupBlobData.map(({ gid, circles, ox, oy, w, h }) => (
+          <svg key={`g${gid}`} className="group-blob" style={{ left: ox, top: oy, width: w, height: h }}>
+            <defs>
+              <filter id={`blob${gid}`}>
+                <feGaussianBlur in="SourceGraphic" stdDeviation="12" />
+                <feColorMatrix type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 25 -10" />
+              </filter>
+            </defs>
+            <g filter={`url(#blob${gid})`}>
+              {circles.map((c, i) => (
+                <ellipse key={i} cx={c.cx - ox} cy={c.cy - oy} rx={c.rx} ry={c.ry} fill="rgba(255,255,255,0.12)" />
+              ))}
+            </g>
+          </svg>
+        ))}
         {(() => {
           // 소방관 스킨: 배치 순서대로 불 이동 (첫 번째 미완성 글자)
           let fireTargetId = null;
@@ -835,11 +864,11 @@ export default function FreeComposeMode({ onGameMode }) {
             key={piece.id} piece={piece} selected={piece.id === selectedId}
             inputLocked={panSmooth || panLocked}
             onDone={() => markDone(piece.id)}
-            onResetDone={() => setPieces(prev => prev.map(p => p.id === piece.id ? { ...p, done: false } : p))}
-            onDelete={() => { delete pieceOverrides[piece.id]; setPieces(prev => prev.filter(p => p.id !== piece.id)); }}
+            onResetDone={() => resetDone(piece.id)}
+            onDelete={() => deletePiece(piece.id)}
             isOverTrash={isOverTrash} setTrashHover={setTrashHover}
             onSelect={() => selectPiece(piece.id)}
-            onUngroup={piece.groupId ? () => setPieces(prev => prev.map(p => p.groupId === piece.groupId ? { ...p, groupId: null } : p)) : null}
+            onUngroup={piece.groupId ? () => ungroupPiece(piece.groupId) : null}
             onNearGoal={(near) => onNearGoal(near, piece)}
             focusZoom={focusZoom}
             fireSkin={piece.id === fireTargetId}
@@ -847,19 +876,7 @@ export default function FreeComposeMode({ onGameMode }) {
             difficulty={difficulty}
             onHandlerMove={piece.id === fireTargetId ? setElephantPos : undefined}
             onSourceUpdate={(ns) => updateSource(piece.id, piece.char, ns)}
-            onMoved={(nx, ny) => {
-              const sx = gridOn ? Math.round(nx / GRID_SIZE) * GRID_SIZE : nx;
-              const sy = gridOn ? Math.round(ny / GRID_SIZE) * GRID_SIZE : ny;
-              setPieces(prev => {
-                const target = prev.find(p => p.id === piece.id);
-                if (!target) return prev;
-                const dx = sx - target.x, dy = sy - target.y;
-                if (target.groupId) {
-                  return prev.map(p => p.groupId === target.groupId ? { ...p, x: p.x + dx, y: p.y + dy } : p);
-                }
-                return prev.map(p => p.id === piece.id ? { ...p, x: sx, y: sy } : p);
-              });
-            }}
+            onMoved={(nx, ny) => movePiece(piece.id, nx, ny)}
           />
         ));
         })()}
@@ -964,7 +981,7 @@ export default function FreeComposeMode({ onGameMode }) {
       )}
 
       {dragNew && jamoImages[dragNew.char] && (
-        <img className="drag-ghost-img" src={jamoImages[dragNew.char]} style={{ left: dragNew.x, top: dragNew.y }} draggable={false} />
+        <img ref={dragGhostRef} className="drag-ghost-img" src={jamoImages[dragNew.char]} style={{ left: dragNew.x, top: dragNew.y }} draggable={false} />
       )}
 
       {mathQuiz && (
