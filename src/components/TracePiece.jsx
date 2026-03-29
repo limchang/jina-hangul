@@ -381,6 +381,7 @@ export default function TracePiece({ piece, selected, inputLocked, onDone, onRes
     }
     if (S.strokeIdx >= curSource.strokes.length) {
       overlayRef.current.innerHTML = '';
+      if (onHandlerMove) onHandlerMove(null);
       if (fireSkinRef.current || fireThemeRef.current) {
         // 불모드 완성 — 트레이스 캔버스 클리어 + 불 애니메이션 정지
         const tCtx = traceRef.current?.getContext('2d');
