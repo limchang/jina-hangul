@@ -9,7 +9,7 @@ import { ICON_MAP } from '../icon-map.js';
 import { getSource } from '../sourceOverrides.js';
 import VertexEditor from './VertexEditor.jsx';
 
-const DEFAULT_ICON = 'icons/default/character/ChatGPT Image 2026년 3월 26일 오후 12_27_41.png';
+const DEFAULT_ICON = 'icons/default/character/police-car.png';
 
 function getIconImageUrl(char) {
   if (ICON_MAP[char]) return ICON_MAP[char];
