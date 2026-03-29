@@ -305,9 +305,8 @@ export default function TracePiece({ piece, selected, inputLocked, onDone, onRes
       const targetSvg = `<svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="16" fill="none" stroke="rgba(79,195,247,0.8)" stroke-width="3"/><circle cx="20" cy="20" r="6" fill="rgba(79,195,247,0.9)"/></svg>`;
       ol.innerHTML = `<div class="target-icon free-target">${targetSvg}</div><div class="character-handler fire-handler-extinguisher">🧯</div>`;
     } else {
-      // 자동차 모드: 빨간 목적지 (🚨)
-      const targetSvg = `<svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="16" fill="none" stroke="rgba(255,60,60,0.9)" stroke-width="3"/><circle cx="20" cy="20" r="6" fill="rgba(255,60,60,1)"/></svg>`;
-      ol.innerHTML = `<div class="target-icon free-target"><div class="target-echo"></div><div class="target-echo target-echo--delay"></div>${targetSvg}</div><img class="character-handler" src="${getIconImageUrl(piece.char)}" onerror="this.src='${DEFAULT_ICON}'">`;
+      // 자동차 모드: 도둑 목적지
+      ol.innerHTML = `<div class="target-icon free-target"><img class="target-thief" src="icons/thief.png" /></div><img class="character-handler" src="${getIconImageUrl(piece.char)}" onerror="this.src='${DEFAULT_ICON}'">`;
     }
     updateIcons();
   }

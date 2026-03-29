@@ -950,6 +950,19 @@ main {
   50% { box-shadow: 0 8px 32px rgba(255,110,180,0.5); }
 }
 
+/* 자동차 모드 — 도둑 목적지 */
+.target-thief {
+  width: 100%; height: 100%;
+  object-fit: contain;
+  border-radius: 50%;
+  filter: drop-shadow(0 0 8px rgba(255,60,60,0.6));
+  animation: thiefBounce 1s ease-in-out infinite;
+}
+@keyframes thiefBounce {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+}
+
 /* 편집 모드 확인 버튼 — 화면 하단 고정 */
 .edit-done-btn {
   position: fixed;
