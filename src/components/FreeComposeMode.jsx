@@ -935,10 +935,13 @@ export default function FreeComposeMode({ onGameMode }) {
         <div className="ctrl-divider" />
         <div className={`zoom-btn ${fireSkin ? 'zoom-btn--active' : ''}`} onClick={() => setFireSkin(f => {
           if (!f) {
-            setKbMode(false); // 불 모드 켜면 키보드 끔
+            setKbMode(false);
             const url = `https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=ko&q=${encodeURIComponent('불이야! 불을 꺼주자!')}`;
             new Audio(url).play().catch(() => {});
           }
+          // 모드 전환 시 캔버스 비우기
+          setPieces([]);
+          setElephantPos(null);
           return !f;
         })} title="소방관 스킨">🔥</div>
         <div className="ctrl-divider" />
