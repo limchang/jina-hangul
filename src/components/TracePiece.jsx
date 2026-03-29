@@ -148,21 +148,25 @@ export default function TracePiece({ piece, selected, inputLocked, onDone, onRes
     if (!gCtx || !src) return;
     const S = stateRef.current;
     const fire = fireSkinRef.current || fireThemeRef.current;
+    const fireWaiting = fireThemeRef.current && !fireSkinRef.current && !piece.done;
     gCtx.clearRect(0, 0, SIZE, SIZE);
     gCtx.save();
     gCtx.translate(PAD, PAD);
-    // 배경선
-    gCtx.strokeStyle = fire ? 'rgba(255,100,30,0.2)' : 'rgba(255,255,255,0.25)';
-    gCtx.lineWidth = APP_CONFIG.GUIDE_STROKE_WIDTH + 28;
-    gCtx.lineCap = 'round'; gCtx.lineJoin = 'round';
-    gCtx.setLineDash([]);
-    src.strokes.forEach(s => gCtx.stroke(new Path2D(s.path)));
-    // 점선 가이드
-    gCtx.strokeStyle = fire ? 'rgba(255,80,0,0.5)' : 'rgba(255,200,0,0.55)';
-    gCtx.lineWidth = 6;
-    gCtx.setLineDash([18, 14]);
-    src.strokes.forEach(s => gCtx.stroke(new Path2D(s.path)));
-    gCtx.setLineDash([]);
+    // 대기 중 글자(fireTheme이지만 아직 불 안 붙은)는 가이드 숨김
+    if (!fireWaiting) {
+      // 배경선
+      gCtx.strokeStyle = fire ? 'rgba(255,100,30,0.2)' : 'rgba(255,255,255,0.25)';
+      gCtx.lineWidth = APP_CONFIG.GUIDE_STROKE_WIDTH + 28;
+      gCtx.lineCap = 'round'; gCtx.lineJoin = 'round';
+      gCtx.setLineDash([]);
+      src.strokes.forEach(s => gCtx.stroke(new Path2D(s.path)));
+      // 점선 가이드
+      gCtx.strokeStyle = fire ? 'rgba(255,80,0,0.5)' : 'rgba(255,200,0,0.55)';
+      gCtx.lineWidth = 6;
+      gCtx.setLineDash([18, 14]);
+      src.strokes.forEach(s => gCtx.stroke(new Path2D(s.path)));
+      gCtx.setLineDash([]);
+    }
     // 완성된 획
     S.completed.forEach(pts => {
       gCtx.beginPath();
@@ -173,7 +177,7 @@ export default function TracePiece({ piece, selected, inputLocked, onDone, onRes
       for (const p of pts) gCtx.lineTo(p.x, p.y);
       gCtx.stroke();
     });
-    if (!hideStartDot && S.strokeIdx < src.strokes.length) {
+    if (!hideStartDot && !fireWaiting && S.strokeIdx < src.strokes.length) {
       const pts = samplePath(src.strokes[S.strokeIdx].path, 80);
       if (pts.length >= 2) {
         gCtx.beginPath(); gCtx.arc(pts[0].x, pts[0].y, 12, 0, Math.PI * 2);
@@ -284,8 +288,8 @@ export default function TracePiece({ piece, selected, inputLocked, onDone, onRes
   function setupIcons() {
     const ol = overlayRef.current; if (!ol) return;
     const fire = fireSkinRef.current;
-    // done이면서 fireTheme → 오버레이 완전 비움 (가젤/소화기 다 안 나옴)
-    if (piece.done && fireThemeRef.current) {
+    // fireTheme: done이거나 대기 중(불 안 붙은) → 오버레이 비움
+    if (fireThemeRef.current && (piece.done || !fire)) {
       ol.innerHTML = '';
       return;
     }
