@@ -947,7 +947,6 @@ export default function FreeComposeMode({ onGameMode }) {
           }
           return !f;
         })} title="소방관 스킨">🔥</div>
-        </div>
       </div>
 
       {/* 키보드 조합 입력 모드 — 숨겨진 input */}
