@@ -90,13 +90,17 @@ export class TracingEngine {
     if (percent > goalThreshold && goalDist < 150) {
       this.reachedGoal = true;
     }
-    // offPath 판정 — 도착지 근처일수록 후하게
-    const progress = this.pts.length > 1 ? this.maxReachedIdx / (this.pts.length - 1) : 0;
-    const offThreshold = progress > 0.7 ? 100 : 52; // 70% 이상 진행 시 판정 넓힘
-    if (bestDist < offThreshold) {
+    // offPath 판정 — 도착지 도달했으면 이탈 무시
+    if (this.reachedGoal) {
       this.offPathCount = 0;
     } else {
-      this.offPathCount = (this.offPathCount || 0) + 1;
+      const progress = this.pts.length > 1 ? this.maxReachedIdx / (this.pts.length - 1) : 0;
+      const offThreshold = progress > 0.7 ? 100 : 52;
+      if (bestDist < offThreshold) {
+        this.offPathCount = 0;
+      } else {
+        this.offPathCount = (this.offPathCount || 0) + 1;
+      }
     }
   }
 
