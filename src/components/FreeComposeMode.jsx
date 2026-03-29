@@ -946,7 +946,7 @@ export default function FreeComposeMode({ onGameMode }) {
         })} title="소방관 스킨">🔥</div>
         <div className="ctrl-divider" />
         <div className="difficulty-btn" onClick={() => setDifficulty(d => d === 'easy' ? 'normal' : d === 'normal' ? 'hard' : 'easy')}>
-          {difficulty === 'easy' ? '😊' : difficulty === 'normal' ? '😐' : '😤'}
+          {difficulty === 'easy' ? 'EASY' : difficulty === 'normal' ? 'NORMAL' : 'HARD'}
         </div>
       </div>
 
