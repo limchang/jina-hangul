@@ -3,14 +3,20 @@
 
 import React, { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import { CONSONANTS, VOWELS, APP_CONFIG } from '../data.js';
-import { initSvgHelper, samplePath } from '../TracingEngine.js';
+import { initSvgHelper } from '../TracingEngine.js';
 import { getSource, pieceOverrides } from '../sourceOverrides.js';
 import TracePiece from './TracePiece.jsx';
 import WordCards, { renderLayoutPreview } from './WordCards.jsx';
-import { decompose, decomposeWord } from '../utils/jamo.js';
-import { isVowel } from '../utils/jamo.js';
-
-let nextId = 1;
+import DraggableRemote from './DraggableRemote.jsx';
+import TrashZone from './TrashZone.jsx';
+import MathQuizModal from './MathQuizModal.jsx';
+import useCanvasNavigation from '../hooks/useCanvasNavigation.js';
+import usePiecesManager from '../hooks/usePiecesManager.js';
+import useDragFromPanel from '../hooks/useDragFromPanel.js';
+import useKeyboardInput from '../hooks/useKeyboardInput.js';
+import { recordCompletion, getRecommendedChar, getLearningStats } from '../utils/learningData.js';
+import { playCelebrate } from '../sound.js';
+import '../../css/free-compose.css';
 
 // 배치 기억 — 낱말별 글자 위치 저장
 const LAYOUT_KEY = 'jina-word-layouts';
@@ -49,138 +55,23 @@ function renderJamoImage(source) {
 }
 
 export default function FreeComposeMode({ onGameMode }) {
-  const [pieces, setPieces] = useState([]);
-  const [dragNew, setDragNew] = useState(null);
-  const [selectedId, setSelectedId] = useState(null);
-  const [selectedGroup, setSelectedGroup] = useState(null); // 그룹 선택
-  let groupIdCounter = useRef(1);
-  const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
-  const [zoom, setZoom] = useState(2);
-  const [panLocked, setPanLocked] = useState(true);
-  const [mathQuiz, setMathQuiz] = useState(null);
-  const [focusZoom, setFocusZoom] = useState(false); // 도착지 근접 시 확대 (기본 off)
   const [fireSkin, setFireSkin] = useState(false); // 소방관 스킨 모드
   const [difficulty, setDifficulty] = useState('easy'); // 'easy' | 'normal' | 'hard'
   const [elephantPos, setElephantPos] = useState(null); // 코끼리 위치 (소화기 따라다님)
-  const focusZoomValRef = useRef(true);
-  useEffect(() => { focusZoomValRef.current = focusZoom; }, [focusZoom]);
-  const focusZoomActiveRef = useRef(false);
-  const savedZoomRef = useRef(null);
-  const spaceHeldRef = useRef(false);
-
-  const onNearGoal = useCallback((near, piece) => {
-    if (!focusZoomValRef.current) return;
-    if (near && !focusZoomActiveRef.current) {
-      focusZoomActiveRef.current = true;
-      savedZoomRef.current = zoomRef.current;
-      const oldZ = zoomRef.current;
-      const newZ = Math.min(oldZ * 1.5, 3);
-      // 목적지 중심으로 확대 — pan 보정
-      const po = panOffsetRef.current;
-      const cx = piece.x * oldZ + po.x; // 목적지의 현재 화면 좌표
-      const cy = piece.y * oldZ + po.y;
-      const newPanX = cx - piece.x * newZ;
-      const newPanY = cy - piece.y * newZ;
-      // DOM 직접 조작 (smooth) — 드래그 안 풀림
-      if (panLayerRef.current) {
-        panLayerRef.current.style.transition = 'transform 0.35s ease-out';
-        panLayerRef.current.style.transform = `translate(${newPanX}px, ${newPanY}px) scale(${newZ})`;
-        setTimeout(() => { if (panLayerRef.current) panLayerRef.current.style.transition = ''; }, 400);
-      }
-      setZoom(newZ);
-      setPanOffset({ x: newPanX, y: newPanY });
-    } else if (!near && focusZoomActiveRef.current) {
-      focusZoomActiveRef.current = false;
-      if (savedZoomRef.current !== null) {
-        const oldZ = zoomRef.current;
-        const newZ = savedZoomRef.current;
-        // 화면 중앙 기준 복귀
-        const screenCX = window.innerWidth / 2, screenCY = window.innerHeight / 2;
-        const po = panOffsetRef.current;
-        const newPanX = screenCX - (screenCX - po.x) * (newZ / oldZ);
-        const newPanY = screenCY - (screenCY - po.y) * (newZ / oldZ);
-        if (panLayerRef.current) {
-          panLayerRef.current.style.transition = 'transform 0.35s ease-out';
-          panLayerRef.current.style.transform = `translate(${newPanX}px, ${newPanY}px) scale(${newZ})`;
-          setTimeout(() => { if (panLayerRef.current) panLayerRef.current.style.transition = ''; }, 400);
-        }
-        setZoom(newZ);
-        setPanOffset({ x: newPanX, y: newPanY });
-        savedZoomRef.current = null;
-      }
-    }
-  }, []);
-
-  const handleLockClick = useCallback(() => {
-    if (!panLocked) {
-      // 잠금: 바로
-      setPanLocked(true);
-    } else {
-      // 해제: 곱셈 문제
-      const a = 2 + Math.floor(Math.random() * 8); // 2~9
-      const b = 2 + Math.floor(Math.random() * 8);
-      const answer = a * b;
-      // 오답 3개 생성 (중복 방지)
-      const wrongs = new Set();
-      while (wrongs.size < 3) {
-        const w = answer + (Math.floor(Math.random() * 21) - 10);
-        if (w !== answer && w > 0) wrongs.add(w);
-      }
-      const options = [...wrongs, answer].sort(() => Math.random() - 0.5);
-      setMathQuiz({ a, b, answer, options });
-    }
-  }, [panLocked]);
-
-  const handleQuizAnswer = useCallback((val) => {
-    if (val === mathQuiz?.answer) {
-      setPanLocked(false);
-      setMathQuiz(null);
-    } else {
-      // 틀림 — 새 문제
-      const a = 2 + Math.floor(Math.random() * 8);
-      const b = 2 + Math.floor(Math.random() * 8);
-      const answer = a * b;
-      const wrongs = new Set();
-      while (wrongs.size < 3) {
-        const w = answer + (Math.floor(Math.random() * 21) - 10);
-        if (w !== answer && w > 0) wrongs.add(w);
-      }
-      const options = [...wrongs, answer].sort(() => Math.random() - 0.5);
-      setMathQuiz({ a, b, answer, options });
-    }
-  }, [mathQuiz]);
+  const fireTargetIdRef = useRef(null); // 현재 불이 붙은 글자 ID (완성 전까지 유지)
   const [gridOn, setGridOn] = useState(false);
-  const [kbMode, setKbMode] = useState(false); // 키보드 조합 입력 모드
-  const kbInputRef = useRef(null);
-  const kbPrevRef = useRef('');
-  const GRID_SIZE = 100;
   const [cardEditMode, setCardEditMode] = useState(false);
   const wordCardsRef = useRef(null);
-  const dragNewRef = useRef(null);
-  const panStart = useRef(null);
-  const pinchRef = useRef(null);
-  const panLayerRef = useRef(null);
-  const panRafRef = useRef(null);
+  const [trashHover, setTrashHover] = useState(false);
+  const [panSmooth, setPanSmooth] = useState(false);
+  const GRID_SIZE = 100;
+
+  // ── 별 카운터 ──
+  const [starCount, setStarCount] = useState(() => getLearningStats().totalStars);
+  const [starPop, setStarPop] = useState(false);
+  const todayPlacedRef = useRef(false); // 오늘의 글자 중복 방지
 
   useEffect(() => { initSvgHelper(); }, []);
-
-  // ── 스페이스 키 = 패닝 모드 ──
-  useEffect(() => {
-    function onKeyDown(e) { if (e.code === 'Space' && !e.repeat) { e.preventDefault(); spaceHeldRef.current = true; } }
-    function onKeyUp(e) { if (e.code === 'Space') { spaceHeldRef.current = false; } }
-    window.addEventListener('keydown', onKeyDown);
-    window.addEventListener('keyup', onKeyUp);
-    return () => { window.removeEventListener('keydown', onKeyDown); window.removeEventListener('keyup', onKeyUp); };
-  }, []);
-
-  // ── 키보드 입력 → 글자 배치 (키코드 매핑) ──
-  const keyCharMap = useMemo(() => ({
-    'KeyR': 'ㄱ', 'KeyS': 'ㄴ', 'KeyE': 'ㄷ', 'KeyF': 'ㄹ', 'KeyA': 'ㅁ',
-    'KeyQ': 'ㅂ', 'KeyT': 'ㅅ', 'KeyD': 'ㅇ', 'KeyW': 'ㅈ', 'KeyC': 'ㅊ',
-    'KeyZ': 'ㅋ', 'KeyX': 'ㅌ', 'KeyV': 'ㅍ', 'KeyG': 'ㅎ',
-    'KeyK': 'ㅏ', 'KeyI': 'ㅑ', 'KeyJ': 'ㅓ', 'KeyU': 'ㅕ', 'KeyH': 'ㅗ',
-    'KeyY': 'ㅛ', 'KeyN': 'ㅜ', 'KeyB': 'ㅠ', 'KeyM': 'ㅡ', 'KeyL': 'ㅣ',
-  }), []);
 
   const allChars = useMemo(() => {
     const map = {};
@@ -189,257 +80,88 @@ export default function FreeComposeMode({ onGameMode }) {
     return map;
   }, []);
 
-  useEffect(() => {
-    function onKeyDown(e) {
-      if (cardEditMode || e.ctrlKey || e.metaKey || e.altKey) return;
-      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
-      if (e.code === 'Space') return; // 스페이스는 패닝용
-      const char = keyCharMap[e.code] || e.key;
-      if (allChars[char]) {
-        e.preventDefault();
-        const pos = getNextPlacePos();
-        placeNewPiece(char, pos.x, pos.y);
-      }
-    }
-    if (!kbMode) {
-      window.addEventListener('keydown', onKeyDown);
-      return () => window.removeEventListener('keydown', onKeyDown);
-    }
+  // ── 공유 ref: dragNewRef (Hook 1, 3에서 공유) ──
+  const dragNewRef = useRef(null);
+  // ── 공유 ref: onPanStart 콜백 (Hook 1→Hook 2 연결용) ──
+  const onPanStartRef = useRef(null);
+
+  // ── Hook 1: 캔버스 네비게이션 ──
+  const {
+    panOffset, setPanOffset,
+    zoom, setZoom,
+    focusZoom, setFocusZoom,
+    panLocked, setPanLocked,
+    mathQuiz, setMathQuiz,
+    panLayerRef,
+    panOffsetRef, zoomRef,
+    onNearGoal,
+    handleLockClick,
+    handleQuizAnswer,
+    startPan,
+  } = useCanvasNavigation({
+    dragNewRef,
+    onPanStart: () => { if (onPanStartRef.current) onPanStartRef.current(); },
   });
 
-  // ── 키보드 조합 모드 — 숨겨진 input으로 한글 조합 입력 ──
-  useEffect(() => {
-    if (kbMode && kbInputRef.current) {
-      kbInputRef.current.focus();
-      kbInputRef.current.value = '';
-      kbPrevRef.current = '';
-      kbComposingRef.current = false;
-      syllableCursorRef.current = null;
-      typingGroupRef.current = groupIdCounter.current++;
-    }
-  }, [kbMode]);
+  // ── Hook 2: 글자 조각 관리 ──
+  const {
+    pieces, setPieces,
+    selectedId, setSelectedId,
+    selectedGroup, setSelectedGroup,
+    groupIdCounter,
+    nextIdRef,
+    placeNewPiece, placeNewPieceRef,
+    getNextPlacePos, getNextPlacePosRef,
+    markDone, selectPiece, resetDone, deletePiece,
+    ungroupPiece, movePiece, resetAll, undoReset,
+    findNextPiece, placeAll,
+    autoQueueRef, autoQueueType, setAutoQueueType,
+  } = usePiecesManager({ zoom, panOffset, setPanOffset, panOffsetRef, zoomRef, gridOn });
 
-  // 자모 바운딩 박스 캐시 (500x500 캔버스 기준)
-  const bboxCache = useMemo(() => {
-    const cache = {};
-    [...CONSONANTS, ...VOWELS].forEach(item => {
-      let minX = 500, maxX = 0, minY = 500, maxY = 0;
-      item.strokes.forEach(s => {
-        const pts = samplePath(s.path, 30);
-        pts.forEach(p => {
-          if (p.x < minX) minX = p.x;
-          if (p.x > maxX) maxX = p.x;
-          if (p.y < minY) minY = p.y;
-          if (p.y > maxY) maxY = p.y;
-        });
-      });
-      // 흰색 가이드 배경선 두께 반영 (GUIDE_STROKE_WIDTH+28)/2 = 51
-      const guideR = 51;
-      cache[item.char] = { minX: minX - guideR, maxX: maxX + guideR, minY: minY - guideR, maxY: maxY + guideR, w: maxX - minX + guideR * 2, h: maxY - minY + guideR * 2 };
+  // onPanStart → setSelectedId(null) 연결
+  onPanStartRef.current = () => setSelectedId(null);
+
+  // ── 글자 완성 콜백 (별 카운터 연동) ──
+  const handlePieceDone = useCallback((pieceId, char) => {
+    markDone(pieceId);
+    recordCompletion(char, 0);
+    setStarCount(prev => {
+      const next = prev + 1;
+      if (next % 5 === 0) playCelebrate();
+      return next;
     });
-    return cache;
-  }, []);
+    setStarPop(true);
+    setTimeout(() => setStarPop(false), 400);
+  }, [markDone]);
 
-  const syllableCursorRef = useRef(null);
-  const typingGroupRef = useRef(null); // 현재 타이핑 세션의 groupId
-  const VERT_VOWELS = new Set(['ㅏ','ㅑ','ㅓ','ㅕ','ㅣ']);
-  const C = 250; // 캔버스 중심 (글자 원점)
-
-  // 두 자모 중심 간 거리 계산: A의 가장자리와 B의 가장자리가 pad만큼 떨어지도록
-  // 가로: A 오른쪽~B 왼쪽 = (A.maxX - C)*s + pad + (C - B.minX)*s
-  // 세로: A 아래~B 위 = (A.maxY - C)*s + pad + (C - B.minY)*s
-  const distX = (bbA, bbB, s, pad) => (bbA.maxX - C) * s + pad + (C - bbB.minX) * s;
-  const distY = (bbA, bbB, s, pad) => (bbA.maxY - C) * s + pad + (C - bbB.minY) * s;
-
-  const placeSyllable = useCallback((syllable) => {
-    const parts = decompose(syllable);
-    const validParts = parts.filter(j => allChars[j]);
-    if (validParts.length === 0) return;
-
-    // 음절마다 새 groupId (한 글자 = 한 그룹)
-    const syllableGroupId = groupIdCounter.current++;
-
-    const scale = 0.5;
-    const S = scale;
-    const PAD = 5;
-
-    if (!syllableCursorRef.current) {
-      const pos = getNextPlacePosRef.current();
-      syllableCursorRef.current = { x: pos.x, y: pos.y };
-    }
-
-    const SYLLABLE_GAP = 140; // 음절 간 추가 여백
-    const ox = syllableCursorRef.current.x;
-    const topY = syllableCursorRef.current.y; // 윗선 기준 (상단 정렬)
-    // 자모 중심 Y = 윗선 + (캔버스중심 - bb상단) * scale → 상단 정렬
-    const topAlignY = (bb) => topY + (C - bb.minY) * S;
-
-    if (validParts.length === 1) {
-      const bb = bboxCache[validParts[0]];
-      placeNewPieceRef.current(validParts[0], ox, topAlignY(bb), false, syllableGroupId);
-      syllableCursorRef.current.x += (bb.w / 2) * S + SYLLABLE_GAP;
-      return;
-    }
-
-    // 복합 모음 처리: 3번째 자모가 모음이면 받침이 아니라 복합 모음의 일부
-    const cho = validParts[0];
-    const vowelParts = []; // 중성 자모들
-    let jong = null;
-    for (let vi = 1; vi < validParts.length; vi++) {
-      if (isVowel(validParts[vi])) vowelParts.push(validParts[vi]);
-      else { jong = validParts[vi]; break; }
-    }
-    const jung = vowelParts[0];
-    const bc = bboxCache[cho], bj = bboxCache[jung], bk = jong ? bboxCache[jong] : null;
-    const isVert = VERT_VOWELS.has(jung);
-    const hasJong = !!jong;
-
-    if (isVert) {
-      // 모든 세로 모음 파트의 누적 너비 계산
-      let prevBB = bc;
-      let totalDx = 0;
-      const vowelDxList = []; // 각 모음의 x 오프셋
-      for (const vp of vowelParts) {
-        const bv = bboxCache[vp];
-        const ddx = distX(prevBB, bv, S, PAD);
-        totalDx += ddx;
-        vowelDxList.push(totalDx);
-        prevBB = bv;
-      }
-      const lastVowelBB = bboxCache[vowelParts[vowelParts.length - 1]];
-      const leftEdge = (C - bc.minX) * S;
-      const rightEdge = totalDx + (lastVowelBB.maxX - C) * S;
-      const totalW = leftEdge + rightEdge;
-      const startX = ox - totalW / 2 + leftEdge; // 초성 중심
-
-      const choX = startX;
-
-      if (hasJong) {
-        const choY = topAlignY(bc);
-        placeNewPieceRef.current(cho, choX, choY, false, syllableGroupId);
-        for (let vi = 0; vi < vowelParts.length; vi++) {
-          placeNewPieceRef.current(vowelParts[vi], startX + vowelDxList[vi], topAlignY(bboxCache[vowelParts[vi]]), false, syllableGroupId);
-        }
-        const dyJong = distY(bc, bk, S, PAD);
-        const jongX = startX + totalDx * 0.5;
-        const jongY = choY + dyJong;
-        placeNewPieceRef.current(jong, jongX, jongY, false, syllableGroupId);
-      } else {
-        placeNewPieceRef.current(cho, choX, topAlignY(bc), false, syllableGroupId);
-        for (let vi = 0; vi < vowelParts.length; vi++) {
-          placeNewPieceRef.current(vowelParts[vi], startX + vowelDxList[vi], topAlignY(bboxCache[vowelParts[vi]]), false, syllableGroupId);
-        }
-      }
-      syllableCursorRef.current.x += totalW / 2 + SYLLABLE_GAP;
-    } else {
-      const dy1 = distY(bc, bj, S, PAD);
-      const choY = topAlignY(bc);
-      if (hasJong) {
-        const dy2 = distY(bj, bk, S, PAD);
-        placeNewPieceRef.current(cho, ox, choY, false, syllableGroupId);
-        placeNewPieceRef.current(jung, ox, choY + dy1, false, syllableGroupId);
-        placeNewPieceRef.current(jong, ox, choY + dy1 + dy2, false, syllableGroupId);
-      } else {
-        placeNewPieceRef.current(cho, ox, choY, false, syllableGroupId);
-        placeNewPieceRef.current(jung, ox, choY + dy1, false, syllableGroupId);
-      }
-      const maxW = Math.max(bc.w, bj.w, bk ? bk.w : 0) * S;
-      syllableCursorRef.current.x += maxW / 2 + SYLLABLE_GAP;
-    }
-  }, [allChars, bboxCache]);
-
-  const kbComposingRef = useRef(false);
-
-  const handleKbInput = useCallback((e) => {
-    // compositionEnd에서만 배치 — input에서는 무시
-  }, []);
-
-  const handleCompositionStart = useCallback(() => {
-    kbComposingRef.current = true;
-  }, []);
-
-  const handleCompositionEnd = useCallback((e) => {
-    kbComposingRef.current = false;
-    const val = kbInputRef.current?.value || '';
-    if (val.length > 0) {
-      placeSyllable(val[val.length - 1]);
-    }
-    if (kbInputRef.current) kbInputRef.current.value = '';
-    kbPrevRef.current = '';
-  }, [placeSyllable]);
-
-  // ── 휠 줌 (마우스 위치 기준) ──
+  // ── 오늘의 글자 자동 배치 (앱 시작 시 1회) ──
   useEffect(() => {
-    function onWheel(e) {
-      if (e.target.closest('.remote') || e.target.closest('.word-tray') || e.target.closest('.left-controls')) return;
-      e.preventDefault();
-      const factor = e.deltaY > 0 ? 0.95 : 1.05;
-      const oldZ = zoomRef.current;
-      const newZ = Math.min(3, Math.max(0.3, oldZ * factor));
-      const po = panOffsetRef.current;
-      const cx = e.clientX, cy = e.clientY;
-      const newPanX = cx - (cx - po.x) * (newZ / oldZ);
-      const newPanY = cy - (cy - po.y) * (newZ / oldZ);
-      setZoom(newZ);
-      setPanOffset({ x: newPanX, y: newPanY });
-      if (panLayerRef.current) {
-        panLayerRef.current.style.transform = `translate(${newPanX}px, ${newPanY}px) scale(${newZ})`;
-      }
-    }
-    window.addEventListener('wheel', onWheel, { passive: false });
-    return () => window.removeEventListener('wheel', onWheel);
-  }, []);
-
-  // ── 핀치 줌 (ref 기반 — zoom deps 제거) ──
-  const zoomRef = useRef(zoom);
-  useEffect(() => { zoomRef.current = zoom; }, [zoom]);
-
-  useEffect(() => {
-    function onTouchStart(e) {
-      if (e.touches.length === 2) {
-        // 핀치 시작 — 패닝 중단
-        panStart.current = null;
-        if (panRafRef.current) { cancelAnimationFrame(panRafRef.current); panRafRef.current = null; }
-        const d = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
-        const cx = (e.touches[0].clientX + e.touches[1].clientX) / 2;
-        const cy = (e.touches[0].clientY + e.touches[1].clientY) / 2;
-        pinchRef.current = { startDist: d, startZoom: zoomRef.current, startPan: { ...panOffsetRef.current }, cx, cy };
-      }
-    }
-    function onTouchMove(e) {
-      if (e.touches.length === 2 && pinchRef.current) {
-        e.preventDefault();
-        const d = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
-        const scale = d / pinchRef.current.startDist;
-        const newZoom = Math.min(3, Math.max(0.3, pinchRef.current.startZoom * scale));
-        // 현재 두 손가락 중앙
-        const curCX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
-        const curCY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
-        // 줌 보정 + 2손가락 이동(패닝)
-        const { cx, cy, startPan, startZoom } = pinchRef.current;
-        const zoomPanX = cx - (cx - startPan.x) * (newZoom / startZoom);
-        const zoomPanY = cy - (cy - startPan.y) * (newZoom / startZoom);
-        const newPanX = zoomPanX + (curCX - cx);
-        const newPanY = zoomPanY + (curCY - cy);
-        setZoom(newZoom);
-        setPanOffset({ x: newPanX, y: newPanY });
-        if (panLayerRef.current) {
-          panLayerRef.current.style.transform = `translate(${newPanX}px, ${newPanY}px) scale(${newZoom})`;
-        }
-      }
-    }
-    function onTouchEnd(e) {
-      if (e.touches.length < 2) pinchRef.current = null;
-    }
-    window.addEventListener('touchstart', onTouchStart, { passive: false });
-    window.addEventListener('touchmove', onTouchMove, { passive: false });
-    window.addEventListener('touchend', onTouchEnd);
-    return () => {
-      window.removeEventListener('touchstart', onTouchStart);
-      window.removeEventListener('touchmove', onTouchMove);
-      window.removeEventListener('touchend', onTouchEnd);
-    };
+    if (todayPlacedRef.current) return;
+    if (pieces.length > 0) return;
+    todayPlacedRef.current = true;
+    const allCharList = [...CONSONANTS, ...VOWELS].map(c => c.char);
+    const recommended = getRecommendedChar(allCharList);
+    const screenCX = window.innerWidth / 2;
+    const screenCY = window.innerHeight / 2;
+    const x = (screenCX - panOffset.x) / zoom;
+    const y = (screenCY - panOffset.y) / zoom;
+    placeNewPiece(recommended, x, y, false);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Hook 3: 드래그 from 패널 ──
+  const {
+    dragNew, lastPressedChar, setLastPressedChar,
+    dragGhostRef,
+    startDragNew,
+  } = useDragFromPanel({ panOffsetRef, zoomRef, getNextPlacePosRef, placeNewPieceRef, dragNewRef });
+
+  // ── Hook 4: 키보드 입력 ──
+  const {
+    kbMode, setKbMode,
+    kbInputRef,
+    bboxCache,
+    handleKbInput, handleCompositionStart, handleCompositionEnd,
+  } = useKeyboardInput({ allChars, groupIdCounter, placeNewPiece, getNextPlacePos, placeNewPieceRef, getNextPlacePosRef, cardEditMode });
 
   const updateSource = useCallback((pieceId, char, newStrokes) => {
     pieceOverrides[pieceId] = { char, strokes: newStrokes };
@@ -451,47 +173,6 @@ export default function FreeComposeMode({ onGameMode }) {
     VOWELS.forEach(v => { map[v.char] = renderJamoImage(v); });
     return map;
   }, []);
-
-  const getNextPlacePos = useCallback(() => {
-    const screenCX = window.innerWidth / 2;
-    const screenCY = window.innerHeight / 2;
-    if (pieces.length === 0) return { x: (screenCX - panOffset.x) / zoom, y: (screenCY - panOffset.y) / zoom };
-    const last = pieces[pieces.length - 1];
-    const gap = 500 * last.scale * 0.8;
-    return { x: last.x + gap, y: last.y };
-  }, [pieces, panOffset]);
-
-  const placeNewPiece = useCallback((char, x, y, focus = true, groupId = null) => {
-    const newId = nextId++;
-    const scale = pieces.length > 0 ? pieces[pieces.length - 1].scale : 0.5;
-    setPieces(prev => [...prev, { id: newId, char, x, y, scale, done: false, groupId }]);
-    setSelectedId(newId);
-    if (focus) {
-      const screenCX = window.innerWidth / 2;
-      const screenCY = window.innerHeight / 2;
-      setPanOffset({ x: screenCX - x * zoom, y: screenCY - y * zoom });
-    }
-  }, [pieces, zoom]);
-
-  const placeAll = useCallback((items) => {
-    const scale = pieces.length > 0 ? pieces[pieces.length - 1].scale : 0.5;
-    const gap = 500 * scale * 0.8;
-    const screenCX = window.innerWidth / 2;
-    const screenCY = window.innerHeight / 2;
-    const centerX = (screenCX - panOffset.x) / zoom;
-    const centerY = (screenCY - panOffset.y) / zoom;
-    const totalW = (items.length - 1) * gap;
-    const startX = centerX - totalW / 2;
-    const newPieces = items.map((item, i) => ({
-      id: nextId++, char: item.char,
-      x: startX + i * gap, y: centerY,
-      scale, done: false
-    }));
-    const firstPiece = newPieces[0];
-    setPieces(prev => [...prev, ...newPieces]);
-    setSelectedId(firstPiece.id);
-    setPanOffset({ x: screenCX - firstPiece.x * zoom, y: screenCY - firstPiece.y * zoom });
-  }, [pieces, zoom, panOffset]);
 
   // ── 현재 캔버스를 낱말카드로 저장 ──
   const saveCanvasAsCard = useCallback(() => {
@@ -515,183 +196,26 @@ export default function FreeComposeMode({ onGameMode }) {
       const avgX = saved.reduce((s, p) => s + p.x, 0) / saved.length;
       const avgY = saved.reduce((s, p) => s + p.y, 0) / saved.length;
       const offX = cx - avgX, offY = cy - avgY;
-      newPieces = saved.map(s => ({ id: nextId++, char: s.char, word, x: s.x + offX, y: s.y + offY, scale: s.scale, done: false }));
+      newPieces = saved.map(s => ({ id: nextIdRef.current++, char: s.char, word, x: s.x + offX, y: s.y + offY, scale: s.scale, done: false }));
     } else if (saved && saved.length === jamos.length) {
       const avgX = saved.reduce((s, p) => s + p.x, 0) / saved.length;
       const avgY = saved.reduce((s, p) => s + p.y, 0) / saved.length;
       const offX = cx - avgX, offY = cy - avgY;
-      newPieces = jamos.map((char, i) => ({ id: nextId++, char, word, x: saved[i].x + offX, y: saved[i].y + offY, scale: saved[i].scale, done: false }));
+      newPieces = jamos.map((char, i) => ({ id: nextIdRef.current++, char, word, x: saved[i].x + offX, y: saved[i].y + offY, scale: saved[i].scale, done: false }));
     } else {
       const scale = pieces.length > 0 ? pieces[pieces.length - 1].scale : 0.5;
       const gap = 500 * scale * 0.8;
       const totalW = (jamos.length - 1) * gap;
-      newPieces = jamos.map((char, i) => ({ id: nextId++, char, word, x: cx - totalW / 2 + i * gap, y: cy, scale, done: false }));
+      newPieces = jamos.map((char, i) => ({ id: nextIdRef.current++, char, word, x: cx - totalW / 2 + i * gap, y: cy, scale, done: false }));
     }
     setPieces(prev => [...prev, ...newPieces]);
     setSelectedId(newPieces[0].id);
-  }, [pieces, panOffset]);
+  }, [pieces, panOffset, zoom, nextIdRef, setPieces, setSelectedId]);
 
-  // ── 패널에서 클릭 or 드래그 ──
-  const dragMovedRef = useRef(false);
-  const lastTouchTimeRef = useRef(0);
-  const startDragNew = useCallback((char, type, e) => {
-    e.preventDefault(); e.stopPropagation();
-    const isTouch = !!e.touches;
-    // 터치 직후 synthesized mousedown 무시 (300ms 이내)
-    if (!isTouch && Date.now() - lastTouchTimeRef.current < 300) return;
-    if (isTouch) lastTouchTimeRef.current = Date.now();
-    let x, y;
-    if (e.touches) { x = e.touches[0].clientX; y = e.touches[0].clientY; } else { x = e.clientX; y = e.clientY; }
-    dragNewRef.current = { char, type, x, y, startX: x, startY: y, wasTouch: isTouch };
-    dragMovedRef.current = false;
-    setDragNew({ char, type, x, y });
-  }, []);
-
-  // 최신 값 참조용 refs
-  const panOffsetRef = useRef(panOffset);
-  const zoomValRef = useRef(zoom);
-  useEffect(() => { panOffsetRef.current = panOffset; }, [panOffset]);
-  useEffect(() => { zoomValRef.current = zoom; }, [zoom]);
-  const getNextPlacePosRef = useRef(null);
-  const placeNewPieceRef = useRef(null);
-  useEffect(() => { getNextPlacePosRef.current = getNextPlacePos; }, [getNextPlacePos]);
-  useEffect(() => { placeNewPieceRef.current = placeNewPiece; }, [placeNewPiece]);
-
-  // 드래그 고스트 DOM ref — setState 대신 직접 조작
-  const dragGhostRef = useRef(null);
-
-  // 드래그 이벤트 — 한 번만 등록
-  useEffect(() => {
-    function onMove(e) {
-      if (!dragNewRef.current) return;
-      e.preventDefault();
-      let x, y;
-      if (e.touches) { x = e.touches[0].clientX; y = e.touches[0].clientY; } else { x = e.clientX; y = e.clientY; }
-      const d = dragNewRef.current;
-      if (d && (Math.abs(x - d.startX) > 10 || Math.abs(y - d.startY) > 10)) dragMovedRef.current = true;
-      dragNewRef.current = { ...d, x, y };
-      // DOM 직접 조작 — setState 없이 고스트 위치 갱신
-      if (dragGhostRef.current) {
-        dragGhostRef.current.style.left = `${x}px`;
-        dragGhostRef.current.style.top = `${y}px`;
-      }
-    }
-    function onEnd(e) {
-      const d = dragNewRef.current; if (!d) return;
-      dragNewRef.current = null; setDragNew(null);
-      if (e.type === 'mouseup' && d.wasTouch) return;
-      let ex, ey;
-      if (e.changedTouches) { ex = e.changedTouches[0].clientX; ey = e.changedTouches[0].clientY; } else { ex = e.clientX; ey = e.clientY; }
-      const po = panOffsetRef.current, z = zoomValRef.current;
-      if (!dragMovedRef.current) {
-        // 클릭만 → 다음 위치에 자동 배치
-        const pos = getNextPlacePosRef.current(); placeNewPieceRef.current(d.char, pos.x, pos.y);
-      } else {
-        // 드래그 → 리모컨 위에 놓으면 취소
-        const remoteEl = document.querySelector('.remote');
-        if (remoteEl) {
-          const r = remoteEl.getBoundingClientRect();
-          if (ex >= r.left && ex <= r.right && ey >= r.top && ey <= r.bottom) return;
-        }
-        placeNewPieceRef.current(d.char, (ex - po.x) / z, (ey - po.y) / z, false);
-      }
-    }
-    window.addEventListener('touchmove', onMove, { passive: false });
-    window.addEventListener('mousemove', onMove);
-    window.addEventListener('touchend', onEnd);
-    window.addEventListener('mouseup', onEnd);
-    return () => { window.removeEventListener('touchmove', onMove); window.removeEventListener('mousemove', onMove); window.removeEventListener('touchend', onEnd); window.removeEventListener('mouseup', onEnd); };
-  }, []); // 한 번만 등록
-
-  // ── 캔버스 패닝: 2손가락 터치 or 스페이스+마우스 ──
-  const startPan = useCallback((e) => {
-    if (e.target.closest('.remote') || e.target.closest('.trash-zone') || e.target.closest('.word-tray') || e.target.closest('.word-card') || e.target.closest('.left-controls')) return;
-    if (dragNewRef.current || panLocked) return;
-    // 마우스: 스페이스 눌린 상태에서만 패닝
-    if (!e.touches && !spaceHeldRef.current) return;
-    // 터치: 2손가락에서만 패닝 (1손가락은 무시)
-    if (e.touches && e.touches.length < 2) return;
-    e.preventDefault();
-    let x, y;
-    if (e.touches && e.touches.length >= 2) {
-      x = (e.touches[0].clientX + e.touches[1].clientX) / 2;
-      y = (e.touches[0].clientY + e.touches[1].clientY) / 2;
-    } else if (e.touches) {
-      x = e.touches[0].clientX; y = e.touches[0].clientY;
-    } else {
-      x = e.clientX; y = e.clientY;
-    }
-    panStart.current = { startX: x, startY: y, origX: panOffset.x, origY: panOffset.y };
-    setSelectedId(null);
-  }, [panOffset, panLocked]);
-
-  useEffect(() => {
-    function onMove(e) {
-      if (!panStart.current || pinchRef.current) return;
-      // 마우스: 스페이스 떼면 패닝 중단
-      if (!e.touches && !spaceHeldRef.current) { panStart.current = null; return; }
-      e.preventDefault();
-      let x, y;
-      if (e.touches && e.touches.length >= 2) {
-        x = (e.touches[0].clientX + e.touches[1].clientX) / 2;
-        y = (e.touches[0].clientY + e.touches[1].clientY) / 2;
-      } else if (e.touches) {
-        x = e.touches[0].clientX; y = e.touches[0].clientY;
-      } else {
-        x = e.clientX; y = e.clientY;
-      }
-      const ps = panStart.current;
-      const nx = ps.origX + (x - ps.startX);
-      const ny = ps.origY + (y - ps.startY);
-      ps.lastX = nx; ps.lastY = ny;
-      // rAF로 DOM 직접 조작 — React 리렌더 없이 transform 갱신
-      if (!panRafRef.current) {
-        panRafRef.current = requestAnimationFrame(() => {
-          panRafRef.current = null;
-          if (panLayerRef.current && panStart.current) {
-            panLayerRef.current.style.transform = `translate(${panStart.current.lastX}px, ${panStart.current.lastY}px) scale(${zoomRef.current})`;
-          }
-        });
-      }
-    }
-    function onEnd() {
-      if (!panStart.current) return;
-      if (panRafRef.current) { cancelAnimationFrame(panRafRef.current); panRafRef.current = null; }
-      // 패닝 종료 시 state 동기화
-      const final = panStart.current.lastX !== undefined
-        ? { x: panStart.current.lastX, y: panStart.current.lastY }
-        : { x: panStart.current.origX, y: panStart.current.origY };
-      panStart.current = null;
-      setPanOffset(final);
-    }
-    window.addEventListener('touchmove', onMove, { passive: false });
-    window.addEventListener('mousemove', onMove);
-    window.addEventListener('touchend', onEnd);
-    window.addEventListener('mouseup', onEnd);
-    return () => { window.removeEventListener('touchmove', onMove); window.removeEventListener('mousemove', onMove); window.removeEventListener('touchend', onEnd); window.removeEventListener('mouseup', onEnd); };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const undoRef = useRef(null);
-
-  const resetAll = useCallback(() => {
-    // 되돌리기용 백업
-    setPieces(prev => {
-      undoRef.current = { pieces: prev, panOffset, selectedId, overrides: { ...pieceOverrides } };
-      return [];
-    });
-    nextId = Date.now(); setSelectedId(null); setPanOffset({ x: 0, y: 0 });
-    Object.keys(pieceOverrides).forEach(k => delete pieceOverrides[k]);
-  }, [panOffset, selectedId]);
-
-  const undoReset = useCallback(() => {
-    if (!undoRef.current) return;
-    const snap = undoRef.current;
-    undoRef.current = null;
-    setPieces(snap.pieces);
-    setPanOffset(snap.panOffset);
-    setSelectedId(snap.selectedId);
-    Object.assign(pieceOverrides, snap.overrides);
-    nextId = Math.max(...snap.pieces.map(p => p.id), 0) + 1;
+  const isOverTrash = useCallback((cx, cy) => {
+    const el = document.getElementById('trash-zone'); if (!el) return false;
+    const r = el.getBoundingClientRect();
+    return cx >= r.left && cx <= r.right && cy >= r.top && cy <= r.bottom;
   }, []);
 
   const editingCardRef = useRef(null);
@@ -717,21 +241,21 @@ export default function FreeComposeMode({ onGameMode }) {
     if (saved && saved.length > 0 && saved[0].char) {
       const avgX = saved.reduce((s, p) => s + p.x, 0) / saved.length;
       const avgY = saved.reduce((s, p) => s + p.y, 0) / saved.length;
-      newPieces = saved.map(s => ({ id: nextId++, char: s.char, x: s.x - avgX + screenCX, y: s.y - avgY + screenCY, scale: s.scale, done: false }));
+      newPieces = saved.map(s => ({ id: nextIdRef.current++, char: s.char, x: s.x - avgX + screenCX, y: s.y - avgY + screenCY, scale: s.scale, done: false }));
     } else if (saved && saved.length === chars.length) {
       const avgX = saved.reduce((s, p) => s + p.x, 0) / saved.length;
       const avgY = saved.reduce((s, p) => s + p.y, 0) / saved.length;
-      newPieces = chars.map((char, i) => ({ id: nextId++, char, x: saved[i].x - avgX + screenCX, y: saved[i].y - avgY + screenCY, scale: saved[i].scale, done: false }));
+      newPieces = chars.map((char, i) => ({ id: nextIdRef.current++, char, x: saved[i].x - avgX + screenCX, y: saved[i].y - avgY + screenCY, scale: saved[i].scale, done: false }));
     } else {
       const scale = 0.5;
       const gap = 500 * scale * 0.8;
       const totalW = (chars.length - 1) * gap;
-      newPieces = chars.map((char, i) => ({ id: nextId++, char, x: screenCX - totalW / 2 + i * gap, y: screenCY, scale, done: false }));
+      newPieces = chars.map((char, i) => ({ id: nextIdRef.current++, char, x: screenCX - totalW / 2 + i * gap, y: screenCY, scale, done: false }));
     }
     setPieces(newPieces);
     if (newPieces.length > 0) setSelectedId(newPieces[0].id);
     setCardEditMode(true);
-  }, []);
+  }, [nextIdRef, setPieces, setSelectedId, setPanOffset]);
 
   const finishCardEdit = useCallback(() => {
     if (pieces.length === 0) {
@@ -755,62 +279,10 @@ export default function FreeComposeMode({ onGameMode }) {
       wordCardsRef.current.addCardDirect(cardName, img);
     }
     editingCardRef.current = null;
-    setPieces([]); nextId = Date.now(); setSelectedId(null); setPanOffset({ x: 0, y: 0 });
+    setPieces([]); nextIdRef.current = Date.now(); setSelectedId(null); setPanOffset({ x: 0, y: 0 });
     Object.keys(pieceOverrides).forEach(k => delete pieceOverrides[k]);
     setCardEditMode(false);
-  }, [pieces]);
-
-  const [trashHover, setTrashHover] = useState(false);
-  const isOverTrash = useCallback((cx, cy) => {
-    const el = document.getElementById('trash-zone'); if (!el) return false;
-    const r = el.getBoundingClientRect();
-    return cx >= r.left && cx <= r.right && cy >= r.top && cy <= r.bottom;
-  }, []);
-
-  const [panSmooth, setPanSmooth] = useState(false);
-
-  const findNextPiece = useCallback((donePiece, candidates) => {
-    if (candidates.length === 0) return null;
-    const T = 100, cx = donePiece.x, cy = donePiece.y;
-    const right = candidates.filter(p => Math.abs(p.y - cy) < T && p.x > cx).sort((a, b) => a.x - b.x);
-    if (right.length > 0) return right[0];
-    const below = candidates.filter(p => p.y > cy + T).sort((a, b) => Math.abs(a.y - b.y) < T ? a.x - b.x : a.y - b.y);
-    if (below.length > 0) return below[0];
-    return candidates.sort((a, b) => Math.hypot(a.x - cx, a.y - cy) - Math.hypot(b.x - cx, b.y - cy))[0];
-  }, []);
-
-  const markDone = useCallback((id) => {
-    setPieces(prev => prev.map(p => p.id === id ? { ...p, done: true } : p));
-  }, []);
-
-  const selectPiece = useCallback((id) => setSelectedId(id), []);
-
-  const resetDone = useCallback((id) => {
-    setPieces(prev => prev.map(p => p.id === id ? { ...p, done: false } : p));
-  }, []);
-
-  const deletePiece = useCallback((id) => {
-    delete pieceOverrides[id];
-    setPieces(prev => prev.filter(p => p.id !== id));
-  }, []);
-
-  const ungroupPiece = useCallback((groupId) => {
-    setPieces(prev => prev.map(p => p.groupId === groupId ? { ...p, groupId: null } : p));
-  }, []);
-
-  const movePiece = useCallback((id, nx, ny) => {
-    const sx = gridOn ? Math.round(nx / GRID_SIZE) * GRID_SIZE : nx;
-    const sy = gridOn ? Math.round(ny / GRID_SIZE) * GRID_SIZE : ny;
-    setPieces(prev => {
-      const target = prev.find(p => p.id === id);
-      if (!target) return prev;
-      const dx = sx - target.x, dy = sy - target.y;
-      if (target.groupId) {
-        return prev.map(p => p.groupId === target.groupId ? { ...p, x: p.x + dx, y: p.y + dy } : p);
-      }
-      return prev.map(p => p.id === id ? { ...p, x: sx, y: sy } : p);
-    });
-  }, [gridOn]);
+  }, [pieces, nextIdRef, setPieces, setSelectedId, setPanOffset]);
 
   // 그룹 blob SVG 데이터 메모이제이션
   const groupBlobData = useMemo(() => {
@@ -853,46 +325,73 @@ export default function FreeComposeMode({ onGameMode }) {
           </svg>
         ))}
         {(() => {
-          // 소방관 스킨: 배치 순서대로 불 이동 (첫 번째 미완성 글자)
+          // 소방관 스킨: 현재 타겟이 완성되거나 없어졌을 때만 다음 글자로 이동
           let fireTargetId = null;
           if (fireSkin) {
-            const first = pieces.find(p => !p.done);
-            if (first) fireTargetId = first.id;
+            const currentTarget = pieces.find(p => p.id === fireTargetIdRef.current && !p.done);
+            if (currentTarget) {
+              fireTargetId = currentTarget.id; // 현재 타겟 유지
+            } else {
+              const next = pieces.find(p => !p.done);
+              fireTargetId = next ? next.id : null;
+              fireTargetIdRef.current = fireTargetId;
+            }
           }
-          return pieces.map(piece => (
-          <TracePiece
-            key={piece.id} piece={piece} selected={piece.id === selectedId}
-            inputLocked={panSmooth || panLocked}
-            onDone={() => markDone(piece.id)}
-            onResetDone={() => resetDone(piece.id)}
-            onDelete={() => deletePiece(piece.id)}
-            isOverTrash={isOverTrash} setTrashHover={setTrashHover}
-            onSelect={() => selectPiece(piece.id)}
-            onUngroup={piece.groupId ? () => ungroupPiece(piece.groupId) : null}
-            onNearGoal={(near) => onNearGoal(near, piece)}
-            focusZoom={focusZoom}
-            fireSkin={piece.id === fireTargetId}
-            fireTheme={fireSkin}
-            difficulty={difficulty}
-            onHandlerMove={piece.id === fireTargetId ? setElephantPos : undefined}
-            onSourceUpdate={(ns) => updateSource(piece.id, piece.char, ns)}
-            onMoved={(nx, ny) => movePiece(piece.id, nx, ny)}
-          />
-        ));
+          // 뷰포트 바깥 글자는 렌더링 건너뜀 (선택/불 타겟은 항상 렌더)
+          const vw = window.innerWidth, vh = window.innerHeight;
+          const margin = 300; // px 여유
+          return pieces.map(piece => {
+            const screenX = piece.x * zoom + panOffset.x;
+            const screenY = piece.y * zoom + panOffset.y;
+            const pieceSize = 500 * (piece.scale ?? 0.5) * zoom;
+            const inView = screenX + pieceSize > -margin && screenX - margin < vw + margin
+                        && screenY + pieceSize > -margin && screenY - margin < vh + margin;
+            if (!inView && piece.id !== selectedId && piece.id !== fireTargetId) {
+              // 화면 밖: 자리만 잡는 빈 div (위치는 그대로 유지)
+              return <div key={piece.id} style={{ position: 'absolute', left: piece.x, top: piece.y, width: 1, height: 1 }} />;
+            }
+            return (
+            <TracePiece
+              key={piece.id} piece={piece} selected={piece.id === selectedId}
+              inputLocked={panSmooth || panLocked}
+              onDone={() => handlePieceDone(piece.id, piece.char)}
+              onResetDone={() => resetDone(piece.id)}
+              onDelete={() => deletePiece(piece.id)}
+              isOverTrash={isOverTrash} setTrashHover={setTrashHover}
+              onSelect={() => selectPiece(piece.id)}
+              onUngroup={piece.groupId ? () => ungroupPiece(piece.groupId) : null}
+              onNearGoal={(near) => onNearGoal(near, piece)}
+              focusZoom={focusZoom}
+              fireSkin={piece.id === fireTargetId}
+              fireTheme={fireSkin}
+              difficulty={difficulty}
+              onHandlerMove={piece.id === fireTargetId ? setElephantPos : undefined}
+              onSourceUpdate={(ns) => updateSource(piece.id, piece.char, ns)}
+              onMoved={(nx, ny) => movePiece(piece.id, nx, ny)}
+            />
+          )});
         })()}
       </div>
 
       <DraggableRemote startY={window.innerHeight - 130}>
         <div className="remote-row">
-          <div className="remote-btn remote-btn--all" onClick={() => placeAll(CONSONANTS)}>ALL</div>
+          <div className={`remote-btn remote-btn--all${autoQueueType === 'consonant' ? ' remote-btn--all-active' : ''}`} onClick={() => placeAll(CONSONANTS, 'consonant')}>ALL</div>
           {CONSONANTS.map(c => (
-            <div key={c.char} className="remote-btn" onTouchStart={(e) => startDragNew(c.char, 'jamo', e)} onMouseDown={(e) => startDragNew(c.char, 'jamo', e)}>{c.char}</div>
+            <div key={c.char}
+              className={`remote-btn${lastPressedChar === c.char ? ' remote-btn--last' : ''}${autoQueueType ? ' remote-btn--disabled' : ''}`}
+              onTouchStart={autoQueueType ? undefined : (e) => { setLastPressedChar(c.char); startDragNew(c.char, 'jamo', e); }}
+              onMouseDown={autoQueueType ? undefined : (e) => { setLastPressedChar(c.char); startDragNew(c.char, 'jamo', e); }}
+            >{c.char}</div>
           ))}
         </div>
         <div className="remote-row">
-          <div className="remote-btn remote-btn--all" onClick={() => placeAll(VOWELS)}>ALL</div>
+          <div className={`remote-btn remote-btn--all${autoQueueType === 'vowel' ? ' remote-btn--all-active' : ''}`} onClick={() => placeAll(VOWELS, 'vowel')}>ALL</div>
           {VOWELS.map(v => (
-            <div key={v.char} className="remote-btn" onTouchStart={(e) => startDragNew(v.char, 'jamo', e)} onMouseDown={(e) => startDragNew(v.char, 'jamo', e)}>{v.char}</div>
+            <div key={v.char}
+              className={`remote-btn${lastPressedChar === v.char ? ' remote-btn--last' : ''}${autoQueueType ? ' remote-btn--disabled' : ''}`}
+              onTouchStart={autoQueueType ? undefined : (e) => { setLastPressedChar(v.char); startDragNew(v.char, 'jamo', e); }}
+              onMouseDown={autoQueueType ? undefined : (e) => { setLastPressedChar(v.char); startDragNew(v.char, 'jamo', e); }}
+            >{v.char}</div>
           ))}
         </div>
       </DraggableRemote>
@@ -959,11 +458,16 @@ export default function FreeComposeMode({ onGameMode }) {
           // 모드 전환 시 캔버스 비우기
           setPieces([]);
           setElephantPos(null);
+          fireTargetIdRef.current = null;
           return !f;
         })} title="소방관 스킨">🔥</div>
         <div className="ctrl-divider" />
         <div className="difficulty-btn" onClick={() => setDifficulty(d => d === 'easy' ? 'normal' : d === 'normal' ? 'hard' : 'easy')}>
           {difficulty === 'easy' ? 'EASY' : difficulty === 'normal' ? 'NORMAL' : 'HARD'}
+        </div>
+        <div className="ctrl-divider" />
+        <div className={`star-counter${starPop ? ' star-counter--pop' : ''}`}>
+          ★ {starCount}
         </div>
       </div>
 
@@ -984,18 +488,7 @@ export default function FreeComposeMode({ onGameMode }) {
         <img ref={dragGhostRef} className="drag-ghost-img" src={jamoImages[dragNew.char]} style={{ left: dragNew.x, top: dragNew.y }} draggable={false} />
       )}
 
-      {mathQuiz && (
-        <div className="quiz-overlay" onClick={() => setMathQuiz(null)}>
-          <div className="quiz-card" onClick={(e) => e.stopPropagation()}>
-            <div className="quiz-question">{mathQuiz.a} × {mathQuiz.b} = ?</div>
-            <div className="quiz-options">
-              {mathQuiz.options.map((opt, i) => (
-                <div key={i} className="quiz-option" onClick={() => handleQuizAnswer(opt)}>{opt}</div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
+      <MathQuizModal quiz={mathQuiz} onAnswer={handleQuizAnswer} onClose={() => setMathQuiz(null)} />
 
       {/* 소방관 코끼리 — 소화기 따라다님, 없으면 왼쪽 아래 */}
       {fireSkin && (
@@ -1004,81 +497,38 @@ export default function FreeComposeMode({ onGameMode }) {
           <img className="firefighter-img" src="icons/firefighter-elephant.png" draggable={false} />
         </div>
       )}
-    </div>
-  );
-}
-
-// ── 드래그 이동 가능한 리모컨 래퍼 ──
-function DraggableRemote({ children, startY = 10 }) {
-  const [pos, setPos] = useState({ x: window.innerWidth / 2, y: startY });
-  const dragRef = useRef(null);
-  const onDown = (e) => {
-    e.preventDefault(); e.stopPropagation();
-    let cx, cy;
-    if (e.touches) { cx = e.touches[0].clientX; cy = e.touches[0].clientY; } else { cx = e.clientX; cy = e.clientY; }
-    dragRef.current = { startX: cx, startY: cy, origX: pos.x, origY: pos.y };
-  };
-  useEffect(() => {
-    function onMove(e) {
-      if (!dragRef.current) return;
-      let cx, cy;
-      if (e.touches) { cx = e.touches[0].clientX; cy = e.touches[0].clientY; } else { cx = e.clientX; cy = e.clientY; }
-      const d = dragRef.current;
-      setPos({ x: d.origX + (cx - d.startX), y: d.origY + (cy - d.startY) });
-    }
-    function onUp() { dragRef.current = null; }
-    window.addEventListener('mousemove', onMove); window.addEventListener('touchmove', onMove, { passive: false });
-    window.addEventListener('mouseup', onUp); window.addEventListener('touchend', onUp);
-    return () => { window.removeEventListener('mousemove', onMove); window.removeEventListener('touchmove', onMove); window.removeEventListener('mouseup', onUp); window.removeEventListener('touchend', onUp); };
-  }, []);
-  return (
-    <div className="remote" style={{ left: pos.x, top: pos.y, transform: 'translateX(-50%)' }}>
-      <div className="remote-handle" onMouseDown={onDown} onTouchStart={onDown}>⠿</div>
-      <div className="remote-inner">{children}</div>
-      <div className="remote-handle" onMouseDown={onDown} onTouchStart={onDown}>⠿</div>
-    </div>
-  );
-}
-
-// ── 휴지통 ──
-function TrashZone({ trashHover, onClearAll, onUndo }) {
-  const [undoMode, setUndoMode] = useState(false);
-  const timerRef = useRef(null);
-
-  const handleClick = (e) => {
-    e.stopPropagation();
-    if (undoMode) {
-      // 되돌리기
-      setUndoMode(false);
-      if (timerRef.current) clearTimeout(timerRef.current);
-      if (onUndo) onUndo();
-    } else {
-      // 삭제 → 되돌리기 모드 전환
-      onClearAll();
-      setUndoMode(true);
-      if (timerRef.current) clearTimeout(timerRef.current);
-      timerRef.current = setTimeout(() => setUndoMode(false), 4000);
-    }
-  };
-
-  return (
-    <div id="trash-zone"
-      className={`trash-zone ${trashHover ? 'trash-zone--hover' : ''} ${undoMode ? 'trash-zone--undo' : ''}`}
-      onClick={handleClick}>
-      {undoMode ? (
-        <>
-          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <polyline points="1 4 1 10 7 10"></polyline>
-            <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
-          </svg>
-          <span className="trash-undo-label">되돌리기</span>
-        </>
-      ) : (
-        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <polyline points="3 6 5 6 21 6"></polyline>
-          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-        </svg>
-      )}
+      {/* 코끼리가 화면 밖일 때 — 사라진 방향에 호버 버튼 */}
+      {fireSkin && (() => {
+        const targetPiece = pieces.find(p => p.id === fireTargetIdRef.current && !p.done);
+        if (!targetPiece) return null;
+        const screenX = targetPiece.x * zoom + panOffset.x;
+        const screenY = targetPiece.y * zoom + panOffset.y;
+        const vw = window.innerWidth, vh = window.innerHeight;
+        const margin = 100;
+        const isOffScreen = screenX < -margin || screenX > vw + margin || screenY < -margin || screenY > vh + margin;
+        if (!isOffScreen) return null;
+        // 방향 계산
+        const cx = vw / 2, cy = vh / 2;
+        const dx = screenX - cx, dy = screenY - cy;
+        const angle = Math.atan2(dy, dx);
+        const edgePad = 40;
+        const bx = Math.max(edgePad, Math.min(vw - edgePad, cx + Math.cos(angle) * (vw / 2 - edgePad)));
+        const by = Math.max(edgePad, Math.min(vh - edgePad, cy + Math.sin(angle) * (vh / 2 - edgePad)));
+        const arrowDeg = angle * (180 / Math.PI);
+        return (
+          <div className="elephant-beacon" style={{ left: bx, top: by }}
+            onClick={() => {
+              const newPanX = vw / 2 - targetPiece.x * zoom;
+              const newPanY = vh / 2 - targetPiece.y * zoom;
+              setPanSmooth(true);
+              setPanOffset({ x: newPanX, y: newPanY });
+              setTimeout(() => setPanSmooth(false), 400);
+            }}>
+            <div className="elephant-beacon-arrow" style={{ transform: `rotate(${arrowDeg}deg)` }}>▶</div>
+            <img className="elephant-beacon-img" src="icons/firefighter-elephant.png" draggable={false} />
+          </div>
+        );
+      })()}
     </div>
   );
 }

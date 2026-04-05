@@ -2,6 +2,7 @@
 import React, { useState, useRef, useCallback, useEffect, useImperativeHandle, forwardRef } from 'react';
 import { CONSONANTS, VOWELS, APP_CONFIG } from '../data.js';
 import { decomposeWord } from '../utils/jamo.js';
+import '../../css/word-cards.css';
 
 const STORAGE_KEY = 'jina-word-cards';
 const PREVIEW_KEY = 'jina-word-previews';

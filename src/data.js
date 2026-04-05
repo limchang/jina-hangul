@@ -1,5 +1,7 @@
 // data.js — 한글 자음/모음/음절 데이터 + 조합 로직 (ES Module)
 
+import { getPathXCoords, getPathYCoords, offsetPathX, offsetPathY, scalePathXAroundCenter } from './utils/svgPath.js';
+
 export const CONSONANTS = [
   { char:'ㄱ', strokes:[{path:'M 150 150 L 350 150 L 350 350'}] },
   { char:'ㄴ', strokes:[{path:'M 150 150 L 150 350 L 350 350'}] },
@@ -87,29 +89,7 @@ export const APP_CONFIG = {
   STARFISH_SVG: `<svg viewBox="0 0 100 100"><path d="M50,5 L63,38 L95,38 L69,59 L79,91 L50,72 L21,91 L31,59 L5,38 L37,38 Z" fill="#ff9133" stroke="#cc5500" stroke-width="2"/><circle cx="42" cy="45" r="4" fill="black"/><circle cx="58" cy="45" r="4" fill="black"/><path d="M46,55 Q50,60 54,55" fill="none" stroke="black" stroke-width="2"/></svg>`
 };
 
-// ── 유틸 함수들 ──
-
-function getPathXCoords(pathStr) {
-  const xs = [];
-  const ml = pathStr.matchAll(/[ML]\s*(-?[\d.]+)\s+(-?[\d.]+)/g);
-  for (const m of ml) xs.push(parseFloat(m[1]));
-  const qs = pathStr.matchAll(/Q\s*(-?[\d.]+)\s+(-?[\d.]+)\s+(-?[\d.]+)\s+(-?[\d.]+)/g);
-  for (const m of qs) { xs.push(parseFloat(m[1])); xs.push(parseFloat(m[3])); }
-  const as = pathStr.matchAll(/A\s+[\d.]+\s+[\d.]+\s+[\d.]+\s+[\d.]+\s+[\d.]+\s+(-?[\d.]+)\s+(-?[\d.]+)/g);
-  for (const m of as) xs.push(parseFloat(m[1]));
-  return xs;
-}
-
-function getPathYCoords(pathStr) {
-  const ys = [];
-  const ml = pathStr.matchAll(/[ML]\s*(-?[\d.]+)\s+(-?[\d.]+)/g);
-  for (const m of ml) ys.push(parseFloat(m[2]));
-  const qs = pathStr.matchAll(/Q\s*(-?[\d.]+)\s+(-?[\d.]+)\s+(-?[\d.]+)\s+(-?[\d.]+)/g);
-  for (const m of qs) { ys.push(parseFloat(m[2])); ys.push(parseFloat(m[4])); }
-  const as = pathStr.matchAll(/A\s+[\d.]+\s+[\d.]+\s+[\d.]+\s+[\d.]+\s+[\d.]+\s+(-?[\d.]+)\s+(-?[\d.]+)/g);
-  for (const m of as) ys.push(parseFloat(m[2]));
-  return ys;
-}
+// ── 유틸 함수들 (svgPath.js에서 import) ──
 
 function getConsonantXBounds(consonant) {
   let minX = Infinity, maxX = -Infinity;
@@ -133,98 +113,6 @@ function getConsonantYBounds(consonant) {
   return { minY, maxY };
 }
 
-function offsetPathY(pathStr, offset) {
-  const tokens = pathStr.match(/[A-Za-z]|[-+]?[\d.]+/g);
-  if (!tokens) return pathStr;
-  const result = [];
-  let i = 0;
-  while (i < tokens.length) {
-    const t = tokens[i];
-    if (t === 'M' || t === 'L') {
-      result.push(t, tokens[i+1], String(parseFloat(tokens[i+2]) + offset));
-      i += 3;
-    } else if (t === 'Q') {
-      result.push(t, tokens[i+1], String(parseFloat(tokens[i+2]) + offset),
-                     tokens[i+3], String(parseFloat(tokens[i+4]) + offset));
-      i += 5;
-    } else if (t === 'A') {
-      result.push(t, tokens[i+1], tokens[i+2], tokens[i+3], tokens[i+4], tokens[i+5],
-                     tokens[i+6], String(parseFloat(tokens[i+7]) + offset));
-      i += 8;
-    } else if (t === 'Z') {
-      result.push(t);
-      i += 1;
-    } else {
-      result.push(t);
-      i += 1;
-    }
-  }
-  return result.join(' ');
-}
-
-function offsetPathX(pathStr, offset) {
-  const tokens = pathStr.match(/[A-Za-z]|[-+]?[\d.]+/g);
-  if (!tokens) return pathStr;
-  const result = [];
-  let i = 0;
-  while (i < tokens.length) {
-    const t = tokens[i];
-    if (t === 'M' || t === 'L') {
-      result.push(t, String(parseFloat(tokens[i+1]) + offset), tokens[i+2]);
-      i += 3;
-    } else if (t === 'Q') {
-      result.push(t, String(parseFloat(tokens[i+1]) + offset), tokens[i+2],
-                     String(parseFloat(tokens[i+3]) + offset), tokens[i+4]);
-      i += 5;
-    } else if (t === 'A') {
-      result.push(t, tokens[i+1], tokens[i+2], tokens[i+3], tokens[i+4], tokens[i+5],
-                     String(parseFloat(tokens[i+6]) + offset), tokens[i+7]);
-      i += 8;
-    } else if (t === 'Z') {
-      result.push(t);
-      i += 1;
-    } else {
-      result.push(t);
-      i += 1;
-    }
-  }
-  return result.join(' ');
-}
-
-function scalePathXAroundCenter(pathStr, cx, scale) {
-  const tokens = pathStr.match(/[A-Za-z]|[-+]?[\d.]+/g);
-  if (!tokens) return pathStr;
-  const result = [];
-  let i = 0;
-  const sx = (x) => String(Math.round((cx + (x - cx) * scale) * 10) / 10);
-  while (i < tokens.length) {
-    const t = tokens[i];
-    if (t === 'M' || t === 'L') {
-      result.push(t, sx(parseFloat(tokens[i+1])), tokens[i+2]);
-      i += 3;
-    } else if (t === 'Q') {
-      // Q cx cy x y — control point와 end point 모두 스케일
-      result.push(t, sx(parseFloat(tokens[i+1])), tokens[i+2],
-                     sx(parseFloat(tokens[i+3])), tokens[i+4]);
-      i += 5;
-    } else if (t === 'A') {
-      // A rx ry rotation large-arc sweep x y
-      // rx도 스케일, x 좌표도 스케일
-      const rx = parseFloat(tokens[i+1]) * scale;
-      result.push(t, String(Math.round(rx * 10) / 10), tokens[i+2],
-                     tokens[i+3], tokens[i+4], tokens[i+5],
-                     sx(parseFloat(tokens[i+6])), tokens[i+7]);
-      i += 8;
-    } else if (t === 'Z') {
-      result.push(t);
-      i += 1;
-    } else {
-      result.push(t);
-      i += 1;
-    }
-  }
-  return result.join(' ');
-}
 
 function scaleConsonantX(consonant, scale) {
   if (scale === 1) return consonant;

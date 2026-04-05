@@ -1,13 +1,23 @@
 // particles.js — 경량 파티클 시스템 (ES Module)
 
+/** @typedef {import('./types.js').Point} Point */
+
+/** @type {string} */
 const SPARKLE_COLOR = '#fff8b0';
 
 const CONFETTI_COLORS = [
   '#FF6B8A', '#FFD93D', '#6BCB77', '#4D96FF', '#9B72FF', '#45D0E8'
 ];
 
-// 경량 파티클 — save/restore 없이 단순 도형만 사용
+/**
+ * 경량 파티클 — save/restore 없이 단순 도형만 사용
+ */
 class Particle {
+  /**
+   * @param {number} x - 초기 X 좌표
+   * @param {number} y - 초기 Y 좌표
+   * @param {'sparkle' | 'confetti'} type - 파티클 유형
+   */
   constructor(x, y, type) {
     this.x = x;
     this.y = y;
@@ -29,6 +39,7 @@ class Particle {
     this.gravity = type === 'confetti' ? 0.08 : 0;
   }
 
+  /** 파티클 위치와 수명을 갱신 */
   update() {
     this.x += this.vx;
     this.y += this.vy;
@@ -38,12 +49,23 @@ class Particle {
   }
 }
 
+/**
+ * 파티클 풀을 관리하고 캔버스에 렌더링하는 시스템
+ */
 export class ParticleSystem {
   constructor() {
+    /** @type {Particle[]} */
     this.particles = [];
+    /** @type {number} */
     this.frameCount = 0;
   }
 
+  /**
+   * 트레이싱 중 반짝이 파티클 방출 (4프레임마다 1개)
+   * @param {number} x
+   * @param {number} y
+   * @returns {void}
+   */
   emit(x, y) {
     this.frameCount++;
     if (this.frameCount % 4 === 0) {
@@ -51,12 +73,25 @@ export class ParticleSystem {
     }
   }
 
+  /**
+   * 폭발형 컨페티 파티클 일괄 생성
+   * @param {number} x
+   * @param {number} y
+   * @param {number} [count] - 생성할 파티클 수
+   * @returns {void}
+   */
   burst(x, y, count = 6) {
     for (let i = 0; i < count; i++) {
       this.particles.push(new Particle(x, y, 'confetti'));
     }
   }
 
+  /**
+   * 글자 완성 축하 — 컨페티 + 대형 반짝이
+   * @param {number} cx - 중심 X
+   * @param {number} cy - 중심 Y
+   * @returns {void}
+   */
   celebrate(cx, cy) {
     for (let i = 0; i < 15; i++) {
       this.particles.push(new Particle(
@@ -77,6 +112,7 @@ export class ParticleSystem {
     }
   }
 
+  /** 모든 파티클 갱신 및 수명이 다한 파티클 제거 */
   update() {
     for (let i = this.particles.length - 1; i >= 0; i--) {
       this.particles[i].update();
@@ -87,6 +123,11 @@ export class ParticleSystem {
     }
   }
 
+  /**
+   * 모든 파티클을 캔버스에 렌더링
+   * @param {CanvasRenderingContext2D} ctx
+   * @returns {void}
+   */
   draw(ctx) {
     const len = this.particles.length;
     for (let i = 0; i < len; i++) {

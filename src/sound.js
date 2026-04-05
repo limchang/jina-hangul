@@ -1,5 +1,6 @@
 // sound.js — 간단한 효과음 (Web Audio API)
 
+/** @type {AudioContext | null} */
 let audioCtx = null;
 
 function getCtx() {
@@ -7,15 +8,35 @@ function getCtx() {
   return audioCtx;
 }
 
-// 드래그 시작 — 짧은 팝 사운드
-export function playStart() {
-  const ctx = getCtx();
+/**
+ * osc+gain 생성 헬퍼 — 반복 패턴 제거
+ * @param {AudioContext} ctx
+ * @param {OscillatorType} [type]
+ * @returns {{ osc: OscillatorNode, gain: GainNode }}
+ */
+function createTone(ctx, type = 'sine') {
   const osc = ctx.createOscillator();
   const gain = ctx.createGain();
   osc.connect(gain);
   gain.connect(ctx.destination);
+  osc.type = type;
+  return { osc, gain };
+}
 
-  osc.type = 'sine';
+// 배경음 상태 (사이렌/치지직)
+const bgSounds = {
+  siren: null,   // was sirenNodes
+  sizzle: null,  // was sizzleNodes
+};
+
+/**
+ * 드래그 시작 — 짧은 팝 사운드
+ * @returns {void}
+ */
+export function playStart() {
+  const ctx = getCtx();
+  const { osc, gain } = createTone(ctx, 'sine');
+
   osc.frequency.setValueAtTime(880, ctx.currentTime);
   osc.frequency.exponentialRampToValueAtTime(1200, ctx.currentTime + 0.08);
 
@@ -26,15 +47,14 @@ export function playStart() {
   osc.stop(ctx.currentTime + 0.12);
 }
 
-// 획 완성 — 밝은 띵 사운드
+/**
+ * 획 완성 — 밝은 띵 사운드
+ * @returns {void}
+ */
 export function playComplete() {
   const ctx = getCtx();
-  const osc = ctx.createOscillator();
-  const gain = ctx.createGain();
-  osc.connect(gain);
-  gain.connect(ctx.destination);
+  const { osc, gain } = createTone(ctx, 'sine');
 
-  osc.type = 'sine';
   osc.frequency.setValueAtTime(1047, ctx.currentTime);       // C6
   osc.frequency.setValueAtTime(1319, ctx.currentTime + 0.08); // E6
 
@@ -45,17 +65,16 @@ export function playComplete() {
   osc.stop(ctx.currentTime + 0.25);
 }
 
-// 글자 완성 — 축하 멜로디 (도미솔)
+/**
+ * 글자 완성 — 축하 멜로디 (도미솔)
+ * @returns {void}
+ */
 export function playCelebrate() {
   const ctx = getCtx();
   const notes = [1047, 1319, 1568]; // C6, E6, G6
   notes.forEach((freq, i) => {
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.connect(gain);
-    gain.connect(ctx.destination);
+    const { osc, gain } = createTone(ctx, 'sine');
 
-    osc.type = 'sine';
     osc.frequency.setValueAtTime(freq, ctx.currentTime + i * 0.1);
 
     const t = ctx.currentTime + i * 0.1;
@@ -68,16 +87,15 @@ export function playCelebrate() {
   });
 }
 
-// 착! 바닥에 박히는 사운드 — 짧고 강한 임팩트
+/**
+ * 착! 바닥에 박히는 사운드 — 짧고 강한 임팩트
+ * @returns {void}
+ */
 export function playSlam() {
   const ctx = getCtx();
 
   // 저음 쿵
-  const osc1 = ctx.createOscillator();
-  const gain1 = ctx.createGain();
-  osc1.connect(gain1);
-  gain1.connect(ctx.destination);
-  osc1.type = 'sine';
+  const { osc: osc1, gain: gain1 } = createTone(ctx, 'sine');
   osc1.frequency.setValueAtTime(150, ctx.currentTime);
   osc1.frequency.exponentialRampToValueAtTime(60, ctx.currentTime + 0.1);
   gain1.gain.setValueAtTime(0.3, ctx.currentTime);
@@ -86,11 +104,7 @@ export function playSlam() {
   osc1.stop(ctx.currentTime + 0.15);
 
   // 고음 착
-  const osc2 = ctx.createOscillator();
-  const gain2 = ctx.createGain();
-  osc2.connect(gain2);
-  gain2.connect(ctx.destination);
-  osc2.type = 'square';
+  const { osc: osc2, gain: gain2 } = createTone(ctx, 'square');
   osc2.frequency.setValueAtTime(800, ctx.currentTime);
   osc2.frequency.exponentialRampToValueAtTime(200, ctx.currentTime + 0.05);
   gain2.gain.setValueAtTime(0.15, ctx.currentTime);
@@ -99,14 +113,13 @@ export function playSlam() {
   osc2.stop(ctx.currentTime + 0.08);
 }
 
-// 둥실 — 롱프레스 해제 시 부드러운 뜨는 소리
+/**
+ * 둥실 — 롱프레스 해제 시 부드러운 뜨는 소리
+ * @returns {void}
+ */
 export function playFloat() {
   const ctx = getCtx();
-  const osc = ctx.createOscillator();
-  const gain = ctx.createGain();
-  osc.connect(gain);
-  gain.connect(ctx.destination);
-  osc.type = 'sine';
+  const { osc, gain } = createTone(ctx, 'sine');
   osc.frequency.setValueAtTime(523, ctx.currentTime);
   osc.frequency.exponentialRampToValueAtTime(784, ctx.currentTime + 0.15);
   gain.gain.setValueAtTime(0.12, ctx.currentTime);
@@ -115,14 +128,13 @@ export function playFloat() {
   osc.stop(ctx.currentTime + 0.25);
 }
 
-// 착지 — 해제된 글자를 다시 놓을 때
+/**
+ * 착지 — 해제된 글자를 다시 놓을 때
+ * @returns {void}
+ */
 export function playLand() {
   const ctx = getCtx();
-  const osc = ctx.createOscillator();
-  const gain = ctx.createGain();
-  osc.connect(gain);
-  gain.connect(ctx.destination);
-  osc.type = 'sine';
+  const { osc, gain } = createTone(ctx, 'sine');
   osc.frequency.setValueAtTime(400, ctx.currentTime);
   osc.frequency.exponentialRampToValueAtTime(200, ctx.currentTime + 0.08);
   gain.gain.setValueAtTime(0.2, ctx.currentTime);
@@ -131,14 +143,13 @@ export function playLand() {
   osc.stop(ctx.currentTime + 0.12);
 }
 
-// 휘우웅~ 낙하 사운드
+/**
+ * 휘우웅~ 낙하 사운드
+ * @returns {void}
+ */
 export function playFallSound() {
   const ctx = getCtx();
-  const osc = ctx.createOscillator();
-  const gain = ctx.createGain();
-  osc.connect(gain);
-  gain.connect(ctx.destination);
-  osc.type = 'sine';
+  const { osc, gain } = createTone(ctx, 'sine');
   osc.frequency.setValueAtTime(600, ctx.currentTime);
   osc.frequency.exponentialRampToValueAtTime(80, ctx.currentTime + 0.4);
   gain.gain.setValueAtTime(0.15, ctx.currentTime);
@@ -147,46 +158,79 @@ export function playFallSound() {
   osc.stop(ctx.currentTime + 0.45);
 }
 
-// 자모 이름 매핑
-const JAMO_NAMES = {
-  'ㄱ':'기역','ㄴ':'니은','ㄷ':'디귿','ㄹ':'리을','ㅁ':'미음',
-  'ㅂ':'비읍','ㅅ':'시옷','ㅇ':'이응','ㅈ':'지읒','ㅊ':'치읓',
-  'ㅋ':'키읔','ㅌ':'티읕','ㅍ':'피읖','ㅎ':'히읗',
-  'ㅏ':'아','ㅑ':'야','ㅓ':'어','ㅕ':'여','ㅗ':'오',
-  'ㅛ':'요','ㅜ':'우','ㅠ':'유','ㅡ':'으','ㅣ':'이'
-};
+// 자모 이름 → MP3 파일 매핑 (자모는 파일명이 자모 자체)
+const JAMO_CHARS = new Set('ㄱㄴㄷㄹㅁㅂㅅㅇㅈㅊㅋㅌㅍㅎㅏㅑㅓㅕㅗㅛㅜㅠㅡㅣ'.split(''));
 
-// Google Translate TTS로 발음 재생
-const ttsCache = {}; // URL → Audio 캐시 (같은 글자 반복 시 즉시 재생)
+// MP3 오디오 캐시
+const audioCache = {};
 
+// 사이렌/치지직 볼륨 낮추기 (ducking) — TTS가 들리도록
+function duckBgSounds() {
+  const duckTo = 0.01;
+  if (bgSounds.siren) {
+    bgSounds.siren.gain.gain.setValueAtTime(bgSounds.siren.gain.gain.value, bgSounds.siren.ctx.currentTime);
+    bgSounds.siren.gain.gain.linearRampToValueAtTime(duckTo, bgSounds.siren.ctx.currentTime + 0.05);
+  }
+  if (bgSounds.sizzle) {
+    bgSounds.sizzle.gain.gain.setValueAtTime(bgSounds.sizzle.gain.gain.value, bgSounds.sizzle.ctx.currentTime);
+    bgSounds.sizzle.gain.gain.linearRampToValueAtTime(duckTo, bgSounds.sizzle.ctx.currentTime + 0.05);
+  }
+}
+
+function unduckBgSounds() {
+  if (bgSounds.siren) {
+    bgSounds.siren.gain.gain.setValueAtTime(bgSounds.siren.gain.gain.value, bgSounds.siren.ctx.currentTime);
+    bgSounds.siren.gain.gain.linearRampToValueAtTime(0.08, bgSounds.siren.ctx.currentTime + 0.15);
+  }
+  if (bgSounds.sizzle) {
+    bgSounds.sizzle.gain.gain.setValueAtTime(bgSounds.sizzle.gain.gain.value, bgSounds.sizzle.ctx.currentTime);
+    bgSounds.sizzle.gain.gain.linearRampToValueAtTime(0.06, bgSounds.sizzle.ctx.currentTime + 0.15);
+  }
+}
+
+/**
+ * 네이버 TTS MP3로 발음 재생
+ * @param {string} char - 재생할 한글 글자 또는 자모
+ * @param {number} [delay] - 재생 지연 시간(ms)
+ */
 export function speakChar(char, delay = 0) {
-  const name = JAMO_NAMES[char];
-  if (!name) return;
+  // 한글이 아니면 무시
+  if (!/[가-힣ㄱ-ㅎㅏ-ㅣ]/.test(char)) return;
+  // 자모이면 자모 파일, 완성 글자면 글자 파일
+  const fileName = JAMO_CHARS.has(char) ? char : char;
   const doSpeak = () => {
-    const url = `https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=ko&q=${encodeURIComponent(name)}`;
-    if (!ttsCache[name]) ttsCache[name] = new Audio(url);
-    const audio = ttsCache[name];
+    if (!audioCache[fileName]) {
+      audioCache[fileName] = new Audio(`./audio/${fileName}.mp3`);
+      audioCache[fileName].onerror = () => {
+        // MP3 파일이 없으면 Web Speech API 폴백
+        if ('speechSynthesis' in window) {
+          speechSynthesis.cancel();
+          const utter = new SpeechSynthesisUtterance(char);
+          utter.lang = 'ko-KR';
+          utter.rate = 0.9;
+          speechSynthesis.speak(utter);
+        }
+      };
+    }
+    const audio = audioCache[fileName];
     audio.currentTime = 0;
-    audio.play().catch(() => {
-      // 네트워크 실패 시 Web Speech API 폴백
-      if ('speechSynthesis' in window) {
-        const utter = new SpeechSynthesisUtterance(name);
-        utter.lang = 'ko-KR';
-        utter.rate = 0.85;
-        speechSynthesis.speak(utter);
-      }
-    });
+    // 배경음 줄이고 → 재생 → 끝나면 복구
+    duckBgSounds();
+    audio.play().then(() => {
+      audio.onended = () => unduckBgSounds();
+    }).catch(() => unduckBgSounds());
   };
   if (delay > 0) setTimeout(doSpeak, delay);
   else doSpeak();
 }
 
-// 경찰차 — 삐뽀삐뽀 사이렌 (따라쓰기 중 지속)
-let sirenNodes = null;
-
+/**
+ * 경찰차 — 삐뽀삐뽀 사이렌 (따라쓰기 중 지속)
+ * @returns {void}
+ */
 export function startSiren() {
   try {
-    if (sirenNodes) return;
+    if (bgSounds.siren) return;
     const ctx = getCtx();
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
@@ -205,29 +249,37 @@ export function startSiren() {
     gain.connect(ctx.destination);
     osc.start();
     lfo.start();
-    sirenNodes = { osc, lfo, gain, ctx };
-  } catch {}
+    bgSounds.siren = { osc, lfo, gain, ctx };
+  } catch (e) {
+    console.warn('Siren start failed:', e);
+  }
 }
 
+/**
+ * 사이렌 사운드 정지
+ * @returns {void}
+ */
 export function stopSiren() {
-  if (!sirenNodes) return;
+  if (!bgSounds.siren) return;
   try {
-    const { osc, lfo, gain } = sirenNodes;
-    gain.gain.setValueAtTime(gain.gain.value, sirenNodes.ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, sirenNodes.ctx.currentTime + 0.15);
+    const { osc, lfo, gain } = bgSounds.siren;
+    gain.gain.setValueAtTime(gain.gain.value, bgSounds.siren.ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, bgSounds.siren.ctx.currentTime + 0.15);
     setTimeout(() => {
+      // oscillator가 이미 중지된 경우 무시
       try { osc.stop(); lfo.stop(); } catch {}
     }, 200);
   } catch {}
-  sirenNodes = null;
+  bgSounds.siren = null;
 }
 
-// 불모드 — 치지직 소리 (따라쓰기 중 지속)
-let sizzleNodes = null;
-
+/**
+ * 불모드 — 치지직 소리 (따라쓰기 중 지속)
+ * @returns {void}
+ */
 export function startSizzle() {
   try {
-    if (sizzleNodes) return; // 이미 재생 중
+    if (bgSounds.sizzle) return; // 이미 재생 중
     const ctx = getCtx();
     // 화이트 노이즈 생성 (2초 루프)
     const bufLen = ctx.sampleRate * 2;
@@ -263,25 +315,35 @@ export function startSizzle() {
     hp.connect(gain);
     gain.connect(ctx.destination);
     noise.start();
-    sizzleNodes = { noise, lfo, gain, ctx };
-  } catch {}
+    bgSounds.sizzle = { noise, lfo, gain, ctx };
+  } catch (e) {
+    console.warn('Sizzle start failed:', e);
+  }
 }
 
+/**
+ * 치지직 사운드 정지
+ * @returns {void}
+ */
 export function stopSizzle() {
-  if (!sizzleNodes) return;
+  if (!bgSounds.sizzle) return;
   try {
-    const { noise, lfo, gain } = sizzleNodes;
+    const { noise, lfo, gain } = bgSounds.sizzle;
     // 페이드 아웃
-    gain.gain.setValueAtTime(gain.gain.value, sizzleNodes.ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, sizzleNodes.ctx.currentTime + 0.15);
+    gain.gain.setValueAtTime(gain.gain.value, bgSounds.sizzle.ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, bgSounds.sizzle.ctx.currentTime + 0.15);
     setTimeout(() => {
+      // oscillator가 이미 중지된 경우 무시
       try { noise.stop(); lfo.stop(); } catch {}
     }, 200);
   } catch {}
-  sizzleNodes = null;
+  bgSounds.sizzle = null;
 }
 
-// 불모드 글자 완성 — 쏴~ 물 소리 + 상승 멜로디
+/**
+ * 불모드 글자 완성 — 쏴~ 물 소리 + 상승 멜로디
+ * @returns {void}
+ */
 export function playWaterComplete() {
   try {
     const ctx = getCtx();
@@ -300,10 +362,7 @@ export function playWaterComplete() {
     noise.start(ctx.currentTime); noise.stop(ctx.currentTime + 0.3);
     // 상승 멜로디
     [523, 659, 784].forEach((freq, i) => {
-      const osc = ctx.createOscillator();
-      const g2 = ctx.createGain();
-      osc.connect(g2); g2.connect(ctx.destination);
-      osc.type = 'sine';
+      const { osc, gain: g2 } = createTone(ctx, 'sine');
       const t = ctx.currentTime + 0.1 + i * 0.1;
       osc.frequency.setValueAtTime(freq, t);
       g2.gain.setValueAtTime(0, t);
@@ -311,18 +370,19 @@ export function playWaterComplete() {
       g2.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
       osc.start(t); osc.stop(t + 0.2);
     });
-  } catch {}
+  } catch (e) {
+    console.warn('Water complete sound failed:', e);
+  }
 }
 
-// 실패 (놓았는데 완성 안 됨) — 낮은 붕 사운드
+/**
+ * 실패 (놓았는데 완성 안 됨) — 낮은 붕 사운드
+ * @returns {void}
+ */
 export function playFail() {
   const ctx = getCtx();
-  const osc = ctx.createOscillator();
-  const gain = ctx.createGain();
-  osc.connect(gain);
-  gain.connect(ctx.destination);
+  const { osc, gain } = createTone(ctx, 'sine');
 
-  osc.type = 'sine';
   osc.frequency.setValueAtTime(330, ctx.currentTime);
   osc.frequency.exponentialRampToValueAtTime(220, ctx.currentTime + 0.15);
 

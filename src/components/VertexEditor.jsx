@@ -3,70 +3,12 @@
 // 선분 가운데를 잡으면 양쪽 끝점이 평행 이동
 
 import React, { useRef, useEffect } from 'react';
+import { parsePathVertices, buildPathFromVertices } from '../utils/svgPath.js';
+import '../../css/vertex-editor.css';
 
-// ── SVG path string → vertex 배열 파싱 ──
-export function parsePath(pathStr) {
-  const tokens = pathStr.match(/[A-Za-z]|[-+]?[\d.]+/g);
-  if (!tokens) return [];
-  const verts = [];
-  let i = 0;
-  while (i < tokens.length) {
-    const cmd = tokens[i];
-    if (cmd === 'M' || cmd === 'L') {
-      verts.push({ cmd, x: parseFloat(tokens[i+1]), y: parseFloat(tokens[i+2]) });
-      i += 3;
-    } else if (cmd === 'Q') {
-      verts.push({ cmd: 'Q_CP', x: parseFloat(tokens[i+1]), y: parseFloat(tokens[i+2]) });
-      verts.push({ cmd: 'Q_END', x: parseFloat(tokens[i+3]), y: parseFloat(tokens[i+4]) });
-      i += 5;
-    } else if (cmd === 'A') {
-      verts.push({
-        cmd: 'A',
-        rx: parseFloat(tokens[i+1]), ry: parseFloat(tokens[i+2]),
-        rotation: parseFloat(tokens[i+3]),
-        largeArc: parseFloat(tokens[i+4]), sweep: parseFloat(tokens[i+5]),
-        x: parseFloat(tokens[i+6]), y: parseFloat(tokens[i+7])
-      });
-      i += 8;
-    } else if (cmd === 'Z') {
-      verts.push({ cmd: 'Z' });
-      i += 1;
-    } else {
-      i += 1;
-    }
-  }
-  return verts;
-}
-
-// ── vertex 배열 → SVG path string 재생성 ──
-export function buildPath(verts) {
-  const parts = [];
-  let i = 0;
-  while (i < verts.length) {
-    const v = verts[i];
-    if (v.cmd === 'M' || v.cmd === 'L') {
-      parts.push(`${v.cmd} ${round(v.x)} ${round(v.y)}`);
-      i++;
-    } else if (v.cmd === 'Q_CP') {
-      const end = verts[i + 1];
-      parts.push(`Q ${round(v.x)} ${round(v.y)} ${round(end.x)} ${round(end.y)}`);
-      i += 2;
-    } else if (v.cmd === 'Q_END') {
-      i++;
-    } else if (v.cmd === 'A') {
-      parts.push(`A ${round(v.rx)} ${round(v.ry)} ${v.rotation} ${v.largeArc} ${v.sweep} ${round(v.x)} ${round(v.y)}`);
-      i++;
-    } else if (v.cmd === 'Z') {
-      parts.push('Z');
-      i++;
-    } else {
-      i++;
-    }
-  }
-  return parts.join(' ');
-}
-
-function round(n) { return Math.round(n * 10) / 10; }
+// ── SVG path 파싱/빌드는 utils/svgPath.js에서 import ──
+export const parsePath = parsePathVertices;
+export const buildPath = buildPathFromVertices;
 
 // 모든 strokes에서 꼭지점 목록을 flat하게 추출
 function extractVerts(source) {

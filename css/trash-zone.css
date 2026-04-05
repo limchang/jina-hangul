@@ -1,0 +1,45 @@
+/* 휴지통 — 오른쪽 아래 */
+.trash-zone {
+  width: 46px; height: 46px;
+  background: rgba(255,255,255,0.12);
+  backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+  border: 1.5px solid rgba(255,255,255,0.25);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  color: rgba(255,255,255,0.4);
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+.trash-zone--hover {
+  background: rgba(255,80,80,0.3);
+  border-color: rgba(255,80,80,0.6);
+  color: rgba(255,255,255,0.9);
+  transform: scale(1.2);
+  box-shadow: 0 0 24px rgba(255,80,80,0.4);
+}
+
+/* 모두 지우기 오버레이 */
+/* 휴지통 되돌리기 확장 모드 */
+.trash-zone--undo {
+  width: auto;
+  padding: 0 18px;
+  border-radius: 28px;
+  gap: 6px;
+  background: rgba(255,255,255,0.2);
+  border-color: rgba(255,255,255,0.5);
+  color: white;
+  animation: trashExpand 0.3s ease-out;
+}
+.trash-zone--undo:hover {
+  background: rgba(255,255,255,0.3);
+}
+.trash-undo-label {
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 0.85rem; font-weight: 700;
+  white-space: nowrap;
+}
+@keyframes trashExpand {
+  0% { padding: 0; gap: 0; }
+  100% { padding: 0 18px; gap: 6px; }
+}

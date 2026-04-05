@@ -5,6 +5,7 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { CONSONANTS, VOWELS, APP_CONFIG } from '../data.js';
 import { TracingEngine, samplePath, initSvgHelper } from '../TracingEngine.js';
 import { speakChar } from '../sound.js';
+import '../../css/firefighter.css';
 
 const ALL_CHARS = [...CONSONANTS, ...VOWELS];
 const SIZE = 2000;

@@ -1,0 +1,9 @@
+/* ─── 꼭지점 편집기 ─── */
+
+/* 꼭지점 에디터 캔버스 */
+.vertex-editor-canvas {
+  cursor: grab;
+}
+.vertex-editor-canvas:active {
+  cursor: grabbing;
+}

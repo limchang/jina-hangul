@@ -2,10 +2,23 @@
 
 import { CONSONANTS, VOWELS } from '../data.js';
 
+/** @type {Set<string>} */
 const CONS_CHARS = new Set(CONSONANTS.map(c => c.char));
+/** @type {Set<string>} */
 const VOW_CHARS = new Set(VOWELS.map(v => v.char));
 
+/**
+ * 자음인지 판별
+ * @param {string} ch
+ * @returns {boolean}
+ */
 export function isConsonant(ch) { return CONS_CHARS.has(ch); }
+
+/**
+ * 모음인지 판별
+ * @param {string} ch
+ * @returns {boolean}
+ */
 export function isVowel(ch) { return VOW_CHARS.has(ch); }
 
 // 초성 유니코드 인덱스 (19개 체계)
@@ -13,6 +26,13 @@ const CHO = { 'ㄱ':0,'ㄴ':2,'ㄷ':3,'ㄹ':5,'ㅁ':6,'ㅂ':7,'ㅅ':9,'ㅇ':11,'
 const JUNG = { 'ㅏ':0,'ㅑ':2,'ㅓ':4,'ㅕ':6,'ㅗ':8,'ㅛ':12,'ㅜ':13,'ㅠ':17,'ㅡ':18,'ㅣ':20 };
 const JONG = { '':0,'ㄱ':1,'ㄴ':4,'ㄷ':7,'ㄹ':8,'ㅁ':16,'ㅂ':17,'ㅅ':19,'ㅇ':21,'ㅈ':22,'ㅊ':23,'ㅋ':24,'ㅌ':25,'ㅍ':26,'ㅎ':27 };
 
+/**
+ * 초성+중성+종성으로 한글 음절을 합성
+ * @param {string} cho - 초성
+ * @param {string} jung - 중성
+ * @param {string} [jong] - 종성 (없으면 빈 문자열)
+ * @returns {string} 합성된 한글 음절
+ */
 export function composeSyllable(cho, jung, jong = '') {
   if (!cho || !jung) return '';
   const c = CHO[cho], j = JUNG[jung], jj = JONG[jong] || 0;
@@ -25,8 +45,12 @@ const CHO_LIST = ['ㄱ','ㄲ','ㄴ','ㄷ','ㄸ','ㄹ','ㅁ','ㅂ','ㅃ','ㅅ','�
 const JUNG_LIST = ['ㅏ','ㅐ','ㅑ','ㅒ','ㅓ','ㅔ','ㅕ','ㅖ','ㅗ','ㅘ','ㅙ','ㅚ','ㅛ','ㅜ','ㅝ','ㅞ','ㅟ','ㅠ','ㅡ','ㅢ','ㅣ'];
 const JONG_LIST = ['','ㄱ','ㄲ','ㄳ','ㄴ','ㄵ','ㄶ','ㄷ','ㄹ','ㄺ','ㄻ','ㄼ','ㄽ','ㄾ','ㄿ','ㅀ','ㅁ','ㅂ','ㅄ','ㅅ','ㅆ','ㅇ','ㅈ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
 
-// 한글 음절 → 자모 배열로 분해 (초성, 중성, 종성)
-// 예: '진' → ['ㅈ', 'ㅣ', 'ㄴ'], '아' → ['ㅇ', 'ㅏ']
+/**
+ * 한글 음절 → 자모 배열로 분해 (초성, 중성, 종성)
+ * 예: '진' → ['ㅈ', 'ㅣ', 'ㄴ'], '아' → ['ㅇ', 'ㅏ']
+ * @param {string} syllable - 분해할 한글 음절
+ * @returns {string[]} 자모 배열
+ */
 export function decompose(syllable) {
   const code = syllable.charCodeAt(0);
   // 이미 자모이면 그대로
@@ -49,7 +73,11 @@ export function decompose(syllable) {
   return result;
 }
 
-// 문자열 → 모든 글자를 자모로 분해
+/**
+ * 문자열 → 모든 글자를 자모로 분해
+ * @param {string} word - 분해할 한글 문자열
+ * @returns {string[]} data.js에 있는 자모만 포함된 배열
+ */
 export function decomposeWord(word) {
   const jamos = [];
   for (const ch of word) {

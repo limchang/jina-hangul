@@ -8,6 +8,7 @@ import { playStart, playComplete, playCelebrate, playFail, playSlam, playFloat, 
 import { ICON_MAP } from '../icon-map.js';
 import { getSource } from '../sourceOverrides.js';
 import VertexEditor from './VertexEditor.jsx';
+import '../../css/trace-piece.css';
 
 const VEHICLE_ICONS = [
   'icons/default/character/police-car.png',
@@ -28,63 +29,35 @@ function getIconImageUrl(char, pieceId) {
   return DEFAULT_ICON;
 }
 
-// 불꽃 그리기 — 시간 기반 애니메이션, startIdx 이후만
-function drawFireOnPath(ctx, pts, startIdx, seed) {
-  const t = performance.now() * 0.003; // 시간 흐름
-  for (let pi = startIdx; pi < pts.length; pi++) {
+// 불꽃 이모지 — 경로를 따라 🔥 배치 + 시간 기반 흔들림 애니메이션
+function drawFireEmojiOnPath(ctx, pts, startIdx) {
+  if (startIdx >= pts.length) return;
+  const t = performance.now() * 0.002;
+  const remaining = pts.length - startIdx;
+  const count = Math.max(1, Math.min(14, Math.floor(remaining / 5)));
+  const step = Math.max(1, Math.floor(remaining / count));
+  // font는 루프 밖에서 한 번만 설정 (재계산 방지)
+  ctx.font = '38px serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  for (let i = 0; i < count; i++) {
+    const pi = startIdx + i * step;
+    if (pi >= pts.length) break;
     const pt = pts[pi];
-    const h = pt.x * 7.3 + pt.y * 13.7 + seed * 31;
-
-    // 1) 넓은 열기 글로우
-    const g = ctx.createRadialGradient(pt.x, pt.y - 15, 0, pt.x, pt.y - 15, 55);
-    g.addColorStop(0, 'rgba(255,80,0,0.22)');
-    g.addColorStop(0.5, 'rgba(255,40,0,0.08)');
-    g.addColorStop(1, 'rgba(255,30,0,0)');
-    ctx.fillStyle = g;
-    ctx.fillRect(pt.x - 55, pt.y - 70, 110, 110);
-
-    // 2) 불꽃 입자 5겹 — 시간에 따라 흔들림
-    for (let fi = 0; fi < 5; fi++) {
-      const phase = t + h * 0.1 + fi * 2.3;
-      const sway = Math.sin(phase * 1.7 + fi) * 14; // 좌우 흔들림
-      const rise = Math.sin(phase * 0.9 + fi * 1.1); // 위아래 출렁
-      const ox = sway;
-      const oy = -10 - fi * 13 - Math.abs(rise) * 8;
-      const r = 9 - fi * 1.2 + Math.sin(phase) * 2;
-      if (r < 1.5) continue;
-
-      // 아래(fi=0): 밝은 흰노랑, 위(fi=4): 어두운 빨강
-      const blend = fi / 4;
-      const cr = 255;
-      const cg = Math.round(255 - blend * 200 + Math.sin(phase) * 15);
-      const cb = Math.round(120 - blend * 110);
-      ctx.globalAlpha = (0.7 - fi * 0.1) * (0.8 + Math.sin(phase * 2) * 0.2);
-      ctx.beginPath();
-      ctx.arc(pt.x + ox, pt.y + oy, r, 0, Math.PI * 2);
-      ctx.fillStyle = `rgb(${cr},${Math.max(0, cg)},${Math.max(0, cb)})`;
-      ctx.fill();
-    }
-
-    // 3) 밝은 코어 (흰노랑 중심) — 가장 아래 레이어
-    const coreAlpha = 0.4 + Math.sin(t * 2 + h) * 0.15;
-    ctx.globalAlpha = coreAlpha;
-    ctx.beginPath();
-    ctx.arc(pt.x + Math.sin(t + h) * 3, pt.y - 5, 6, 0, Math.PI * 2);
-    ctx.fillStyle = '#fff8c4';
-    ctx.fill();
+    const phase = t + i * 0.9;
+    const sway = Math.sin(phase * 1.5) * 5;
+    const bob  = Math.abs(Math.sin(phase * 2.0)) * 7;
+    ctx.fillText('🔥', pt.x + sway, pt.y - 14 - bob);
   }
-  ctx.globalAlpha = 1;
 }
 
 function TracePiece({ piece, selected, inputLocked, onDone, onResetDone, onDelete, onSelect, onUngroup, isOverTrash, setTrashHover, onNearGoal, onSourceUpdate, onMoved, focusZoom = true, fireSkin = false, fireTheme = false, difficulty = 'easy', onHandlerMove }) {
   const source = getSource(piece.char, piece.id);
   const [editMode, setEditMode] = useState(false);
-  const focusZoomRef = useRef(focusZoom);
-  useEffect(() => { focusZoomRef.current = focusZoom; }, [focusZoom]);
-  const fireSkinRef = useRef(fireSkin);
-  useEffect(() => { fireSkinRef.current = fireSkin; }, [fireSkin]);
-  const fireThemeRef = useRef(fireTheme);
-  useEffect(() => { fireThemeRef.current = fireTheme; }, [fireTheme]);
+  const configRef = useRef({ focusZoom, fireSkin, fireTheme });
+  useEffect(() => {
+    configRef.current = { focusZoom, fireSkin, fireTheme };
+  }, [focusZoom, fireSkin, fireTheme]);
   useEffect(() => { if (engineRef.current) engineRef.current.difficulty = difficulty; }, [difficulty]);
   const guideRef = useRef(null);
 
@@ -98,6 +71,16 @@ function TracePiece({ piece, selected, inputLocked, onDone, onResetDone, onDelet
   const handlerElRef = useRef(null); // querySelector 캐싱
   const targetElRef = useRef(null);
   const iconRafRef = useRef(null);
+  const timersRef = useRef([]);
+
+  function safeTimeout(fn, ms) {
+    const id = setTimeout(() => {
+      timersRef.current = timersRef.current.filter(t => t !== id);
+      fn();
+    }, ms);
+    timersRef.current.push(id);
+    return id;
+  }
 
   const wrapRef = useRef(null);
   const hitRef = useRef(null);
@@ -116,9 +99,30 @@ function TracePiece({ piece, selected, inputLocked, onDone, onResetDone, onDelet
     setLocalPos({ x: piece.x, y: piece.y });
   }, [piece.x, piece.y]);
 
+  // 이벤트 핸들러에서 최신 값 참조용 ref (재등록 방지)
+  const localPosRef = useRef(localPos);
+  useEffect(() => { localPosRef.current = localPos; }, [localPos]);
+  const pieceDoneRef = useRef(piece.done);
+  useEffect(() => { pieceDoneRef.current = piece.done; }, [piece.done]);
+  const editModeRef = useRef(editMode);
+  useEffect(() => { editModeRef.current = editMode; }, [editMode]);
+  const inputLockedRef = useRef(inputLocked);
+  useEffect(() => { inputLockedRef.current = inputLocked; }, [inputLocked]);
+
   useEffect(() => {
     if (!selected) setEditMode(false);
   }, [selected]);
+
+  // 언마운트 시 모든 타이머 + RAF 정리
+  useEffect(() => {
+    return () => {
+      timersRef.current.forEach(id => clearTimeout(id));
+      timersRef.current = [];
+      if (fireAnimRef.current) { cancelAnimationFrame(fireAnimRef.current); fireAnimRef.current = null; }
+      if (particleAnimRef.current) { cancelAnimationFrame(particleAnimRef.current); particleAnimRef.current = null; }
+      if (iconRafRef.current) { cancelAnimationFrame(iconRafRef.current); iconRafRef.current = null; }
+    };
+  }, []);
 
   const prevEditMode = useRef(false);
   useEffect(() => {
@@ -163,15 +167,15 @@ function TracePiece({ piece, selected, inputLocked, onDone, onResetDone, onDelet
     const gCtx = guideRef.current?.getContext('2d');
     if (!gCtx || !src) return;
     const S = stateRef.current;
-    const fire = fireSkinRef.current || fireThemeRef.current;
-    const fireWaiting = fireThemeRef.current && !fireSkinRef.current && !piece.done;
+    const fire = configRef.current.fireSkin || configRef.current.fireTheme;
+    const fireWaiting = configRef.current.fireTheme && !configRef.current.fireSkin && !piece.done;
     gCtx.clearRect(0, 0, SIZE, SIZE);
     gCtx.save();
     gCtx.translate(PAD, PAD);
     // 완성된 글자는 배경선/점선 가이드 안 그림
     if (!piece.done) {
       // 배경선 — 대기 글자도 표시 (글자 모양 보이게)
-      gCtx.strokeStyle = fire ? 'rgba(255,100,30,0.15)' : 'rgba(255,255,255,0.25)';
+      gCtx.strokeStyle = fireWaiting ? 'rgba(255,100,30,0.35)' : fire ? 'rgba(255,100,30,0.15)' : 'rgba(255,255,255,0.25)';
       gCtx.lineWidth = APP_CONFIG.GUIDE_STROKE_WIDTH + 28;
       gCtx.lineCap = 'round'; gCtx.lineJoin = 'round';
       gCtx.setLineDash([]);
@@ -229,7 +233,7 @@ function TracePiece({ piece, selected, inputLocked, onDone, onResetDone, onDelet
       let lastTime = 0;
       function fireLoop(now) {
         // 30fps 제한 — 불꽃 애니메이션은 60fps 불필요
-        if (now - lastTime > 33) { lastTime = now; renderTrace(); }
+        if (now - lastTime > 33) { lastTime = now; renderTrace(); scheduleUpdateIcons(); }
         fireAnimRef.current = requestAnimationFrame(fireLoop);
       }
       fireAnimRef.current = requestAnimationFrame(fireLoop);
@@ -253,7 +257,7 @@ function TracePiece({ piece, selected, inputLocked, onDone, onResetDone, onDelet
     tCtx.save();
     tCtx.translate(PAD, PAD);
 
-    const isFire = fireSkinRef.current;
+    const isFire = configRef.current.fireSkin;
     const eng = engineRef.current;
 
     // 소방관 스킨 — 모든 미완성 획에 동적 불꽃 (매 프레임 애니메이션)
@@ -268,10 +272,10 @@ function TracePiece({ piece, selected, inputLocked, onDone, onResetDone, onDelet
             // 현재 획: 지나간 부분은 불 제거
             const progress = eng.pts.length > 1 ? eng.maxReachedIdx / (eng.pts.length - 1) : 0;
             const fireStart = Math.floor(progress * firePts.length);
-            drawFireOnPath(tCtx, firePts, fireStart, si);
+            drawFireEmojiOnPath(tCtx, firePts, fireStart);
           } else {
             // 대기 획: 전체에 불
-            drawFireOnPath(tCtx, firePts, 0, si);
+            drawFireEmojiOnPath(tCtx, firePts, 0);
           }
         }
       }
@@ -312,9 +316,9 @@ function TracePiece({ piece, selected, inputLocked, onDone, onResetDone, onDelet
 
   function setupIcons() {
     const ol = overlayRef.current; if (!ol) return;
-    const fire = fireSkinRef.current;
+    const fire = configRef.current.fireSkin;
     // fireTheme: done이거나 대기 중(불 안 붙은) → 오버레이 비움
-    if (fireThemeRef.current && (piece.done || !fire)) {
+    if (configRef.current.fireTheme && (piece.done || !fire)) {
       ol.innerHTML = '';
       handlerElRef.current = null; targetElRef.current = null;
       return;
@@ -362,12 +366,12 @@ function TracePiece({ piece, selected, inputLocked, onDone, onResetDone, onDelet
     const progress = engineRef.current.pts?.length > 0 ? engineRef.current.maxReachedIdx / (engineRef.current.pts.length - 1) : 0;
     const isClosed = engineRef.current.isClosedLoop;
     const allowNear = isClosed ? progress > 0.7 : true;
-    const proximity = (isTracing && allowNear && focusZoomRef.current) ? Math.max(0, 1 - dist / maxDist) : 0;
+    const proximity = (isTracing && allowNear && configRef.current.focusZoom) ? Math.max(0, 1 - dist / maxDist) : 0;
     const baseSize = 220;
     const maxSize = 700;
     const curSize = baseSize + proximity * (maxSize - baseSize);
     target.style.width = `${curSize}px`;
-    const isNear = dist < 150 && isTracing && allowNear && focusZoomRef.current;
+    const isNear = dist < 150 && isTracing && allowNear && configRef.current.focusZoom;
     if (isNear) {
       handler.classList.add('handler-near-goal');
       target.classList.add('target-near-goal');
@@ -381,7 +385,7 @@ function TracePiece({ piece, selected, inputLocked, onDone, onResetDone, onDelet
     if (onNearGoal) onNearGoal(isNear);
     target.style.left = `${(tp.x + PAD) * piece.scale - halfPx}px`; target.style.top = `${(tp.y + PAD) * piece.scale - halfPx}px`;
     // 경로 방향으로 핸들러 회전 (자동차 모드, 불모드 제외)
-    if (!fireSkinRef.current && engineRef.current?.pts?.length > 3) {
+    if (!configRef.current.fireSkin && engineRef.current?.pts?.length > 3) {
       const eng = engineRef.current;
       const idx = isTracing ? eng.maxReachedIdx : 0;
       const nextIdx = Math.min(idx + 3, eng.pts.length - 1);
@@ -392,12 +396,10 @@ function TracePiece({ piece, selected, inputLocked, onDone, onResetDone, onDelet
         handler.style.transform = `translate(-50%,-50%) rotate(${angle}deg)`;
       }
     }
-    // 소화기 위치를 부모에 전달 (코끼리 따라다님)
-    if (onHandlerMove && isTracing) {
+    // 소화기 위치를 부모에 전달 (코끼리 따라다님) — 소화기가 화면에 있으면 항상 따라감
+    if (onHandlerMove) {
       const rect = handler.getBoundingClientRect();
       onHandlerMove({ x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 });
-    } else if (onHandlerMove && !isTracing) {
-      onHandlerMove(null);
     }
   }
 
@@ -415,7 +417,7 @@ function TracePiece({ piece, selected, inputLocked, onDone, onResetDone, onDelet
     failCountRef.current = 0;
     superModeRef.current = false;
     // 소방관 스킨 — 획 완성 시 물 폭발
-    if (fireSkinRef.current) {
+    if (configRef.current.fireSkin) {
       const tp = engineRef.current.getTargetPos();
       for (let i = 0; i < 20; i++) {
         const angle = Math.random() * Math.PI * 2;
@@ -433,7 +435,7 @@ function TracePiece({ piece, selected, inputLocked, onDone, onResetDone, onDelet
     if (S.strokeIdx >= curSource.strokes.length) {
       overlayRef.current.innerHTML = '';
       if (onHandlerMove) onHandlerMove(null);
-      if (fireSkinRef.current || fireThemeRef.current) {
+      if (configRef.current.fireSkin || configRef.current.fireTheme) {
         // 불모드 완성 — 트레이스 캔버스 클리어 + 불 애니메이션 정지
         const tCtx = traceRef.current?.getContext('2d');
         if (tCtx) tCtx.clearRect(0, 0, SIZE, SIZE);
@@ -444,16 +446,16 @@ function TracePiece({ piece, selected, inputLocked, onDone, onResetDone, onDelet
         playWaterComplete();
         setJustDone(true);
         drawGuideWith(curSource);
-        setTimeout(() => { onDone(); }, 150);
-        setTimeout(() => setJustDone(false), 600);
+        safeTimeout(() => { onDone(); }, 150);
+        safeTimeout(() => setJustDone(false), 600);
       } else {
         particleRef.current.celebrate(250, 250); startPLoop();
         playCelebrate();
         speakChar(piece.char, 400);
         setJustDone(true);
-        setTimeout(() => { onDone(); playSlam(); }, 150);
-        setTimeout(() => setJustDone(false), 600);
-        setTimeout(() => stopPLoop(), 2000);
+        safeTimeout(() => { onDone(); playSlam(); }, 150);
+        safeTimeout(() => setJustDone(false), 600);
+        safeTimeout(() => stopPLoop(), 2000);
       }
     } else { loadStroke(S.strokeIdx); }
   }
@@ -484,7 +486,7 @@ function TracePiece({ piece, selected, inputLocked, onDone, onResetDone, onDelet
 
     function onDown(e) {
       if (e.touches?.length > 1) return;
-      if (editMode) return;
+      if (editModeRef.current) return;
       const cPos = getPos(e);
       if (!isOnGlyph(cPos)) {
         // 글자 밖 → pointer-events 끄고 아래 요소에 이벤트 재전달
@@ -498,7 +500,7 @@ function TracePiece({ piece, selected, inputLocked, onDone, onResetDone, onDelet
           if (below && below !== hit) {
             below.dispatchEvent(new e.constructor(e.type, e));
           }
-          setTimeout(() => { if (hit) hit.style.pointerEvents = 'auto'; }, 50);
+          safeTimeout(() => { if (hit) hit.style.pointerEvents = 'auto'; }, 50);
         }
         return;
       }
@@ -509,7 +511,7 @@ function TracePiece({ piece, selected, inputLocked, onDone, onResetDone, onDelet
 
       // 더블탭 — 완료된 글자 따라쓰기 리셋
       const now = Date.now();
-      if (piece.done && now - lastTapRef.current < 350) {
+      if (pieceDoneRef.current && now - lastTapRef.current < 350) {
         lastTapRef.current = 0;
         if (onResetDone) onResetDone();
         stateRef.current.completed = [];
@@ -522,10 +524,10 @@ function TracePiece({ piece, selected, inputLocked, onDone, onResetDone, onDelet
       }
       lastTapRef.current = now;
 
-      if (engineRef.current && !piece.done) {
+      if (engineRef.current && !pieceDoneRef.current) {
         if (engineRef.current.start(cPos.x, cPos.y)) {
           playStart();
-          if (fireSkinRef.current) startSizzle();
+          if (configRef.current.fireSkin) startSizzle();
           else startSiren();
           if (stateRef.current.strokeIdx === 0) speakChar(piece.char);
           particleRef.current.burst(cPos.x, cPos.y, 6); startPLoop(); renderTrace(); scheduleUpdateIcons();
@@ -536,7 +538,7 @@ function TracePiece({ piece, selected, inputLocked, onDone, onResetDone, onDelet
       }
 
       // 잠금 모드면 롱프레스(편집)와 이동 차단
-      if (inputLocked) return;
+      if (inputLockedRef.current) return;
 
       {
         let cx, cy;
@@ -548,10 +550,10 @@ function TracePiece({ piece, selected, inputLocked, onDone, onResetDone, onDelet
           // 그룹 해제 우선
           if (piece.groupId && onUngroup) { onUngroup(); return; }
           // 완료된 글자도 편집 가능 — done 리셋 후 편집 모드 진입
-          if (piece.done && onResetDone) onResetDone();
+          if (pieceDoneRef.current && onResetDone) onResetDone();
           setEditMode(true);
         }, 500);
-        moveStartRef.current = { startX: cx, startY: cy, origX: localPos.x, origY: localPos.y };
+        moveStartRef.current = { startX: cx, startY: cy, origX: localPosRef.current.x, origY: localPosRef.current.y };
       }
     }
 
@@ -563,7 +565,7 @@ function TracePiece({ piece, selected, inputLocked, onDone, onResetDone, onDelet
         engineRef.current.move(cPos.x, cPos.y);
         particleRef.current.emit(cPos.x, cPos.y);
         // 소방관 스킨 — 손가락에서 물 튀김
-        if (fireSkinRef.current) {
+        if (configRef.current.fireSkin) {
           for (let i = 0; i < 2; i++) {
             const angle = Math.random() * Math.PI * 2;
             const speed = 1 + Math.random() * 3;
@@ -594,7 +596,7 @@ function TracePiece({ piece, selected, inputLocked, onDone, onResetDone, onDelet
           if (onNearGoal) onNearGoal(false);
           // 캐릭터 캔버스로 수직 낙하
           setFlyAway(true);
-          setTimeout(() => {
+          safeTimeout(() => {
             setFlyAway(false);
             const tCtx = traceRef.current?.getContext('2d');
             if (tCtx) tCtx.clearRect(0, 0, SIZE, SIZE);
@@ -654,7 +656,7 @@ function TracePiece({ piece, selected, inputLocked, onDone, onResetDone, onDelet
         return;
       }
       if (moveStartRef.current && movedRef.current && onMoved) {
-        onMoved(localPos.x, localPos.y);
+        onMoved(localPosRef.current.x, localPosRef.current.y);
       }
       moveStartRef.current = null;
     }
@@ -676,7 +678,7 @@ function TracePiece({ piece, selected, inputLocked, onDone, onResetDone, onDelet
       window.removeEventListener('touchend', onUp);
       if (iconRafRef.current) { cancelAnimationFrame(iconRafRef.current); iconRafRef.current = null; }
     };
-  }, [localPos, piece.done, editMode]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps — ref 패턴으로 최신 값 참조, 재등록 불필요
 
   if (!source) return null;
 

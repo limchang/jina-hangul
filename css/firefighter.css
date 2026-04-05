@@ -1,0 +1,138 @@
+/* ═══ 소방관 게임모드 ═══ */
+.fire-mode {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  z-index: 9500;
+  background: linear-gradient(180deg, #1a0a00 0%, #3d1500 30%, #6b2000 60%, #2a0800 100%);
+  display: flex; flex-direction: column; align-items: center;
+  overflow: hidden;
+}
+
+/* 헤더 */
+.fire-header {
+  width: 100%; padding: 16px 20px;
+  display: flex; align-items: center; gap: 16px;
+  z-index: 10;
+}
+.fire-exit-btn {
+  width: 44px; height: 44px; border-radius: 50%;
+  background: rgba(255,255,255,0.15); border: 2px solid rgba(255,255,255,0.3);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: all 0.15s;
+}
+.fire-exit-btn:active { transform: scale(0.9); background: rgba(255,255,255,0.25); }
+.fire-score {
+  display: flex; align-items: center; gap: 8px;
+  background: rgba(255,80,30,0.3); border: 2px solid rgba(255,150,50,0.5);
+  border-radius: 20px; padding: 6px 18px;
+}
+.fire-score-icon { font-size: 1.5rem; }
+.fire-score-num {
+  font-family: 'Fredoka', sans-serif; font-size: 1.6rem; font-weight: 700;
+  color: #ffd54f;
+}
+.fire-combo {
+  font-family: 'Fredoka', sans-serif; font-size: 1.1rem; font-weight: 700;
+  color: #ff6b6b; animation: comboPulse 0.5s ease-in-out infinite;
+}
+@keyframes comboPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+}
+
+/* 스테이지 */
+.fire-stage {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 16px; position: relative;
+}
+.fire-char-label {
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 3.5rem; font-weight: 900;
+  color: rgba(255,200,100,0.9);
+  text-shadow: 0 0 30px rgba(255,100,0,0.8), 0 0 60px rgba(255,50,0,0.4);
+  animation: fireCharGlow 1.5s ease-in-out infinite;
+}
+.fire-char-label--done {
+  color: #81d4fa !important;
+  text-shadow: 0 0 30px rgba(100,200,255,0.8) !important;
+  animation: none !important;
+}
+@keyframes fireCharGlow {
+  0%, 100% { text-shadow: 0 0 30px rgba(255,100,0,0.8), 0 0 60px rgba(255,50,0,0.4); }
+  50% { text-shadow: 0 0 50px rgba(255,150,0,1), 0 0 80px rgba(255,80,0,0.6); }
+}
+
+.fire-canvas-wrap {
+  position: relative; border-radius: 24px;
+  background: rgba(0,0,0,0.4);
+  border: 3px solid rgba(255,100,0,0.4);
+  box-shadow: 0 0 40px rgba(255,60,0,0.3);
+  overflow: hidden;
+}
+.fire-canvas-layer {
+  position: absolute; top: 0; left: 0;
+  pointer-events: none;
+}
+.fire-canvas-layer:first-child { pointer-events: auto; cursor: crosshair; }
+
+.fire-glow {
+  position: absolute; top: -20%; left: -20%; width: 140%; height: 140%;
+  background: radial-gradient(circle, rgba(255,80,0,0.3) 0%, transparent 70%);
+  pointer-events: none; animation: fireGlowPulse 0.8s ease-in-out infinite;
+}
+@keyframes fireGlowPulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 0.8; }
+}
+
+/* 진화 성공 */
+.fire-success {
+  position: absolute; top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  animation: successPop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.fire-success-text {
+  font-family: 'Fredoka', 'Noto Sans KR', sans-serif;
+  font-size: 2.5rem; font-weight: 700; color: #81d4fa;
+  text-shadow: 0 0 20px rgba(100,200,255,0.8), 0 4px 8px rgba(0,0,0,0.5);
+  white-space: nowrap;
+}
+@keyframes successPop {
+  0% { transform: translate(-50%, -50%) scale(0); }
+  100% { transform: translate(-50%, -50%) scale(1); }
+}
+
+/* 진행 바 */
+.fire-progress-wrap {
+  width: 80%; max-width: 400px;
+  padding: 24px 0 40px; display: flex; flex-direction: column;
+  align-items: center; gap: 8px;
+}
+.fire-progress-bar {
+  width: 100%; height: 16px; border-radius: 8px;
+  background: rgba(255,255,255,0.15);
+  border: 2px solid rgba(255,255,255,0.2);
+  overflow: hidden;
+}
+.fire-progress-fill {
+  height: 100%; border-radius: 6px;
+  background: linear-gradient(90deg, #4fc3f7, #29b6f6, #03a9f4);
+  transition: width 0.4s ease-out;
+  box-shadow: 0 0 12px rgba(79,195,247,0.6);
+}
+.fire-progress-label {
+  font-family: 'Fredoka', sans-serif; font-size: 1rem; font-weight: 600;
+  color: rgba(255,255,255,0.8);
+}
+
+/* 게임 모드 진입 버튼 */
+.fire-mode-btn {
+  width: 48px; height: 48px; border-radius: 50%;
+  background: linear-gradient(135deg, #ff6b35, #ff4444);
+  border: 3px solid rgba(255,255,255,0.7);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; font-size: 1.5rem;
+  box-shadow: 0 4px 12px rgba(255,60,0,0.4);
+  transition: all 0.15s;
+}
+.fire-mode-btn:active { transform: scale(0.9); }

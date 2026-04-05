@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Agentation } from 'agentation';
 import FreeComposeMode from './components/FreeComposeMode.jsx';
 import FirefighterMode from './components/FirefighterMode.jsx';
-import '../css/styles.css';
+import '../css/global.css';
 
 export default function App() {
   const [gameMode, setGameMode] = useState(null); // null | 'fire'
